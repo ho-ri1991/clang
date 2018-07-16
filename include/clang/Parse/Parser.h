@@ -49,6 +49,7 @@ namespace clang {
   class OMPClause;
   class ObjCTypeParamList;
   class ObjCTypeParameter;
+  class ExtendParser;
 
 /// Parser - This implements a parser for the C family of languages.  After
 /// parsing units of the grammar, productions are invoked to handle whatever has
@@ -61,6 +62,7 @@ class Parser : public CodeCompletionHandler {
   friend class ObjCDeclContextSwitch;
   friend class ParenBraceBracketBalancer;
   friend class BalancedDelimiterTracker;
+  friend class ExtendParser;
 
   Preprocessor &PP;
 
@@ -390,7 +392,7 @@ public:
 
   /// ParseTopLevelDecl - Parse one top-level declaration. Returns true if
   /// the EOF was encountered.
-  bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
+  virtual bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
   bool ParseTopLevelDecl() {
     DeclGroupPtrTy Result;
     return ParseTopLevelDecl(Result);
@@ -1565,7 +1567,7 @@ public:
     IsTypeCast
   };
 
-  ExprResult ParseExpression(TypeCastState isTypeCast = NotTypeCast);
+  virtual ExprResult ParseExpression(TypeCastState isTypeCast = NotTypeCast);
   ExprResult ParseConstantExpressionInExprEvalContext(
       TypeCastState isTypeCast = NotTypeCast);
   ExprResult ParseConstantExpression(TypeCastState isTypeCast = NotTypeCast);
@@ -1847,7 +1849,7 @@ private:
     /// Allow statements and all executable OpenMP directives
     ACK_StatementsOpenMPAnyExecutable
   };
-  StmtResult
+  virtual StmtResult
   ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKind Allowed,
                               SourceLocation *TrailingElseLoc = nullptr);
   StmtResult ParseStatementOrDeclarationAfterAttributes(

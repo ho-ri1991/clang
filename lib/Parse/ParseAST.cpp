@@ -18,6 +18,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Parse/ExtendParser.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaConsumer.h"
@@ -128,8 +129,8 @@ void clang::ParseAST(Sema &S, bool PrintStats, bool SkipFunctionBodies) {
 
   ASTConsumer *Consumer = &S.getASTConsumer();
 
-  std::unique_ptr<Parser> ParseOP(
-      new Parser(S.getPreprocessor(), S, SkipFunctionBodies));
+  std::unique_ptr<ExtendParser> ParseOP(
+      new ExtendParser(S.getPreprocessor(), S, SkipFunctionBodies));
   Parser &P = *ParseOP.get();
 
   llvm::CrashRecoveryContextCleanupRegistrar<const void, ResetStackCleanup>
