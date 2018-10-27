@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 
+#include <iostream>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1925,6 +1926,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
                                               DeclaratorContext Context,
                                               SourceLocation *DeclEnd,
                                               ForRangeInit *FRI) {
+  std::cout << "ParseDeclGroup" << std::endl;
   // Parse the first declarator.
   ParsingDeclarator D(*this, DS, Context);
   ParseDeclarator(D);
@@ -3218,6 +3220,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         }
       }
 
+      std::cout << "ParseDeclarationSpecifiers identifier before TryAnnotateCXXScopeToken" << std::endl;
       // In C++, check to see if this is a scope specifier like foo::bar::, if
       // so handle it as such.  This is important for ctor parsing.
       if (getLangOpts().CPlusPlus) {
@@ -5361,6 +5364,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     ParseOptionalCXXScopeSpecifier(SS, nullptr, EnteringContext);
 
     if (SS.isNotEmpty()) {
+      std::cout << "ParseDeclaratorInternal nonempty" << std::endl;
       if (Tok.isNot(tok::star)) {
         // The scope spec really belongs to the direct-declarator.
         if (D.mayHaveIdentifier())
