@@ -22,8 +22,6 @@
 #include "clang/Sema/Scope.h"
 #include "llvm/Support/ErrorHandling.h"
 
-#include "clang/DebugMessage.h"
-
 
 using namespace clang;
 
@@ -444,11 +442,6 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       if (LastII)
         *LastII = &II;
 
-      DebugMessage d("ParseOptionalCXXScopeSpecifier");
-      PP.DumpToken(Tok);
-      std::cout << std::endl;
-      std::cout << Tok.getIdentifierInfo()->getNameStart() << std::endl;
-
       // We have an identifier followed by a '::'. Lookup this name
       // as the name in a nested-name-specifier.
       Token Identifier = Tok;
@@ -473,7 +466,6 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           Tok = Identifier;
           break;
         }
-        std::cout << "ParseOptionalCXXScopeSpecifier ss invalid" << std::endl;
         SS.SetInvalid(SourceRange(IdLoc, CCLoc));
       }
       HasScopeSpecifier = true;
