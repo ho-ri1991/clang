@@ -59,7 +59,8 @@ ExtendParser::ParseTopLevelDecl(DeclGroupPtrTy &Result)
 //    assert(TestII);
     auto loc = Tok.getLocation();
     ConsumeAnyToken();
-    CachedTokens toks;
+    auto ptoks = new CachedTokens();
+    auto& toks = *ptoks;
     toks.push_back(GenerateToken(tok::kw_void, loc));
     toks.push_back(GenerateIdentifierToken(PP, (new std::string("Test"))->c_str(), loc));
     toks.push_back(GenerateToken(tok::coloncolon, loc));
