@@ -1785,12 +1785,31 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         (void)Actions.CorrectDelayedTyposInExpr(LHS);
         LHS = ExprError();
       }
-
+      
+      bool isPropertyCall = false;
       if (!LHS.isInvalid())
         LHS = Actions.ActOnMemberAccessExpr(getCurScope(), LHS.get(), OpLoc,
                                             OpKind, SS, TemplateKWLoc, Name,
                                  CurParsedObjCImpl ? CurParsedObjCImpl->Dcl
-                                                   : nullptr);
+                                                   : nullptr, &isPropertyCall);
+      if (isPropertyCall)
+      {
+        auto ptoks = new CachedTokens();
+        auto& toks = *ptoks;
+        Token lParen;
+        lParen.startToken();
+        lParen.setKind(tok::l_paren);
+        lParen.setLocation(Tok.getLocation());
+        Token rParen;
+        rParen.startToken();
+        rParen.setKind(tok::r_paren);
+        rParen.setLocation(Tok.getLocation());
+        toks.push_back(lParen);
+        toks.push_back(rParen);
+        toks.push_back(Tok);
+        PP.EnterTokenStream(toks, true);
+        ConsumeAnyToken();
+      }
       if (!LHS.isInvalid() && Tok.is(tok::less))
         checkPotentialAngleBracket(LHS);
       break;

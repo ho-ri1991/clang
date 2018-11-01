@@ -641,7 +641,8 @@ static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                                      SourceLocation OpLoc, bool IsArrow,
                                      CXXScopeSpec &SS, bool HasTemplateArgs,
                                      SourceLocation TemplateKWLoc,
-                                     TypoExpr *&TE) {
+                                     TypoExpr *&TE, 
+                                     bool* isPropertyCall = nullptr) {
   SourceRange BaseRange = BaseExpr ? BaseExpr->getSourceRange() : SourceRange();
   RecordDecl *RDecl = RTy->getDecl();
   if (!SemaRef.isThisOutsideMemberFunctionBody(QualType(RTy, 0)) &&
@@ -684,7 +685,27 @@ static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   SemaRef.LookupQualifiedName(R, DC, SS);
 
   if (!R.empty())
+  {
+    if (isPropertyCall) *isPropertyCall = false;
     return false;
+  }
+
+  {
+    auto name = R.getLookupNameInfo().getName().getAsIdentifierInfo()->getNameStart();
+    auto loc = R.getLookupNameInfo().getBeginLoc();
+    auto lookupName = name + std::string("__");
+    IdentifierInfo* newII = &SemaRef.PP.getIdentifierTable().get((new std::string(lookupName))->c_str());
+    DeclarationNameInfo NameInfo;
+    NameInfo.setLoc(loc);
+    NameInfo.setName(newII);
+    R.setLookupNameInfo(NameInfo);
+    SemaRef.LookupQualifiedName(R, DC, SS);
+    if (!R.empty())
+    {
+      if (isPropertyCall) *isPropertyCall = true;
+      return false;
+    }
+  }
 
   DeclarationName Typo = R.getLookupName();
   SourceLocation TypoLoc = R.getNameLoc();
@@ -735,7 +756,8 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
                                    ExprResult &BaseExpr, bool &IsArrow,
                                    SourceLocation OpLoc, CXXScopeSpec &SS,
                                    Decl *ObjCImpDecl, bool HasTemplateArgs,
-                                   SourceLocation TemplateKWLoc);
+                                   SourceLocation TemplateKWLoc,
+                                   bool* isPropertyCall = nullptr);
 
 ExprResult
 Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
@@ -746,7 +768,8 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
                                const DeclarationNameInfo &NameInfo,
                                const TemplateArgumentListInfo *TemplateArgs,
                                const Scope *S,
-                               ActOnMemberAccessExtraArgs *ExtraArgs) {
+                               ActOnMemberAccessExtraArgs *ExtraArgs,
+                               bool* isPropertyCall) {
   if (BaseType->isDependentType() ||
       (SS.isSet() && isDependentScopeSpecifier(SS)))
     return ActOnDependentMemberExpr(Base, BaseType,
@@ -774,7 +797,7 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
     ExprResult Result =
         LookupMemberExpr(*this, R, BaseResult, IsArrow, OpLoc, SS,
                          ExtraArgs ? ExtraArgs->ObjCImpDecl : nullptr,
-                         TemplateArgs != nullptr, TemplateKWLoc);
+                         TemplateArgs != nullptr, TemplateKWLoc, isPropertyCall);
 
     if (BaseResult.isInvalid())
       return ExprError();
@@ -1229,7 +1252,7 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
                                    ExprResult &BaseExpr, bool &IsArrow,
                                    SourceLocation OpLoc, CXXScopeSpec &SS,
                                    Decl *ObjCImpDecl, bool HasTemplateArgs,
-                                   SourceLocation TemplateKWLoc) {
+                                   SourceLocation TemplateKWLoc, bool* isPropertyCall) {
   assert(BaseExpr.get() && "no base expression");
 
   // Perform default conversions.
@@ -1280,7 +1303,7 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     TypoExpr *TE = nullptr;
     if (LookupMemberExprInRecord(S, R, BaseExpr.get(), RTy, OpLoc, IsArrow, SS,
-                                 HasTemplateArgs, TemplateKWLoc, TE))
+                                 HasTemplateArgs, TemplateKWLoc, TE, isPropertyCall))
       return ExprError();
 
     // Returning valid-but-null is how we indicate to the caller that
@@ -1671,7 +1694,8 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
                                        CXXScopeSpec &SS,
                                        SourceLocation TemplateKWLoc,
                                        UnqualifiedId &Id,
-                                       Decl *ObjCImpDecl) {
+                                       Decl *ObjCImpDecl,
+                                       bool* isPropertyCall) {
   if (SS.isSet() && SS.isInvalid())
     return ExprError();
 
@@ -1710,7 +1734,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   ActOnMemberAccessExtraArgs ExtraArgs = {S, Id, ObjCImpDecl};
   return BuildMemberReferenceExpr(Base, Base->getType(), OpLoc, IsArrow, SS,
                                   TemplateKWLoc, FirstQualifierInScope,
-                                  NameInfo, TemplateArgs, S, &ExtraArgs);
+                                  NameInfo, TemplateArgs, S, &ExtraArgs, isPropertyCall);
 }
 
 ExprResult
