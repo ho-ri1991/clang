@@ -19,6 +19,11 @@ public:
   ParseExpression(TypeCastState isTypeCast = NotTypeCast) override;
 
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result) override;
+
+  DeclGroupPtrTy ParseCXXClassMemberDeclaration(
+      AccessSpecifier AS, AttributeList *Attr,
+      const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
+      ParsingDeclRAIIObject *DiagsFromTParams = nullptr) override;
 };
 
 }

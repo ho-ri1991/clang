@@ -2695,7 +2695,7 @@ private:
                                                  LateParsedAttrList &LateAttrs);
   void MaybeParseAndDiagnoseDeclSpecAfterCXX11VirtSpecifierSeq(Declarator &D,
                                                                VirtSpecifiers &VS);
-  DeclGroupPtrTy ParseCXXClassMemberDeclaration(
+  virtual DeclGroupPtrTy ParseCXXClassMemberDeclaration(
       AccessSpecifier AS, AttributeList *Attr,
       const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
       ParsingDeclRAIIObject *DiagsFromTParams = nullptr);
