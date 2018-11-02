@@ -1805,6 +1805,11 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         rParen.setKind(tok::r_paren);
         rParen.setLocation(Tok.getLocation());
         toks.push_back(lParen);
+        if (Tok.is(tok::equal))
+        {
+          ConsumeAnyToken();
+          ConsumeAndStoreUntil(tok::semi, toks, true, false);
+        }
         toks.push_back(rParen);
         toks.push_back(Tok);
         PP.EnterTokenStream(toks, true);
