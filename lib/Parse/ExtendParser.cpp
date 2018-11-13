@@ -1,7 +1,14 @@
 #include "clang/Parse/ExtendParser.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/Support/SmallVectorMemoryBuffer.h"
+#include <pybind11/embed.h>
+#include <iostream>
+#include <cassert>
 
 using namespace clang;
+
+namespace py = pybind11;
+using namespace py::literals;
 
 //IdentifierInfo* TestII = nullptr;
 
@@ -54,24 +61,56 @@ ExtendParser::ParseTopLevelDecl(DeclGroupPtrTy &Result)
 {
 //  if (Tok.is(tok::identifier) && std::string(Tok.getIdentifierInfo()->getNameStart()) == "Test")
 //    TestII = Tok.getIdentifierInfo();
+  static bool init = true;
+  if (init)
+  {
+    init = false;
+    py::scoped_interpreter guard{};
+    auto locals = py::dict("name"_a="World", "number"_a=42);
+    std::string script = R"(
+message = "Hello, {name}! The answer is {number}".format(**locals())
+  )";
+    py::exec(script, py::globals(), locals);
+    auto message = locals["message"].cast<std::string>();
+    std::cout << message << std::endl;
+  }
   if (Tok.is(tok::identifier) && std::string(Tok.getIdentifierInfo()->getNameStart()) == "hoge")
   {
-//    assert(TestII);
-    auto loc = Tok.getLocation();
+    std::string* str = new std::string(
+//      "Test{{42, -42, 0}, 0.42, 11};\n"
+      "func(10, 4.2, -1);\n"
+    );
+    llvm::SmallVector<char, 0> buf;
+//    buf.append(str->begin(), str->end());
+    buf.append(str->c_str(), str->c_str() + str->size() + 1);
+    buf.set_size(str->size());
+    auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
+    auto mem_buf_ptr = mem_buf.get();
+    auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
+    PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
     ConsumeAnyToken();
-    auto ptoks = new CachedTokens();
-    auto& toks = *ptoks;
-    toks.push_back(GenerateToken(tok::kw_void, loc));
-    toks.push_back(GenerateIdentifierToken(PP, (new std::string("Test"))->c_str(), loc));
-    toks.push_back(GenerateToken(tok::coloncolon, loc));
-    toks.push_back(GenerateIdentifierToken(PP, (new std::string("print"))->c_str(), loc));
-    toks.push_back(GenerateToken(tok::l_paren, loc));
-    toks.push_back(GenerateToken(tok::r_paren, loc));
-    toks.push_back(GenerateToken(tok::l_brace, loc));
-    toks.push_back(GenerateToken(tok::r_brace, loc));
-    toks.push_back(Tok);
-    PP.EnterTokenStream(toks, true);
+    ExprResult Result = ParseAssignmentExpression();
+    assert(Tok.is(tok::semi));
     ConsumeAnyToken();
+    Expr::EvalResult Eval;
+    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+    auto b = Result.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+
+//    auto loc = Tok.getLocation();
+//    ConsumeAnyToken();
+//    auto ptoks = new CachedTokens();
+//    auto& toks = *ptoks;
+//    toks.push_back(GenerateToken(tok::kw_void, loc));
+//    toks.push_back(GenerateIdentifierToken(PP, (new std::string("Test"))->c_str(), loc));
+//    toks.push_back(GenerateToken(tok::coloncolon, loc));
+//    toks.push_back(GenerateIdentifierToken(PP, (new std::string("print"))->c_str(), loc));
+//    toks.push_back(GenerateToken(tok::l_paren, loc));
+//    toks.push_back(GenerateToken(tok::r_paren, loc));
+//    toks.push_back(GenerateToken(tok::l_brace, loc));
+//    toks.push_back(GenerateToken(tok::r_brace, loc));
+//    toks.push_back(Tok);
+//    PP.EnterTokenStream(toks, true);
+//    ConsumeAnyToken();
   }
   return Parser::ParseTopLevelDecl(Result);
 }

@@ -455,9 +455,13 @@ if(LLVM_ENABLE_MODULES AND NOT CLANG_BUILT_STANDALONE)
   list(APPEND LLVM_COMMON_DEPENDS intrinsics_gen)
 endif()
 
+include_directories(/disk1/koudai/.pyenv/versions/3.6.5/include/python3.6m)
+include_directories(./pybind11/include)
+add_subdirectory(pybind11)
 add_subdirectory(lib)
 add_subdirectory(tools)
 add_subdirectory(runtime)
+
 
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs by default." OFF)
 add_subdirectory(examples)
