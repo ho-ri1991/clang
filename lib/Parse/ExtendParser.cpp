@@ -1,9 +1,11 @@
 #include "clang/Parse/ExtendParser.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/Support/SmallVectorMemoryBuffer.h"
+#include "clang/Parse/RAIIObjectsForParser.h"
+#include <iostream>
+#include <cassert>
 
 using namespace clang;
-
-//IdentifierInfo* TestII = nullptr;
 
 static Token GenerateToken(tok::TokenKind Kind, SourceLocation Loc = SourceLocation{})
 {
@@ -56,22 +58,195 @@ ExtendParser::ParseTopLevelDecl(DeclGroupPtrTy &Result)
 //    TestII = Tok.getIdentifierInfo();
   if (Tok.is(tok::identifier) && std::string(Tok.getIdentifierInfo()->getNameStart()) == "hoge")
   {
-//    assert(TestII);
-    auto loc = Tok.getLocation();
+    std::string* str = new std::string(
+//      "func(10, 4.2, -1);\n"
+      R"(generate(
+          meta::class_tokens(
+          boost::hana::make_tuple(
+            meta::member_variable(
+              boost::hana::make_tuple("int"_t),
+              "var1"_t,
+              boost::hana::make_tuple("{"_t, "}"_t, ";"_t)
+            ),
+            meta::member_variable(
+              boost::hana::make_tuple("double"_t),
+              "var2"_t,
+              boost::hana::make_tuple("{"_t, "}"_t, ";"_t)
+            )
+          ),
+          boost::hana::make_tuple(
+            meta::member_function(
+              boost::hana::make_tuple("int"_t),
+              "func"_t,
+              boost::hana::make_tuple(
+                meta::argument(
+                  boost::hana::make_tuple("int"_t),
+                  "x"_t,
+                  boost::hana::make_tuple()
+                ),
+                meta::argument(
+                  boost::hana::make_tuple("bool"_t),
+                  "b"_t,
+                  boost::hana::make_tuple("="_t, "false"_t)
+                )
+              ),
+              boost::hana::make_tuple("{"_t, "}"_t)
+            )
+          )
+        ));)"
+    );
+    llvm::SmallVector<char, 0> buf;
+//    buf.append(str->begin(), str->end());
+    buf.append(str->c_str(), str->c_str() + str->size() + 1);
+    buf.set_size(str->size());
+    auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
+    auto mem_buf_ptr = mem_buf.get();
+    auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
+    PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
+    auto loc = ConsumeAnyToken();
+    ExprResult Result = ParseAssignmentExpression();
+    assert(Tok.is(tok::semi));
     ConsumeAnyToken();
+    Expr::EvalResult Eval;
+    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+    auto b = Result.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+    
+    auto gen_tok_str = [](APValue& token)
+    {
+      auto pstr = new std::string();
+      for (int i = 0; i < token.getStructField(0).getStructField(0).getArraySize() - 1; ++i)
+      {
+        pstr->push_back(static_cast<char>(*token.getStructField(0).getStructField(0).getArrayInitializedElt(i).getInt().getRawData()));
+      }
+      return pstr;
+    };
+    auto tuple_to_elem = [](APValue& t, int i)->decltype(t.getStructField(0).getStructBase(0).getStructBase(i).getStructField(0))
+    {
+      return t.getStructField(0).getStructBase(0).getStructBase(i).getStructField(0);
+    };
+    auto tuple_size = [](APValue& t)
+    {
+      return t.getStructNumFields() == 0 ? 0 : t.getStructField(0).getStructBase(0).getStructNumBases();
+    };
+    auto str_to_clang_token = [](Preprocessor& PP, std::string& str, SourceLocation loc)
+    {
+      llvm::SmallVector<char, 0> buf;
+      buf.append(str.c_str(), str.c_str() + str.size() + 1);
+      buf.set_size(str.size());
+      auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
+      auto mem_buf_ptr = mem_buf.get();
+      auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, loc);
+      Token Result;
+      Lexer TheLexer(fileId, mem_buf_ptr, PP.getSourceManager(), PP.getLangOpts());
+      TheLexer.SetCommentRetentionState(true);
+      TheLexer.LexFromRawLexer(Result);
+      if (Result.is(tok::raw_identifier))
+        return GenerateIdentifierToken(PP, str.c_str(), loc);
+      else
+        return Result;
+      if (str == "::")
+        return GenerateToken(tok::coloncolon, loc);
+      else if (str == ";")
+        return GenerateToken(tok::semi, loc);
+      else if (str == "{")
+        return GenerateToken(tok::l_brace, loc);
+      else if (str == "}")
+        return GenerateToken(tok::r_brace, loc);
+      else if (str == "int")
+        return GenerateToken(tok::kw_int, loc);
+      else if (str == "double")
+        return GenerateToken(tok::kw_double, loc);
+      else if (str == "char")
+        return GenerateToken(tok::kw_char, loc);
+      else if (str == "bool")
+        return GenerateToken(tok::kw_bool, loc);
+      else if (str == "return")
+        return GenerateToken(tok::kw_return, loc);
+      else if (str == ",")
+        return GenerateToken(tok::comma, loc);
+      else if (str == ".")
+        return GenerateToken(tok::period, loc);
+      else if (str == "(")
+        return GenerateToken(tok::l_paren, loc);
+      else if (str == ")")
+        return GenerateToken(tok::r_paren, loc);
+      else if (str == "=")
+        return GenerateToken(tok::equal, loc);
+      else if (str == "==")
+        return GenerateToken(tok::equalequal, loc);
+      else
+        return GenerateIdentifierToken(PP, str.c_str(), loc);
+    };
+
     auto ptoks = new CachedTokens();
     auto& toks = *ptoks;
-    toks.push_back(GenerateToken(tok::kw_void, loc));
-    toks.push_back(GenerateIdentifierToken(PP, (new std::string("Test"))->c_str(), loc));
-    toks.push_back(GenerateToken(tok::coloncolon, loc));
-    toks.push_back(GenerateIdentifierToken(PP, (new std::string("print"))->c_str(), loc));
-    toks.push_back(GenerateToken(tok::l_paren, loc));
-    toks.push_back(GenerateToken(tok::r_paren, loc));
+    toks.push_back(GenerateToken(tok::kw_class, loc));
+    toks.push_back(GenerateIdentifierToken(PP, (new std::string("generated_class"))->c_str(), loc));
     toks.push_back(GenerateToken(tok::l_brace, loc));
+    auto& member_variables = Eval.Val.getStructField(0).getStructField(0).getStructBase(0);
+    for(int i = 0; i < member_variables.getStructNumBases(); ++i)
+    {
+      auto& mem_var = member_variables.getStructBase(i).getStructField(0);
+      auto& mem_type_toks = mem_var.getStructField(0);
+      auto& mem_name_tok = mem_var.getStructField(1);
+      auto& mem_init_toks = mem_var.getStructField(2);
+      for (int j = 0; j < tuple_size(mem_type_toks); ++j)
+        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_type_toks, j)), loc));
+      toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), loc));
+      for (int j = 0; j < tuple_size(mem_init_toks); ++j)
+        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_init_toks, j)), loc));
+    }
+    auto& member_functions = Eval.Val.getStructField(1).getStructField(0).getStructBase(0);
+    for (int i = 0; i < member_functions.getStructNumBases(); ++i)
+    {
+      auto& mem_func = member_functions.getStructBase(i).getStructField(0);
+      auto& mem_ret_type_toks = mem_func.getStructField(0);
+      auto& mem_name_tok = mem_func.getStructField(1);
+      auto& mem_args = mem_func.getStructField(2);
+      auto& mem_body_toks = mem_func.getStructField(3);
+      for (int j = 0; j < tuple_size(mem_ret_type_toks); ++j)
+        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_ret_type_toks, j)), loc));
+      toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), loc));
+      toks.push_back(GenerateToken(tok::l_paren, loc));
+      for (int j = 0; j < tuple_size(mem_args); ++j)
+      {
+        auto& arg = tuple_to_elem(mem_args, j);
+        auto& type_toks = arg.getStructField(0);
+        auto& name_tok = arg.getStructField(1);
+        auto& default_arg_toks = arg.getStructField(2);
+        for (int k = 0; k < tuple_size(type_toks); ++k)
+          toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(type_toks, k)), loc));
+        toks.push_back(str_to_clang_token(PP, *gen_tok_str(name_tok), loc));
+        for (int k = 0; k < tuple_size(default_arg_toks); ++k)
+          toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(default_arg_toks, k)), loc));
+        if (j < tuple_size(mem_args) - 1)
+          toks.push_back(GenerateToken(tok::comma, loc));
+      }
+      toks.push_back(GenerateToken(tok::r_paren, loc));
+      for (int j = 0; j < tuple_size(mem_body_toks); ++j)
+        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_body_toks, j)), loc));
+    }
     toks.push_back(GenerateToken(tok::r_brace, loc));
+    toks.push_back(GenerateToken(tok::semi, loc));
     toks.push_back(Tok);
     PP.EnterTokenStream(toks, true);
     ConsumeAnyToken();
+
+//    auto loc = Tok.getLocation();
+//    ConsumeAnyToken();
+//    auto ptoks = new CachedTokens();
+//    auto& toks = *ptoks;
+//    toks.push_back(GenerateToken(tok::kw_void, loc));
+//    toks.push_back(GenerateIdentifierToken(PP, (new std::string("Test"))->c_str(), loc));
+//    toks.push_back(GenerateToken(tok::coloncolon, loc));
+//    toks.push_back(GenerateIdentifierToken(PP, (new std::string("print"))->c_str(), loc));
+//    toks.push_back(GenerateToken(tok::l_paren, loc));
+//    toks.push_back(GenerateToken(tok::r_paren, loc));
+//    toks.push_back(GenerateToken(tok::l_brace, loc));
+//    toks.push_back(GenerateToken(tok::r_brace, loc));
+//    toks.push_back(Tok);
+//    PP.EnterTokenStream(toks, true);
+//    ConsumeAnyToken();
   }
   return Parser::ParseTopLevelDecl(Result);
 }
@@ -164,4 +339,91 @@ Parser::DeclGroupPtrTy ExtendParser::ParseCXXClassMemberDeclaration(
   }
   return Parser::ParseCXXClassMemberDeclaration(AS, Attr, TemplateInfo, DiagsFromTParams);
 }
+
+void ExtendParser::ParseDeclarationSpecifiers(
+      DeclSpec &DS,
+      const ParsedTemplateInfo &TemplateInfo,
+      AccessSpecifier AS,
+      DeclSpecContext DSC,
+      LateParsedAttrList *LateAttrs)
+{
+  if (Tok.is(tok::kw_class) && NextToken().is(tok::l_paren))
+  {
+    auto ptoks = new CachedTokens();
+    auto& toks = *ptoks;
+    toks.push_back(Tok); // push_back "class"
+    ConsumeAnyToken();
+    CachedTokens qualifiedMetaFunction;
+    BalancedDelimiterTracker BDT(*this, tok::l_paren);
+    BDT.consumeOpen();
+    ConsumeAndStoreUntil(tok::r_paren, qualifiedMetaFunction, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
+    BDT.consumeClose();
+    ConsumeAndStoreUntil(tok::l_brace, toks, false, false);
+//    auto metaFuncCallExpr =  ParseClassMemberAndGenerateMetaFunctionCallExpr(qualifiedMetaFunction);
+    Expr::EvalResult Eval;
+    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+//    auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+  }
+
+  return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
+}
+
+//Expr ExtendParser::ParseClassContentAndGenerateClassTokens(const CachedTokens& qualifiedMetaFunction)
+//{
+//  assert(Tok.is(tok::l_brace));
+//  BalancedDelimiterTracker BDT(*this, tok::l_brace);
+//  BDT.consumeOpen();
+//  while (Tok.isNot(tok::r_brace))
+//  {
+//    switch (Tok.getKind())
+//    {
+//    case tok::kw_public:
+//    case tok::kw_private:
+//    case tok::kw_protected:
+//      ConsumeToken(); // consume access specifier
+//      ConsumeToken(); // consume colon
+//      break;
+//    case tok::kw_using:
+//    case tok::kw_typedef: //TODO support typedef/using
+//      SkipUntil(tok::semi);
+//      break;
+//    default: // member variable/ function
+//      { // parse typename
+//        while (Tok.is(tok::kw_const) || Tok.is(tok::kw_volatile))
+//        { // consume cv-qualifier
+//          ConsumeToken();
+//        }
+//
+//        if (Tok.isOneOf(tok::identifier, tok::coloncolon))
+//        {
+//          if (TryAnnotateCXXScopeToken())
+//          {
+//            SkipUntil(tok::r_brace, StopBeforeMatch);
+//            return false;
+//          }
+//        }
+//
+//        if (Tok.is(tok::annot_cxxscope))
+//        { // in case of X::Y::Z
+//          ConsumeAnyToken(); // X::Y::
+//          ConsumeAnyToken(); // Z
+//        }
+//        else
+//        {
+//          ConsumeToken();
+//        }
+//
+//        while (Tok.is(tok::kw_const) || Tok.is(tok::kw_volatile) || Tok.is(tok::star) || Tok.is(tok::amp) || Tok.is(tok::ampamp))
+//        { // consume cv-qualifier and * and & and &&
+//          ConsumeToken();
+//        }
+//      }
+//
+//    }
+//  }
+////  auto loc = Tok.getSourceLocation();
+////  auto n = Tok.getLength();
+////  const char* c = PP.getSourceManager().getCharacterData(loc);
+//  return "";
+//}
 
