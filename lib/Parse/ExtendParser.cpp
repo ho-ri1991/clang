@@ -359,3 +359,90 @@ Parser::DeclGroupPtrTy ExtendParser::ParseCXXClassMemberDeclaration(
   return Parser::ParseCXXClassMemberDeclaration(AS, Attr, TemplateInfo, DiagsFromTParams);
 }
 
+void ExtendParser::ParseDeclarationSpecifiers(
+      DeclSpec &DS,
+      const ParsedTemplateInfo &TemplateInfo,
+      AccessSpecifier AS,
+      DeclSpecContext DSC,
+      LateParsedAttrList *LateAttrs)
+{
+  if (Tok.is(tok::kw_class) && NextToken().is(tok::l_paren))
+  {
+    auto ptoks = new CachedTokens();
+    auto& toks = *ptoks;
+    toks.push_back(Tok); // push_back "class"
+    ConsumeAnyToken();
+    CachedTokens qualifiedMetaFunction;
+    BalancedDelimiterTracker BDT(*this, tok::l_paren);
+    BDT.consumeOpen();
+    ConsumeAndStoreUntil(tok::r_paren, qualifiedMetaFunction, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
+    BDT.consumeClose();
+    ConsumeAndStoreUntil(tok::l_brace, toks, false, false);
+    auto metaFuncCallExpr =  ParseClassMemberAndGenerateMetaFunctionCallExpr(qualifiedMetaFunction);
+    Expr::EvalResult Eval;
+    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+    auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+  }
+
+  return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
+}
+
+Expr ExtendParser::ParseClassContentAndGenerateClassTokens(const CachedTokens& qualifiedMetaFunction)
+{
+  assert(Tok.is(tok::l_brace));
+  BalancedDelimiterTracker BDT(*this, tok::l_brace);
+  BDT.consumeOpen();
+  while (Tok.isNot(r_brace))
+  {
+    switch (Tok.getKind())
+    {
+    case tok::kw_public:
+    case tok::kw_private:
+    case tok::kw_protected:
+      ConsumeToken(); // consume access specifier
+      ConsumeToken(); // consume colon
+      break;
+    case tok::kw_using:
+    case tok::kw_typedef: //TODO support typedef/using
+      SkipUntil(tok::semi);
+      break;
+    default: // member variable/ function
+      { // parse typename
+        while (Tok.is(tok::kw_const) || Tok.is(tok::kw_volatile))
+        { // consume cv-qualifier
+          ConsumeToken();
+        }
+
+        if (Tok.isOneOf(tok::identifier, tok::coloncolon))
+        {
+          if (TryAnnotateCXXScopeToken())
+          {
+            SkipUntil(tok::r_brace, StopBeforeMatch);
+            return false;
+          }
+        }
+
+        if (Tok.is(tok::annot_cxxscope))
+        { // in case of X::Y::Z
+          ConsumeAnyToken(); // X::Y::
+          ConsumeAnyToken(); // Z
+        }
+        else
+        {
+          ConsumeToken();
+        }
+
+        while (Tok.is(tok::kw_const) || Tok.is(tok::kw_volatile) || Tok.is(tok::star) || Tok.is(tok::amp) || Tok.is(tok::ampamp))
+        { // consume cv-qualifier and * and & and &&
+          ConsumeToken();
+        }
+      }
+
+    }
+  }
+  auto loc = Tok.getSourceLocation();
+  auto n = Tok.getLength();
+  const char* c = PP.getSourceManager().getCharacterData(loc);
+  return "";
+}
+
