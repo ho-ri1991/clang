@@ -74,23 +74,24 @@ namespace meta
   argument(boost::hana::tuple<TypeNameTokens...>, token<s...>, boost::hana::tuple<DefaultArgTokens...>)
   -> argument<boost::hana::tuple<TypeNameTokens...>, token<s...>, boost::hana::tuple<DefaultArgTokens...>>;
 
-  template <typename ReturnTypeToken, typename NameToken, typename Arguments, typename BodyTokens>
+  template <typename ReturnTypeToken, typename NameToken, typename Arguments, typename QualifierTokens, typename BodyTokens>
   struct member_function;
-  template <typename... ReturnTypeTokens, char... s, typename... Arguments, typename... BodyTokens>
-  struct member_function<boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<BodyTokens...>>
+  template <typename... ReturnTypeTokens, char... s, typename... Arguments, typename... QualifierTokens, typename... BodyTokens>
+  struct member_function<boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>>
   {
     static_assert(std::conjunction_v<is_token<ReturnTypeTokens>...>);
     static_assert(std::conjunction_v<is_token<BodyTokens>...>);
     boost::hana::tuple<ReturnTypeTokens...> return_type;
     token<s...> name;
     boost::hana::tuple<Arguments...> arguments;
+    boost::hana::tuple<QualifierTokens...> qualifiers;
     boost::hana::tuple<BodyTokens...> body;
-    constexpr member_function(boost::hana::tuple<ReturnTypeTokens...> return_type, token<s...> name, boost::hana::tuple<Arguments...> arguments, boost::hana::tuple<BodyTokens...> body)
-      : return_type(return_type), name(name), arguments(arguments), body(body) {}
+    constexpr member_function(boost::hana::tuple<ReturnTypeTokens...> return_type, token<s...> name, boost::hana::tuple<Arguments...> arguments, boost::hana::tuple<QualifierTokens...> qualifiers, boost::hana::tuple<BodyTokens...> body)
+      : return_type(return_type), name(name), arguments(arguments), qualifiers(qualifiers), body(body) {}
   };
-  template <typename... ReturnTypeTokens, char... s, typename... Arguments, typename... BodyTokens>
-  member_function(boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<BodyTokens...>)
-  -> member_function<boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<BodyTokens...>>;
+  template <typename... ReturnTypeTokens, char... s, typename... Arguments, typename... QualifierTokens, typename... BodyTokens>
+  member_function(boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>)
+  -> member_function<boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>>;
   
   template <typename MemberVariables, typename MemberFunctions>
   struct class_tokens;

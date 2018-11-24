@@ -450,7 +450,8 @@ void ExtendParser::ParseDeclarationSpecifiers(
       auto& mem_ret_type_toks = mem_func.getStructField(0);
       auto& mem_name_tok = mem_func.getStructField(1);
       auto& mem_args = mem_func.getStructField(2);
-      auto& mem_body_toks = mem_func.getStructField(3);
+      auto& mem_qualifier_toks = mem_func.getStructField(3);
+      auto& mem_body_toks = mem_func.getStructField(4);
       for (int j = 0; j < tuple_size(mem_ret_type_toks); ++j)
         toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_ret_type_toks, j)), loc));
       toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), loc));
@@ -470,6 +471,8 @@ void ExtendParser::ParseDeclarationSpecifiers(
           toks.push_back(GenerateToken(tok::comma, loc));
       }
       toks.push_back(GenerateToken(tok::r_paren, loc));
+      for (int j = 0; j < tuple_size(mem_qualifier_toks); ++j)
+        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_qualifier_toks, j)), loc));
       for (int j = 0; j < tuple_size(mem_body_toks); ++j)
         toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_body_toks, j)), loc));
     }
@@ -669,9 +672,9 @@ ExtendParser::GenerateMetaFunctionCallExpr(
   Result += "(";
   {
     Result += "meta::class_tokens(";
+    Result += "boost::hana::make_tuple(";
     for (auto& var: MemberVariables)
     {
-      Result += "boost::hana::make_tuple(";
       Result += "meta::member_variable(";
       {
         Result += "boost::hana::make_tuple(";
@@ -699,12 +702,14 @@ ExtendParser::GenerateMetaFunctionCallExpr(
 					Result.pop_back();
         Result += ")";
       }
-      Result += ")";
       Result += "),";
     }
+    if (Result.back() == ',')
+      Result.pop_back();
+    Result += "),";
+    Result += "boost::hana::make_tuple(";
     for (auto& func: MemberFunctions)
     {
-      Result += "boost::hana::make_tuple(";
       Result += "meta::member_function(";
       {
         Result += "boost::hana::make_tuple(";
@@ -754,6 +759,16 @@ ExtendParser::GenerateMetaFunctionCallExpr(
 					Result.pop_back();
         Result += "),";
         Result += "boost::hana::make_tuple(";
+        for (auto& tok: func.QualifierTokens)
+        {
+          Result += "\"";
+          AppendToken(tok, Result);
+          Result += "\"_t,";
+        }
+				if (Result.back() == ',')
+					Result.pop_back();
+        Result += "),";
+        Result += "boost::hana::make_tuple(";
         for (auto& tok: func.BodyTokens)
         {
           Result += "\"";
@@ -764,50 +779,14 @@ ExtendParser::GenerateMetaFunctionCallExpr(
 					Result.pop_back();
         Result += ")";
       }
-      Result += ")";
       Result += "),";
     }
 		if (Result.back() == ',')
 			Result.pop_back();
     Result += ")";
+    Result += ")";
   }
   Result += ");";
   return Result;
-//  std::string* str = new std::string(
-//    R"(generate(
-//        meta::class_tokens(
-//        boost::hana::make_tuple(
-//          meta::member_variable(
-//            boost::hana::make_tuple("int"_t),
-//            "var1"_t,
-//            boost::hana::make_tuple("{"_t, "}"_t, ";"_t)
-//          ),
-//          meta::member_variable(
-//            boost::hana::make_tuple("double"_t),
-//            "var2"_t,
-//            boost::hana::make_tuple("{"_t, "}"_t, ";"_t)
-//          )
-//        ),
-//        boost::hana::make_tuple(
-//          meta::member_function(
-//            boost::hana::make_tuple("int"_t),
-//            "func"_t,
-//            boost::hana::make_tuple(
-//              meta::argument(
-//                boost::hana::make_tuple("int"_t),
-//                "x"_t,
-//                boost::hana::make_tuple()
-//              ),
-//              meta::argument(
-//                boost::hana::make_tuple("bool"_t),
-//                "b"_t,
-//                boost::hana::make_tuple("="_t, "false"_t)
-//              )
-//            ),
-//            boost::hana::make_tuple("{"_t, "}"_t)
-//          )
-//        )
-//      ));)"
-//  );
 }
 

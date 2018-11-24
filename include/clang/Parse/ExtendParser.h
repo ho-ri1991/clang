@@ -24,6 +24,7 @@ public:
     CachedTokens TypenameTokens;
     Token NameToken;
     std::vector<FunctionParamToken> Params;
+    CachedTokens QualifierTokens;
     CachedTokens BodyTokens;
   };
 
