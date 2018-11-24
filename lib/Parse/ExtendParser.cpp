@@ -345,7 +345,7 @@ void ExtendParser::ParseDeclarationSpecifiers(
       DeclSpecContext DSC,
       LateParsedAttrList *LateAttrs)
 {
-  if (Tok.is(tok::kw_class) && NextToken().is(tok::l_paren))
+  if (Tok.isOneOf(tok::kw_class, tok::kw_struct) && NextToken().is(tok::l_paren))
   {
     auto ptoks = new CachedTokens();
     auto& toks = *ptoks;
@@ -542,6 +542,7 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
             }
             if (Tok.is(tok::comma))
               ConsumeToken();
+            MemberFunc.Params.push_back(std::move(Param));
           }
           BDT.consumeClose();
           if (Tok.is(tok::l_brace))
@@ -568,7 +569,6 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
     }
   }
   BDT.consumeClose();
-  ConsumeToken();
   auto str = GenerateMetaFunctionCallExpr(MemberVariables, MemberFunctions, qualifiedMetaFunction);
 	llvm::SmallVector<char, 0> buf;
 	buf.append(str.c_str(), str.c_str() + str.size() + 1);
@@ -582,9 +582,6 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
 	assert(Tok.is(tok::semi));
 	ConsumeAnyToken();
   return Result;
-//  auto loc = Tok.getSourceLocation();
-//  auto n = Tok.getLength();
-//  const char* c = PP.getSourceManager().getCharacterData(loc);
 }
 
 bool
@@ -687,7 +684,9 @@ ExtendParser::GenerateMetaFunctionCallExpr(
 				if (Result.back() == ',')
 					Result.pop_back();
         Result += "),";
+        Result += "\"";
         AppendToken(var.NameToken, Result);
+        Result += "\"";
         Result += "_t,";
         Result += "boost::hana::make_tuple(";
         for (auto& tok: var.InitializerTokens)
@@ -718,20 +717,41 @@ ExtendParser::GenerateMetaFunctionCallExpr(
 				if (Result.back() == ',')
 					Result.pop_back();
         Result += "),";
+        Result += "\"";
         AppendToken(func.NameToken, Result);
+        Result += "\"";
         Result += "_t,";
         Result += "boost::hana::make_tuple(";
-//        for (auto& tok: func.Params)
-//        {
-//          Result += "meta::argument(";
-//          
-//          Result += "\"";
-//          AppendToken(tok, Result);
-//          Result += "\"_t,";
-//					Result += "),";
-//        }
-//				if (Result.back() == ',')
-//					Result.pop_back();
+        for (auto& param: func.Params)
+        {
+          Result += "meta::argument(";
+          Result += "boost::hana::make_tuple(";
+          for (auto& tok: param.TypenameTokens)
+          {
+            Result += "\"";
+            AppendToken(tok, Result);
+            Result += "\"_t,";
+          }
+          if (Result.back() == ',')
+            Result.pop_back();
+          Result += "),";
+          Result += "\"";
+          AppendToken(param.NameToken, Result);
+          Result += "\"_t,";
+          Result += "boost::hana::make_tuple(";
+          for (auto& tok: param.DefaultTokens)
+          {
+            Result += "\"";
+            AppendToken(tok, Result);
+            Result += "\"_t,";
+          }
+          if (Result.back() == ',')
+            Result.pop_back();
+          Result += ")";
+					Result += "),";
+        }
+				if (Result.back() == ',')
+					Result.pop_back();
         Result += "),";
         Result += "boost::hana::make_tuple(";
         for (auto& tok: func.BodyTokens)
