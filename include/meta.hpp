@@ -40,6 +40,13 @@ namespace meta
   struct is_token: std::false_type{};
   template <char... s>
   struct is_token<token<s...>>: std::true_type{};
+
+  enum class AccessSpecifier
+  {
+    Public = 0,
+    Private = 1,
+    Protected = 2
+  };
   
   template <typename TypeName, typename NameToken, typename InitializerToken>
   struct member_variable;
@@ -51,8 +58,15 @@ namespace meta
     boost::hana::tuple<TypeNameTokens...> type;
     token<s...> name;
     boost::hana::tuple<InitializerTokens...> initializer;
-    constexpr member_variable(boost::hana::tuple<TypeNameTokens...> type, token<s...> name, boost::hana::tuple<InitializerTokens...> initializer): type(type), name(name), initializer(initializer) {}
+    AccessSpecifier access_specifier;
+    constexpr member_variable(boost::hana::tuple<TypeNameTokens...> type, token<s...> name, boost::hana::tuple<InitializerTokens...> initializer, AccessSpecifier access_specifier)
+      : type(type), name(name), initializer(initializer), access_specifier(access_specifier) {}
+    constexpr member_variable(boost::hana::tuple<TypeNameTokens...> type, token<s...> name, boost::hana::tuple<InitializerTokens...> initializer)
+      : type(type), name(name), initializer(initializer), access_specifier(AccessSpecifier::Public) {}
   };
+  template <typename... TypeNameTokens, char... s, typename... InitializerTokens>
+  member_variable(boost::hana::tuple<TypeNameTokens...>, token<s...>, boost::hana::tuple<InitializerTokens...>, AccessSpecifier)
+  -> member_variable<boost::hana::tuple<TypeNameTokens...>, token<s...>, boost::hana::tuple<InitializerTokens...>>;
   template <typename... TypeNameTokens, char... s, typename... InitializerTokens>
   member_variable(boost::hana::tuple<TypeNameTokens...>, token<s...>, boost::hana::tuple<InitializerTokens...>)
   -> member_variable<boost::hana::tuple<TypeNameTokens...>, token<s...>, boost::hana::tuple<InitializerTokens...>>;
@@ -86,11 +100,17 @@ namespace meta
     boost::hana::tuple<Arguments...> arguments;
     boost::hana::tuple<QualifierTokens...> qualifiers;
     boost::hana::tuple<BodyTokens...> body;
+    AccessSpecifier access_specifier;
     constexpr member_function(boost::hana::tuple<ReturnTypeTokens...> return_type, token<s...> name, boost::hana::tuple<Arguments...> arguments, boost::hana::tuple<QualifierTokens...> qualifiers, boost::hana::tuple<BodyTokens...> body)
-      : return_type(return_type), name(name), arguments(arguments), qualifiers(qualifiers), body(body) {}
+      : return_type(return_type), name(name), arguments(arguments), qualifiers(qualifiers), body(body), access_specifier(AccessSpecifier::Public) {}
+    constexpr member_function(boost::hana::tuple<ReturnTypeTokens...> return_type, token<s...> name, boost::hana::tuple<Arguments...> arguments, boost::hana::tuple<QualifierTokens...> qualifiers, boost::hana::tuple<BodyTokens...> body, AccessSpecifier access_specifier)
+      : return_type(return_type), name(name), arguments(arguments), qualifiers(qualifiers), body(body), access_specifier(access_specifier) {}
   };
   template <typename... ReturnTypeTokens, char... s, typename... Arguments, typename... QualifierTokens, typename... BodyTokens>
   member_function(boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>)
+  -> member_function<boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>>;
+  template <typename... ReturnTypeTokens, char... s, typename... Arguments, typename... QualifierTokens, typename... BodyTokens>
+  member_function(boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>, AccessSpecifier)
   -> member_function<boost::hana::tuple<ReturnTypeTokens...>, token<s...>, boost::hana::tuple<Arguments...>, boost::hana::tuple<QualifierTokens...>, boost::hana::tuple<BodyTokens...>>;
   
   template <typename MemberVariables, typename MemberFunctions>
