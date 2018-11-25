@@ -65,6 +65,7 @@ public:
 
   void AppendToken(const Token& Tok, std::string& Target);
                    
+  void AppendTokenStr(const Token& Source, std::string& Dest);
 };
 
 }
