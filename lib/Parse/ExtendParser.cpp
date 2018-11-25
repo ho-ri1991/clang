@@ -394,6 +394,7 @@ void ExtendParser::ParseDeclarationSpecifiers(
       auto& mem_type_toks = mem_var.getStructField(0);
       auto& mem_name_tok = mem_var.getStructField(1);
       auto& mem_init_toks = mem_var.getStructField(2);
+      auto& mem_access_specifier = mem_var.getStructField(3);
       for (std::size_t j = 0; j < tuple_size(mem_type_toks); ++j)
         toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_type_toks, j), loc)));
       toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
