@@ -33,6 +33,22 @@ static Token GenerateIdentifierToken(Preprocessor& PP, const char* Name, SourceL
   return GenerateIdentifierToken(II, std::move(Loc));
 }
 
+static void AccessSpecifierToString(AccessSpecifier AS, std::string& Dest)
+{
+  switch (AS)
+  {
+  case AS_public:
+    Dest += "meta::AccessSpecifier::Public";
+    return;
+  case AS_protected:
+    Dest += "meta::AccessSpecifier::Protected";
+    return;
+  default:
+    Dest += "meta::AccessSpecifier::Private";
+    return;
+  }
+}
+
 ExtendParser::ExtendParser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies)
   : Parser(PP, Actions, SkipFunctionBodies) {}
 
@@ -333,6 +349,7 @@ void ExtendParser::ParseDeclarationSpecifiers(
   {
     auto ptoks = new CachedTokens();
     auto& toks = *ptoks;
+    AccessSpecifier AS = Tok.is(tok::kw_struct) ? AS_public : AS_private;
     toks.push_back(Tok); // push_back "class"
     auto loc = ConsumeAnyToken();
     CachedTokens qualifiedMetaFunction;
@@ -341,7 +358,7 @@ void ExtendParser::ParseDeclarationSpecifiers(
     ConsumeAndStoreUntil(tok::r_paren, qualifiedMetaFunction, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
     BDT.consumeClose();
     ConsumeAndStoreUntil(tok::l_brace, toks, false, false);
-    auto metaFuncCallExpr =  ParseClassMemberAndGenerateMetaFunctionCallExpr(qualifiedMetaFunction);
+    auto metaFuncCallExpr =  ParseClassMemberAndGenerateMetaFunctionCallExpr(qualifiedMetaFunction, AS);
     Expr::EvalResult Eval;
     Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
     auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
@@ -395,6 +412,23 @@ void ExtendParser::ParseDeclarationSpecifiers(
       auto& mem_name_tok = mem_var.getStructField(1);
       auto& mem_init_toks = mem_var.getStructField(2);
       auto& mem_access_specifier = mem_var.getStructField(3);
+      if (AS != mem_access_specifier.getInt().getLimitedValue())
+      {
+        AS = static_cast<AccessSpecifier>(mem_access_specifier.getInt().getLimitedValue());
+        switch (AS)
+        {
+        case AS_public:
+          toks.push_back(GenerateToken(tok::kw_public, loc));
+          break;
+        case AS_protected:
+          toks.push_back(GenerateToken(tok::kw_protected, loc));
+          break;
+        case AS_private:
+          toks.push_back(GenerateToken(tok::kw_private, loc));
+          break;
+        }
+        toks.push_back(GenerateToken(tok::colon, loc));
+      }
       for (std::size_t j = 0; j < tuple_size(mem_type_toks); ++j)
         toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_type_toks, j), loc)));
       toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
@@ -410,6 +444,24 @@ void ExtendParser::ParseDeclarationSpecifiers(
       auto& mem_args = mem_func.getStructField(2);
       auto& mem_qualifier_toks = mem_func.getStructField(3);
       auto& mem_body_toks = mem_func.getStructField(4);
+      auto& mem_access_specifier = mem_func.getStructField(5);
+      if (AS != mem_access_specifier.getInt().getLimitedValue())
+      {
+        AS = static_cast<AccessSpecifier>(mem_access_specifier.getInt().getLimitedValue());
+        switch (AS)
+        {
+        case AS_public:
+          toks.push_back(GenerateToken(tok::kw_public, loc));
+          break;
+        case AS_protected:
+          toks.push_back(GenerateToken(tok::kw_protected, loc));
+          break;
+        case AS_private:
+          toks.push_back(GenerateToken(tok::kw_private, loc));
+          break;
+        }
+        toks.push_back(GenerateToken(tok::colon, loc));
+      }
       for (std::size_t j = 0; j < tuple_size(mem_ret_type_toks); ++j)
         toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_ret_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_ret_type_toks, j), loc)));
       toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
@@ -445,7 +497,7 @@ void ExtendParser::ParseDeclarationSpecifiers(
   return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
 }
 
-ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const CachedTokens& qualifiedMetaFunction)
+ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const CachedTokens& qualifiedMetaFunction, AccessSpecifier AS)
 {
   assert(Tok.is(tok::l_brace));
   BalancedDelimiterTracker BDT(*this, tok::l_brace);
@@ -457,8 +509,17 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
     switch (Tok.getKind())
     {
     case tok::kw_public:
+      AS = AS_public;
+      ConsumeToken(); // consume access specifier
+      ConsumeToken(); // consume colon
+      break;
     case tok::kw_private:
+      AS = AS_private;
+      ConsumeToken(); // consume access specifier
+      ConsumeToken(); // consume colon
+      break;
     case tok::kw_protected:
+      AS = AS_protected;
       ConsumeToken(); // consume access specifier
       ConsumeToken(); // consume colon
       break;
@@ -481,7 +542,7 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
 
         if (Tok.is(tok::l_paren))
         { // the member is member function
-          MemberFunctionToken MemberFunc{std::move(TypenameTokens), std::move(NameToken), {}, CachedTokens{}, CachedTokens{}};
+          MemberFunctionToken MemberFunc{std::move(TypenameTokens), std::move(NameToken), {}, CachedTokens{}, CachedTokens{}, AS};
           // parse function paramter
           BalancedDelimiterTracker BDT(*this, tok::l_paren);
           BDT.consumeOpen();
@@ -522,7 +583,7 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
         else
         { // the memebr is member variable
           // TODO support decl like int x = 1, y = 2, z = 3;
-          MemberVariableToken MemberVar{std::move(TypenameTokens), std::move(NameToken), CachedTokens{}};
+          MemberVariableToken MemberVar{std::move(TypenameTokens), std::move(NameToken), CachedTokens{}, AS};
           ConsumeAndStoreUntil(tok::semi, MemberVar.InitializerTokens, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/true);
           MemberVariables.push_back(std::move(MemberVar));
         }
@@ -663,7 +724,8 @@ ExtendParser::GenerateMetaFunctionCallExpr(
         }
 				if (Result.back() == ',')
 					Result.pop_back();
-        Result += ")";
+        Result += "),";
+        AccessSpecifierToString(var.AS, Result);
       }
       Result += "),";
     }
@@ -732,7 +794,8 @@ ExtendParser::GenerateMetaFunctionCallExpr(
         }
 				if (Result.back() == ',')
 					Result.pop_back();
-        Result += ")";
+        Result += "),";
+        AccessSpecifierToString(func.AS, Result);
       }
       Result += "),";
     }
