@@ -359,9 +359,14 @@ void ExtendParser::ParseDeclarationSpecifiers(
     BDT.consumeClose();
     ConsumeAndStoreUntil(tok::l_brace, toks, false, false);
     auto metaFuncCallExpr =  ParseClassMemberAndGenerateMetaFunctionCallExpr(qualifiedMetaFunction, AS);
+    if (metaFuncCallExpr.isInvalid())
+      return;
     Expr::EvalResult Eval;
     Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
     auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+    
+    if (!b)
+      return;
 
     auto gen_tok_str = [](APValue& token)
     {
