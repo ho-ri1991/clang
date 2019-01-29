@@ -12,6 +12,7 @@ public:
     CachedTokens TypenameTokens;
     Token NameToken;
     CachedTokens InitializerTokens;
+    AccessSpecifier AS;
   };
   struct FunctionParamToken
   {
@@ -26,6 +27,7 @@ public:
     std::vector<FunctionParamToken> Params;
     CachedTokens QualifierTokens;
     CachedTokens BodyTokens;
+    AccessSpecifier AS;
   };
 
   ExtendParser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies);
@@ -53,7 +55,7 @@ public:
       DeclSpecContext DSC = DeclSpecContext::DSC_normal,
       LateParsedAttrList *LateAttrs = nullptr) override;
 
-  ExprResult ParseClassMemberAndGenerateMetaFunctionCallExpr(const CachedTokens& qualifiedMetaFunction);
+  ExprResult ParseClassMemberAndGenerateMetaFunctionCallExpr(const CachedTokens& qualifiedMetaFunction, AccessSpecifier AS);
 
   bool ConsumeAndStoreTypename(CachedTokens& Result);
 

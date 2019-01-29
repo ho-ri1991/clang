@@ -44,8 +44,8 @@ namespace meta
   enum class AccessSpecifier
   {
     Public = 0,
-    Private = 1,
-    Protected = 2
+    Protected = 1,
+    Private = 2,
   };
   
   template <typename TypeName, typename NameToken, typename InitializerToken>
