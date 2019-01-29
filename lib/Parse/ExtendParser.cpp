@@ -368,22 +368,71 @@ void ExtendParser::ParseDeclarationSpecifiers(
     {
       return t.getStructNumFields() == 0 ? 0 : t.getStructField(0).getStructBase(0).getStructNumBases();
     };
-    auto str_to_clang_token = [](Preprocessor& PP, std::string& str, SourceLocation loc)
+    auto str_to_clang_token = [this](Preprocessor& PP, std::string& str, SourceLocation loc)
     {
+//// Next idea: instead of using a symbol @, just use SourceLocation because we have end of mem_buf and can get end of token from SourceLocation.
+//// Also, just restoreing Tok may be fine (i.e. EnterToken may not be needed)
+//      auto tok = Tok;
+//////      auto atTok = GenerateToken(tok::at);
+//////      PP.EnterToken(atTok);
+//
+//      str.push_back(' ');
+//      str.push_back('?');
+//      llvm::SmallVector<char, 0> buf;
+//      buf.append(str.c_str(), str.c_str() + str.size() + 1);
+//      buf.set_size(str.size());
+//      auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
+//      auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
+//      auto b = PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
+//      assert(!b);
+//      ConsumeAnyToken();
+//      CachedTokens result;
+//      while(Tok.isNot(tok::question))
+//      {
+//        result.push_back(Tok);
+//        ConsumeAnyToken();
+//      }
+//      ConsumeAnyToken();
+//      Tok = tok;
+//      PP.EnterToken(tok);
+//      return result;
+
       llvm::SmallVector<char, 0> buf;
       buf.append(str.c_str(), str.c_str() + str.size() + 1);
       buf.set_size(str.size());
       auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
       auto mem_buf_ptr = mem_buf.get();
-      auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, loc);
-      Token Result;
-      Lexer TheLexer(fileId, mem_buf_ptr, PP.getSourceManager(), PP.getLangOpts());
+      auto& sourceMgr = PP.getSourceManager();
+      auto fileId = sourceMgr.createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, loc);
+      CachedTokens Result;
+      Lexer TheLexer(fileId, mem_buf_ptr, sourceMgr, PP.getLangOpts());
       TheLexer.SetCommentRetentionState(true);
-      TheLexer.LexFromRawLexer(Result);
-      if (Result.is(tok::raw_identifier))
-        return GenerateIdentifierToken(PP, str.c_str(), loc);
+      Token tok;
+      while(!TheLexer.LexFromRawLexer(tok))
+      {
+        if (tok.is(tok::raw_identifier))
+        {
+          Result.push_back(GenerateIdentifierToken(PP, tok.getRawIdentifier().str().c_str(), loc));
+        }
+        else
+        {
+          Result.push_back(tok);
+        }
+      }
+      if (tok.is(tok::raw_identifier))
+      {
+        Result.push_back(GenerateIdentifierToken(PP, tok.getRawIdentifier().str().c_str(), loc));
+      }
       else
-        return Result;
+      {
+        Result.push_back(tok);
+      }
+      return Result;
+//      TheLexer.LexFromRawLexer(Result);
+//      if (Result.is(tok::raw_identifier))
+//        return GenerateIdentifierToken(PP, str.c_str(), loc);
+//      else
+//        return Result;
     };
 
     toks.push_back(GenerateToken(tok::l_brace, loc));
@@ -396,10 +445,20 @@ void ExtendParser::ParseDeclarationSpecifiers(
       auto& mem_init_toks = mem_var.getStructField(2);
       auto& mem_access_specifier = mem_var.getStructField(3);
       for (std::size_t j = 0; j < tuple_size(mem_type_toks); ++j)
-        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_type_toks, j), loc)));
-      toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
+      {
+        for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_type_toks, j), loc)))
+          toks.push_back(tok);
+//        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_type_toks, j), loc)));
+      }
+      for (auto tok: str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)))
+        toks.push_back(tok);
+//      toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
       for (std::size_t j = 0; j < tuple_size(mem_init_toks); ++j)
-        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_init_toks, j)), gen_tok_loc(tuple_to_elem(mem_init_toks, j), loc)));
+      {
+        for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_init_toks, j)), gen_tok_loc(tuple_to_elem(mem_init_toks, j), loc)))
+          toks.push_back(tok);
+//        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_init_toks, j)), gen_tok_loc(tuple_to_elem(mem_init_toks, j), loc)));
+      }
     }
     auto& member_functions = Eval.Val.getStructField(1).getStructField(0).getStructBase(0);
     for (std::size_t i = 0; i < member_functions.getStructNumBases(); ++i)
@@ -411,8 +470,14 @@ void ExtendParser::ParseDeclarationSpecifiers(
       auto& mem_qualifier_toks = mem_func.getStructField(3);
       auto& mem_body_toks = mem_func.getStructField(4);
       for (std::size_t j = 0; j < tuple_size(mem_ret_type_toks); ++j)
-        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_ret_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_ret_type_toks, j), loc)));
-      toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
+      {
+        for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_ret_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_ret_type_toks, j), loc)))
+          toks.push_back(tok);
+//        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_ret_type_toks, j)), gen_tok_loc(tuple_to_elem(mem_ret_type_toks, j), loc)));
+      }
+      for (auto tok: str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)))
+        toks.push_back(tok);
+//      toks.push_back(str_to_clang_token(PP, *gen_tok_str(mem_name_tok), gen_tok_loc(mem_name_tok, loc)));
       toks.push_back(GenerateToken(tok::l_paren, loc));
       for (std::size_t j = 0; j < tuple_size(mem_args); ++j)
       {
@@ -421,18 +486,36 @@ void ExtendParser::ParseDeclarationSpecifiers(
         auto& name_tok = arg.getStructField(1);
         auto& default_arg_toks = arg.getStructField(2);
         for (std::size_t k = 0; k < tuple_size(type_toks); ++k)
-          toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(type_toks, k)), gen_tok_loc(tuple_to_elem(type_toks, k), loc)));
-        toks.push_back(str_to_clang_token(PP, *gen_tok_str(name_tok), gen_tok_loc(name_tok, loc)));
+        {
+          for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(type_toks, k)), gen_tok_loc(tuple_to_elem(type_toks, k), loc)))
+            toks.push_back(tok);
+//          toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(type_toks, k)), gen_tok_loc(tuple_to_elem(type_toks, k), loc)));
+        }
+        for (auto tok: str_to_clang_token(PP, *gen_tok_str(name_tok), gen_tok_loc(name_tok, loc)))
+          toks.push_back(tok);
+//        toks.push_back(str_to_clang_token(PP, *gen_tok_str(name_tok), gen_tok_loc(name_tok, loc)));
         for (std::size_t k = 0; k < tuple_size(default_arg_toks); ++k)
-          toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(default_arg_toks, k)), gen_tok_loc(tuple_to_elem(default_arg_toks, k), loc)));
+        {
+          for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(default_arg_toks, k)), gen_tok_loc(tuple_to_elem(default_arg_toks, k), loc)))
+            toks.push_back(tok);
+//          toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(default_arg_toks, k)), gen_tok_loc(tuple_to_elem(default_arg_toks, k), loc)));
+        }
         if (j < tuple_size(mem_args) - 1)
           toks.push_back(GenerateToken(tok::comma, loc));
       }
       toks.push_back(GenerateToken(tok::r_paren, loc));
       for (std::size_t j = 0; j < tuple_size(mem_qualifier_toks); ++j)
-        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_qualifier_toks, j)), gen_tok_loc(tuple_to_elem(mem_qualifier_toks, j), loc)));
+      {
+        for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_qualifier_toks, j)), gen_tok_loc(tuple_to_elem(mem_qualifier_toks, j), loc)))
+          toks.push_back(tok);
+//        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_qualifier_toks, j)), gen_tok_loc(tuple_to_elem(mem_qualifier_toks, j), loc)));
+      }
       for (std::size_t j = 0; j < tuple_size(mem_body_toks); ++j)
-        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_body_toks, j)), gen_tok_loc(tuple_to_elem(mem_body_toks, j), loc)));
+      {
+        for (auto tok: str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_body_toks, j)), gen_tok_loc(tuple_to_elem(mem_body_toks, j), loc)))
+          toks.push_back(tok);
+//        toks.push_back(str_to_clang_token(PP, *gen_tok_str(tuple_to_elem(mem_body_toks, j)), gen_tok_loc(tuple_to_elem(mem_body_toks, j), loc)));
+      }
     }
     toks.push_back(GenerateToken(tok::r_brace, loc));
     toks.push_back(GenerateToken(tok::semi, loc));
@@ -540,7 +623,7 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
 	auto loc = ConsumeAnyToken();
 	ExprResult Result = ParseAssignmentExpression();
 	assert(Tok.is(tok::semi));
-	ConsumeAnyToken();
+//	ConsumeAnyToken();
   return Result;
 }
 
