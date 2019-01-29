@@ -523,6 +523,8 @@ void ExtendParser::ParseDeclarationSpecifiers(
         case AS_private:
           toks.push_back(GenerateToken(tok::kw_private, loc));
           break;
+        default:
+          break;
         }
         toks.push_back(GenerateToken(tok::colon, loc));
       }
