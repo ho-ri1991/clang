@@ -1733,6 +1733,9 @@ namespace serialization {
       /// An AtomicExpr record.
       EXPR_ATOMIC,
 
+      /// An TestCashExpr record.
+      EXPR_TEST_CASH,
+
       // Objective-C
 
       /// An ObjCStringLiteral record.

@@ -1204,6 +1204,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::ObjCPropertyRefExprClass:
     llvm_unreachable("cannot emit a property reference directly");
 
+  case Expr::TestCashExprClass:
+    return EmitLValue(static_cast<const ImplicitCastExpr*>(cast<TestCashExpr>(E)->getImplicitCastExpr())->getSubExpr());
   case Expr::ObjCSelectorExprClass:
     return EmitObjCSelectorLValue(cast<ObjCSelectorExpr>(E));
   case Expr::ObjCIsaExprClass:

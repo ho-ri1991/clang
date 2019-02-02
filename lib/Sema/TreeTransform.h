@@ -9137,6 +9137,12 @@ TreeTransform<Derived>::TransformTypoExpr(TypoExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformTestCashExpr(TestCashExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformPseudoObjectExpr(PseudoObjectExpr *E) {
   // Rebuild the syntactic form.  The original syntactic form has
   // opaque-value expressions in it, so strip those away and rebuild

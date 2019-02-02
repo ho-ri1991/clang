@@ -16521,3 +16521,26 @@ ExprResult Sema::ActOnObjCAvailabilityCheckExpr(
   return new (Context)
       ObjCAvailabilityCheckExpr(Version, AtLoc, RParen, Context.BoolTy);
 }
+
+StmtResult Sema::ActOnTestCashExpr(StmtResult DeclRef)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return StmtResult{};
+  }
+  else
+  {
+//    DeclRef.getAs<DeclRefExpr>()->getDecl()->getType().dump();
+//    if (DeclRef.getAs<DeclRefExpr>()->getDecl()->getType() != Context.getUIntPtrType())
+//    {
+//    // TODO: Diag expect uintptr_t
+//    return StmtResult{};
+//    }
+    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) TestCashExpr(Cast);
+//    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
+  }
+}
+

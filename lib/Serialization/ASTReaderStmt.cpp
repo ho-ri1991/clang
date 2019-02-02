@@ -1723,6 +1723,11 @@ void ASTStmtReader::VisitTypoExpr(TypoExpr *E) {
   llvm_unreachable("Cannot read TypoExpr nodes");
 }
 
+void ASTStmtReader::VisitTestCashExpr(TestCashExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements
 //===----------------------------------------------------------------------===//
@@ -3437,6 +3442,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_BLOCK:
       S = new (Context) BlockExpr(Empty);
+      break;
+
+    case EXPR_TEST_CASH:
+      S = new (Context) TestCashExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

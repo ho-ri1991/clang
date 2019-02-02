@@ -3391,7 +3391,7 @@ LexNextToken:
     return LexIdentifier(Result, CurPtr);
 
   case '$':   // $ in identifiers.
-    if (LangOpts.DollarIdents) {
+    /*if (LangOpts.DollarIdents) {
       if (!isLexingRawMode())
         Diag(CurPtr-1, diag::ext_dollar_in_identifier);
       // Notify MIOpt that we read a non-whitespace/non-comment token.
@@ -3400,6 +3400,19 @@ LexNextToken:
     }
 
     Kind = tok::unknown;
+    break;
+    */
+    Kind = tok::cash;
+    Char = getCharAndSize(CurPtr, SizeTmp);
+    if (Char == '$') {
+      Kind = tok::cashcash;
+      CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
+      Char = getCharAndSize(CurPtr, SizeTmp);
+      if (Char == '$') {
+        Kind = tok::cashcashcash;
+        CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
+      }
+    }
     break;
 
   // C99 6.4.4: Character Constants.
