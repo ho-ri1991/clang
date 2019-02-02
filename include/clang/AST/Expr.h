@@ -5339,6 +5339,39 @@ public:
   }
 
 };
+
+///
+class TestCashExpr final : public Expr
+{
+//  Stmt* DeclRefExprs[1];
+  Stmt* SubExprs[1];
+public:
+  TestCashExpr(ImplicitCastExpr* cast)
+    : Expr(TestCashExprClass, cast->getType(), VK_LValue, OK_Ordinary, true, true, true, false)
+  {
+    SubExprs[0] = cast;
+  }
+  /// Create an empty test cash expression.
+  explicit TestCashExpr(EmptyShell Shell)
+    : Expr(TestCashExprClass, Shell) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == TestCashExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+
+  static TestCashExpr* Create(ImplicitCastExpr* ref);
+};
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXPR_H

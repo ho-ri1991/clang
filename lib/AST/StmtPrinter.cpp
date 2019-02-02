@@ -2790,6 +2790,11 @@ void StmtPrinter::VisitTypoExpr(TypoExpr *Node) {
   llvm_unreachable("Cannot print TypoExpr nodes");
 }
 
+void StmtPrinter::VisitTestCashExpr(TestCashExpr *Node) {
+  OS << "$";
+  PrintExpr(Node->getImplicitCastExpr());
+}
+
 void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
   OS << "__builtin_astype(";
   PrintExpr(Node->getSrcExpr());

@@ -4040,6 +4040,17 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
   case Stmt::NullStmtClass:
     return ESR_Succeeded;
 
+  case Stmt::TestCashExprClass: {
+    APSInt Int;
+    if (!EvaluateInteger(cast<TestCashExpr>(S)->getImplicitCastExpr(), Int, Info))
+      return ESR_Failed;
+    auto Integer = Int.getExtValue();
+    auto Ast = reinterpret_cast<Decl*>(Integer);
+    Ast->dump();
+    return ESR_Succeeded;
+//    return EvaluateStmt(Result, Info, cast<TestCashExpr>(S)->getDeclRef(), Case);
+  }
+
   case Stmt::DeclStmtClass: {
     const DeclStmt *DS = cast<DeclStmt>(S);
     for (const auto *DclIt : DS->decls()) {
@@ -10837,6 +10848,7 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::CoawaitExprClass:
   case Expr::DependentCoawaitExprClass:
   case Expr::CoyieldExprClass:
+  case Expr::TestCashExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::InitListExprClass: {

@@ -58,6 +58,13 @@ StmtResult
 ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKind Allowed,
                                            SourceLocation *TrailingElseLoc)
 {
+  if (Tok.is(tok::cash))
+  {
+//    std::cerr<<"cash"<<std::endl;
+    ConsumeToken();
+    auto result = Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
+    return Actions.ActOnTestCashExpr(result);
+  }
   return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
 }
 
@@ -480,6 +487,8 @@ void ExtendParser::ParseDeclarationSpecifiers(
         case AS_private:
           toks.push_back(GenerateToken(tok::kw_private, loc));
           break;
+        default:
+          break;
         }
         toks.push_back(GenerateToken(tok::colon, loc));
       }
@@ -582,6 +591,35 @@ void ExtendParser::ParseDeclarationSpecifiers(
     PP.EnterTokenStream(toks, true);
     ConsumeAnyToken();
 
+  }
+  else if (Tok.isOneOf(tok::kw_class, tok::kw_struct) && NextToken().is(tok::cashcash))
+  {
+    auto ClassTok = Tok;
+    ConsumeToken();
+    ConsumeToken(); // consume $$
+    UnconsumeToken(ClassTok);
+    Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
+    auto ClassDecl = DS.getRepAsDecl();
+    ClassDecl->dump();
+    std::cout << ClassDecl << std::endl;
+    std::string MetaFunctionCallExpr = "test(" + std::to_string(reinterpret_cast<unsigned long long>(ClassDecl)) + ");";
+    std::cout << MetaFunctionCallExpr << std::endl;
+    llvm::SmallVector<char, 0> buf;
+    buf.append(MetaFunctionCallExpr.c_str(), MetaFunctionCallExpr.c_str() + MetaFunctionCallExpr.size() + 1);
+    buf.set_size(MetaFunctionCallExpr.size());
+    auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
+    auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
+    PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
+    ConsumeAnyToken();
+    ExprResult metaFuncCallExpr = ParseAssignmentExpression();
+    assert(Tok.is(tok::semi));
+    if (metaFuncCallExpr.isInvalid())
+      return;
+    Expr::EvalResult Eval;
+    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+    auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+    if (!b)
+      std::cerr << "ERROR" << std::endl;
   }
 
   return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
@@ -688,7 +726,7 @@ ExprResult ExtendParser::ParseClassMemberAndGenerateMetaFunctionCallExpr(const C
 	auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
 	auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
 	PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
-	auto loc = ConsumeAnyToken();
+	ConsumeAnyToken();
 	ExprResult Result = ParseAssignmentExpression();
 	assert(Tok.is(tok::semi));
 //	ConsumeAnyToken();

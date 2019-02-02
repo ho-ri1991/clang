@@ -1716,6 +1716,12 @@ void ASTStmtWriter::VisitTypoExpr(TypoExpr *E) {
   llvm_unreachable("Cannot write TypoExpr nodes");
 }
 
+void ASTStmtWriter::VisitTestCashExpr(TestCashExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_TEST_CASH;
+}
+
 //===----------------------------------------------------------------------===//
 // CUDA Expressions and Statements.
 //===----------------------------------------------------------------------===//
