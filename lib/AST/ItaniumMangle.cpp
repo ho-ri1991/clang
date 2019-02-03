@@ -3469,6 +3469,10 @@ recurse:
   case Expr::OMPArraySectionExprClass:
   case Expr::CXXInheritedCtorInitExprClass:
   case Expr::TestCashExprClass:
+  case Expr::ASTMemberVariableSizeExprClass:
+  case Expr::ASTMemberVariableNameExprClass:
+  case Expr::ASTMemberVariableExprClass:
+  case Expr::ASTMemberAppendExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

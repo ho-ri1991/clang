@@ -2795,6 +2795,32 @@ void StmtPrinter::VisitTestCashExpr(TestCashExpr *Node) {
   PrintExpr(Node->getImplicitCastExpr());
 }
 
+void StmtPrinter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *Node) {
+  OS << "$var_size(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberVariableNameExpr(ASTMemberVariableNameExpr *Node) {
+  OS << "$var_name(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *Node) {
+  OS << "$var(";
+  PrintExpr(Node->getASTExpr());
+  OS << ", ";
+  PrintExpr(Node->getIndexExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberAppendExpr(ASTMemberAppendExpr *Node) {
+  OS << "$append(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ")";
+}
+
 void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
   OS << "__builtin_astype(";
   PrintExpr(Node->getSrcExpr());

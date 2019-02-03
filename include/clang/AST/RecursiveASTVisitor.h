@@ -2531,6 +2531,10 @@ DEF_TRAVERSE_STMT(CXXOperatorCallExpr, {})
 DEF_TRAVERSE_STMT(OpaqueValueExpr, {})
 DEF_TRAVERSE_STMT(TypoExpr, {})
 DEF_TRAVERSE_STMT(TestCashExpr, {})
+DEF_TRAVERSE_STMT(ASTMemberVariableSizeExpr, {})
+DEF_TRAVERSE_STMT(ASTMemberVariableNameExpr, {})
+DEF_TRAVERSE_STMT(ASTMemberVariableExpr, {})
+DEF_TRAVERSE_STMT(ASTMemberAppendExpr, {})
 DEF_TRAVERSE_STMT(CUDAKernelCallExpr, {})
 
 // These operators (all of them) do not need any action except

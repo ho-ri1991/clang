@@ -1854,6 +1854,22 @@ void StmtProfiler::VisitTestCashExpr(const TestCashExpr *E) {
   VisitExpr(E);
 }
 
+void StmtProfiler::VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberVariableNameExpr(const ASTMemberVariableNameExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberVariableExpr(const ASTMemberVariableExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberAppendExpr(const ASTMemberAppendExpr *E) {
+  VisitExpr(E);
+}
+
 void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {
   VisitExpr(S);
 }

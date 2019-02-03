@@ -3066,6 +3066,10 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CXXUuidofExprClass:
   case OpaqueValueExprClass:
   case TestCashExprClass:
+  case ASTMemberVariableSizeExprClass:
+  case ASTMemberVariableNameExprClass:
+  case ASTMemberVariableExprClass:
+  case ASTMemberAppendExprClass:
     // These never have a side-effect.
     return false;
 

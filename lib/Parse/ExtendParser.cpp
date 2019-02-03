@@ -49,6 +49,53 @@ static void AccessSpecifierToString(AccessSpecifier AS, std::string& Dest)
   }
 }
 
+CachedTokens MetaLateTokenizer(Parser* P, const char* Chars)
+{
+  llvm::SmallVector<char, 0> buf;
+  auto Len = std::strlen(Chars);
+  buf.append(Chars, Chars + Len + 1);
+  buf.set_size(Len);
+  auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
+  auto mem_buf_ptr = mem_buf.get();
+  auto& PP = P->getPreprocessor();
+  auto& sourceMgr = PP.getSourceManager();
+  SourceLocation loc{};
+  auto fileId = sourceMgr.createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, loc);
+  CachedTokens Result;
+  Lexer TheLexer(fileId, mem_buf_ptr, sourceMgr, PP.getLangOpts());
+  TheLexer.SetCommentRetentionState(true);
+  Token tok;
+  while(!TheLexer.LexFromRawLexer(tok))
+  {
+    if (tok.is(tok::raw_identifier))
+    {
+      Result.push_back(GenerateIdentifierToken(PP, tok.getRawIdentifier().str().c_str(), loc));
+    }
+    else
+    {
+      Result.push_back(tok);
+    }
+  }
+  if (tok.is(tok::raw_identifier))
+  {
+    Result.push_back(GenerateIdentifierToken(PP, tok.getRawIdentifier().str().c_str(), loc));
+  }
+  else
+  {
+    Result.push_back(tok);
+  }
+  return Result;
+}
+
+Decl* MetaLateParser(Parser* P, CachedTokens& Tokens)
+{
+  Tokens.push_back(P->getCurToken());
+  P->getPreprocessor().EnterTokenStream(Tokens, true);
+  P->ConsumeAnyToken();
+  auto Result = P->ParseCXXClassMemberDeclaration(AS_public, nullptr);
+  return Result.get().getSingleDecl();
+}
+
 ExtendParser::ExtendParser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies)
   : Parser(PP, Actions, SkipFunctionBodies) {}
 
@@ -58,12 +105,92 @@ StmtResult
 ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKind Allowed,
                                            SourceLocation *TrailingElseLoc)
 {
-  if (Tok.is(tok::cash))
+//  if (Tok.is(tok::cash))
+//  {
+////    std::cerr<<"cash"<<std::endl;
+//    ConsumeToken();
+//    auto result = Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
+//    return Actions.ActOnTestCashExpr(result);
+//  }
+  if (Tok.is(tok::cash) && NextToken().is(tok::identifier))
   {
-//    std::cerr<<"cash"<<std::endl;
     ConsumeToken();
-    auto result = Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
-    return Actions.ActOnTestCashExpr(result);
+    const char* name = Tok.getIdentifierInfo()->getNameStart();
+    if (std::strcmp(name, "append") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      auto DeclRef = Parser::ParseExpression();
+      if (Tok.is(tok::semi))
+        ConsumeToken(); // semi
+      CachedTokens Toks;
+      {
+        BalancedDelimiterTracker BDT(*this, tok::l_brace);
+        BDT.consumeOpen();
+        ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
+        BDT.consumeClose();
+      }
+      BDT.consumeClose();
+      std::vector<ASTMetaToken> MetaTokens;
+      int state = 0; //0: normal, 1: cashcash, 2: meta-func, 3: l_paren, 4: arg for meta-func, 5: r_paren
+      for (auto&& tok: Toks)
+      {
+        switch(state)
+        {
+        case 0:
+          if (tok.is(tok::cashcash))
+            state = 1;
+          else
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          break;
+        case 1:
+          if (tok.is(tok::identifier))
+            state = 2;
+//          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          break;
+        case 2:
+          if (tok.is(tok::l_paren))
+            state = 3;
+//            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          break;
+        case 3:
+          if (tok.is(tok::identifier))
+          {
+            CachedTokens TmpToks;
+            TmpToks.push_back(tok);
+            TmpToks.push_back(GenerateToken(tok::semi));
+            TmpToks.push_back(Tok);
+            PP.EnterTokenStream(TmpToks, true);
+            ConsumeAnyToken();
+            auto TmpDeclRef = ParseExpression();
+            if (Tok.is(tok::semi))
+              ConsumeToken(); // semi
+            auto Type = TmpDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+            auto expr = ImplicitCastExpr::Create(Actions.getASTContext(), Type, CK_LValueToRValue, TmpDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+            MetaTokens.push_back(ASTMetaToken{tok, expr});
+            break;
+
+//            DeclarationName DeclName(tok.getIdentifierInfo());
+//            DeclarationNameInfo DeclNameInfo(DeclName, tok.getLocation());
+//            LookupResult Result(Actions, DeclNameInfo, LookupOrdinaryName);
+//            Actions.LookupName(Result, getCurScope());
+          }
+          else if (tok.is(tok::r_paren))
+          {
+            state = 0;
+//            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          }
+//          else
+//            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          break;
+        default:
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          break;
+        }
+      }
+      return Actions.ActOnASTMemberAppendExpr(DeclRef, std::move(MetaTokens), this, MetaLateParser, MetaLateTokenizer).get();
+    }
   }
   return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
 }
@@ -72,6 +199,48 @@ ExprResult
 ExtendParser::ParseExpression(TypeCastState isTypeCast)
 {
   return Parser::ParseExpression(isTypeCast);
+}
+
+ExprResult 
+ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
+{
+  if (Tok.is(tok::cash) && NextToken().is(tok::identifier))
+  {
+    ConsumeToken(); //cash
+    const char* name = Tok.getIdentifierInfo()->getNameStart();
+    if (std::strcmp(name, "var_size") ==0 )
+    {
+      ConsumeToken(); // var_size
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      auto DeclRef = ParseExpression();
+      if (Tok.is(tok::semi))
+        ConsumeToken();
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberVariableSizeExpr(DeclRef);
+    }
+    else if (std::strcmp(name, "var") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      auto DeclRefs = ParseExpression();
+      if (Tok.is(tok::semi))
+        ConsumeToken();
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberVariableExpr(DeclRefs.getAs<BinaryOperator>()->getLHS(), DeclRefs.getAs<BinaryOperator>()->getRHS());
+    }
+    else if (std::strcmp(name, "var_name") == 0)
+    {
+      ConsumeToken(); // var_name
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      auto DeclRef = ParseExpression();
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberVariableNameExpr(DeclRef);
+    }
+  }
+  return Parser::ParseAssignmentExpression(isTypeCast);
 }
 
 bool
@@ -350,7 +519,8 @@ void ExtendParser::ParseDeclarationSpecifiers(
       const ParsedTemplateInfo &TemplateInfo,
       AccessSpecifier AS,
       DeclSpecContext DSC,
-      LateParsedAttrList *LateAttrs)
+      LateParsedAttrList *LateAttrs,
+      Expr* MetaCall)
 {
   if (Tok.isOneOf(tok::kw_class, tok::kw_struct) && NextToken().is(tok::l_paren))
   {
@@ -595,31 +765,36 @@ void ExtendParser::ParseDeclarationSpecifiers(
   else if (Tok.isOneOf(tok::kw_class, tok::kw_struct) && NextToken().is(tok::cashcash))
   {
     auto ClassTok = Tok;
-    ConsumeToken();
-    ConsumeToken(); // consume $$
-    UnconsumeToken(ClassTok);
-    Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
-    auto ClassDecl = DS.getRepAsDecl();
-    ClassDecl->dump();
-    std::cout << ClassDecl << std::endl;
-    std::string MetaFunctionCallExpr = "test(" + std::to_string(reinterpret_cast<unsigned long long>(ClassDecl)) + ");";
-    std::cout << MetaFunctionCallExpr << std::endl;
+    ConsumeToken(); // consume tok::kw_class
+//    return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs, true);
+//    Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
+//    auto ClassDecl = DS.getRepAsDecl();
+    std::string MetaFunctionCallExpr = "test(0LL);";
     llvm::SmallVector<char, 0> buf;
     buf.append(MetaFunctionCallExpr.c_str(), MetaFunctionCallExpr.c_str() + MetaFunctionCallExpr.size() + 1);
     buf.set_size(MetaFunctionCallExpr.size());
     auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
     auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
     PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
-    ConsumeAnyToken();
+    ConsumeToken(); // consume $$
     ExprResult metaFuncCallExpr = ParseAssignmentExpression();
     assert(Tok.is(tok::semi));
+    if (Tok.is(tok::semi))
+      ConsumeToken();
     if (metaFuncCallExpr.isInvalid())
       return;
-    Expr::EvalResult Eval;
-    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
-    auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
-    if (!b)
-      std::cerr << "ERROR" << std::endl;
+//    UnconsumeToken(ClassTok);
+    CachedTokens Toks;
+    Toks.push_back(ClassTok);
+    Toks.push_back(Tok);
+    PP.EnterTokenStream(Toks, true);
+    ConsumeAnyToken();
+    return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs, metaFuncCallExpr.get());
+//    Expr::EvalResult Eval;
+//    Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+//    auto b = metaFuncCallExpr.get()->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+//    if (!b)
+//      std::cerr << "ERROR" << std::endl;
   }
 
   return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);

@@ -1964,6 +1964,10 @@ public:
   void ActOnInitializerError(Decl *Dcl);
 
   StmtResult ActOnTestCashExpr(StmtResult DeclRef);
+  ExprResult ActOnASTMemberVariableSizeExpr(ExprResult DeclRef);
+  ExprResult ActOnASTMemberVariableNameExpr(ExprResult DeclRef);
+  ExprResult ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
+  ExprResult ActOnASTMemberAppendExpr(ExprResult ASTDeclRef, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTMemberAppendExpr::LateParseFunction LateParseFn, ASTMemberAppendExpr::LateTokenizeFunction LateTokenzeFn);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);

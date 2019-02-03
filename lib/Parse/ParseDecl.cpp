@@ -2918,7 +2918,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         const ParsedTemplateInfo &TemplateInfo,
                                         AccessSpecifier AS,
                                         DeclSpecContext DSContext,
-                                        LateParsedAttrList *LateAttrs) {
+                                        LateParsedAttrList *LateAttrs,
+                                        Expr* MetaCall) {
   if (DS.getSourceRange().isInvalid()) {
     // Start the range at the current token but make the end of the range
     // invalid.  This will make the entire range invalid unless we successfully
@@ -3703,7 +3704,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // parsing class specifier.
       ParsedAttributesWithRange Attributes(AttrFactory);
       ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS,
-                          EnteringContext, DSContext, Attributes);
+                          EnteringContext, DSContext, Attributes, MetaCall);
 
       // If there are attributes following class specifier,
       // take them over and handle them here.
