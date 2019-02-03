@@ -26,6 +26,9 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/SmallVectorMemoryBuffer.h"
+
+#include <iostream>
 
 using namespace clang;
 
@@ -1348,9 +1351,9 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
 void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  SourceLocation StartLoc, DeclSpec &DS,
                                  const ParsedTemplateInfo &TemplateInfo,
-                                 AccessSpecifier AS,
-                                 bool EnteringContext, DeclSpecContext DSC,
-                                 ParsedAttributesWithRange &Attributes) {
+                                 AccessSpecifier AS, 
+                                 bool EnteringContext, DeclSpecContext DSC, 
+                                 ParsedAttributesWithRange &Attributes, Expr* MetaCall) {
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
     TagType = DeclSpec::TST_struct;
@@ -1896,7 +1899,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  TagOrTempResult.get());
     else if (getLangOpts().CPlusPlus)
       ParseCXXMemberSpecification(StartLoc, AttrFixitLoc, attrs, TagType,
-                                  TagOrTempResult.get());
+                                  TagOrTempResult.get(), MetaCall);
     else {
       Decl *D =
           SkipBody.CheckSameAsPrevious ? SkipBody.New : TagOrTempResult.get();
@@ -3089,7 +3092,7 @@ Parser::DeclGroupPtrTy Parser::ParseCXXClassMemberDeclarationWithPragmas(
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                          SourceLocation AttrFixitLoc,
                                          ParsedAttributesWithRange &Attrs,
-                                         unsigned TagType, Decl *TagDecl) {
+                                         unsigned TagType, Decl *TagDecl, Expr* MetaCall) {
   assert((TagType == DeclSpec::TST_struct ||
          TagType == DeclSpec::TST_interface ||
          TagType == DeclSpec::TST_union  ||
@@ -3252,6 +3255,18 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       // Each iteration of this loop reads one member-declaration.
       ParseCXXClassMemberDeclarationWithPragmas(
           CurAS, AccessAttrs, static_cast<DeclSpec::TST>(TagType), TagDecl);
+    }
+    if (MetaCall)
+    {
+      auto ClassDecl = TagDecl;
+      auto IntegerNode = static_cast<IntegerLiteral*>(static_cast<CallExpr*>(MetaCall)->getArg(0));
+      llvm::APInt Int(64, reinterpret_cast<uint64_t>(ClassDecl));
+      IntegerNode->setValue(Actions.getASTContext(), Int);
+      Expr::EvalResult Eval;
+      Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+      auto b = MetaCall->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+      if (!b)
+        std::cerr << "ERROR" << std::endl;
     }
     T.consumeClose();
   } else {

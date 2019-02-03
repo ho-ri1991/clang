@@ -37,23 +37,27 @@ public:
   ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKind Allowed,
                               SourceLocation *TrailingElseLoc = nullptr) override;
 
+  ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast) override;
 
   ExprResult
   ParseExpression(TypeCastState isTypeCast = NotTypeCast) override;
 
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result) override;
 
+public:
   DeclGroupPtrTy ParseCXXClassMemberDeclaration(
       AccessSpecifier AS, AttributeList *Attr,
       const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
       ParsingDeclRAIIObject *DiagsFromTParams = nullptr) override;
+private:
 
   void ParseDeclarationSpecifiers(
       DeclSpec &DS,
       const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
       AccessSpecifier AS = AS_none,
       DeclSpecContext DSC = DeclSpecContext::DSC_normal,
-      LateParsedAttrList *LateAttrs = nullptr) override;
+      LateParsedAttrList *LateAttrs = nullptr,
+      Expr* MetaCall = nullptr) override;
 
   ExprResult ParseClassMemberAndGenerateMetaFunctionCallExpr(const CachedTokens& qualifiedMetaFunction, AccessSpecifier AS);
 

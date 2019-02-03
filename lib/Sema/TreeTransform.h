@@ -9143,6 +9143,30 @@ TreeTransform<Derived>::TransformTestCashExpr(TestCashExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberVariableExpr(ASTMemberVariableExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberAppendExpr(ASTMemberAppendExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformPseudoObjectExpr(PseudoObjectExpr *E) {
   // Rebuild the syntactic form.  The original syntactic form has
   // opaque-value expressions in it, so strip those away and rebuild

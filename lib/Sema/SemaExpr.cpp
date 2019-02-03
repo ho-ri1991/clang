@@ -16544,3 +16544,92 @@ StmtResult Sema::ActOnTestCashExpr(StmtResult DeclRef)
   }
 }
 
+ExprResult Sema::ActOnASTMemberVariableSizeExpr(ExprResult DeclRef)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+//    DeclRef.getAs<DeclRefExpr>()->getDecl()->getType().dump();
+//    if (DeclRef.getAs<DeclRefExpr>()->getDecl()->getType() != Context.getUIntPtrType())
+//    {
+//    // TODO: Diag expect uintptr_t
+//    return StmtResult{};
+//    }
+    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ASTMemberVariableSizeExpr(Cast);
+//    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
+  }
+}
+
+ExprResult Sema::ActOnASTMemberVariableNameExpr(ExprResult DeclRef)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+//    DeclRef.getAs<DeclRefExpr>()->getDecl()->getType().dump();
+//    if (DeclRef.getAs<DeclRefExpr>()->getDecl()->getType() != Context.getUIntPtrType())
+//    {
+//    // TODO: Diag expect uintptr_t
+//    return StmtResult{};
+//    }
+    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ASTMemberVariableNameExpr(Cast);
+//    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
+  }
+}
+
+ExprResult Sema::ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef)
+{
+  if (ASTDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass || IndexDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+//    DeclRef.getAs<DeclRefExpr>()->getDecl()->getType().dump();
+//    if (DeclRef.getAs<DeclRefExpr>()->getDecl()->getType() != Context.getUIntPtrType())
+//    {
+//    // TODO: Diag expect uintptr_t
+//    return StmtResult{};
+//    }
+    auto ASTType = ASTDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto ASTCast = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, ASTDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    auto IndexType = IndexDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto IndexCast = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ASTMemberVariableExpr(ASTCast, IndexCast);
+//    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
+  }
+}
+
+ExprResult Sema::ActOnASTMemberAppendExpr(ExprResult ASTDeclRef, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTMemberAppendExpr::LateParseFunction LateParseFn, ASTMemberAppendExpr::LateTokenizeFunction LateTokenzeFn)
+{
+  if (ASTDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+//    DeclRef.getAs<DeclRefExpr>()->getDecl()->getType().dump();
+//    if (DeclRef.getAs<DeclRefExpr>()->getDecl()->getType() != Context.getUIntPtrType())
+//    {
+//    // TODO: Diag expect uintptr_t
+//    return StmtResult{};
+//    }
+    auto ASTType = ASTDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto ASTCast = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, ASTDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ASTMemberAppendExpr(ASTCast, std::move(Tokens), LateParser, LateParseFn, LateTokenzeFn);
+  }
+}
+

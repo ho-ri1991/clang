@@ -1583,7 +1583,7 @@ public:
   ExprResult ParseCaseExpression(SourceLocation CaseLoc);
   ExprResult ParseConstraintExpression();
   // Expr that doesn't include commas.
-  ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast);
+  virtual ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast);
 
   ExprResult ParseMSAsmIdentifier(llvm::SmallVectorImpl<Token> &LineToks,
                                   unsigned &NumLineToksConsumed,
@@ -2076,7 +2076,8 @@ private:
       const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
       AccessSpecifier AS = AS_none,
       DeclSpecContext DSC = DeclSpecContext::DSC_normal,
-      LateParsedAttrList *LateAttrs = nullptr);
+      LateParsedAttrList *LateAttrs = nullptr,
+      Expr* MetaCall = nullptr);
   bool DiagnoseMissingSemiAfterTagDefinition(
       DeclSpec &DS, AccessSpecifier AS, DeclSpecContext DSContext,
       LateParsedAttrList *LateAttrs = nullptr);
@@ -2692,8 +2693,9 @@ private:
   void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
                            DeclSpec &DS, const ParsedTemplateInfo &TemplateInfo,
                            AccessSpecifier AS, bool EnteringContext,
-                           DeclSpecContext DSC,
-                           ParsedAttributesWithRange &Attributes);
+                           DeclSpecContext DSC, 
+                           ParsedAttributesWithRange &Attributes,
+                           Expr* MetaCall = nullptr);
   void SkipCXXMemberSpecification(SourceLocation StartLoc,
                                   SourceLocation AttrFixitLoc,
                                   unsigned TagType,
@@ -2702,7 +2704,8 @@ private:
                                    SourceLocation AttrFixitLoc,
                                    ParsedAttributesWithRange &Attrs,
                                    unsigned TagType,
-                                   Decl *TagDecl);
+                                   Decl *TagDecl,
+                                   Expr* MetaCall = nullptr);
   ExprResult ParseCXXMemberInitializer(Decl *D, bool IsFunction,
                                        SourceLocation &EqualLoc);
   bool ParseCXXMemberDeclaratorBeforeInitializer(Declarator &DeclaratorInfo,
@@ -2715,6 +2718,7 @@ private:
       AccessSpecifier AS, ParsedAttributes &Attr,
       const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
       ParsingDeclRAIIObject *DiagsFromTParams = nullptr);
+private:
   DeclGroupPtrTy ParseCXXClassMemberDeclarationWithPragmas(
       AccessSpecifier &AS, ParsedAttributesWithRange &AccessAttrs,
       DeclSpec::TST TagType, Decl *Tag);

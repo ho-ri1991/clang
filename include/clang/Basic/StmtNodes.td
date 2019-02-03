@@ -184,6 +184,10 @@ def BlockExpr : DStmt<Expr>;
 def OpaqueValueExpr : DStmt<Expr>;
 def TypoExpr : DStmt<Expr>;
 def TestCashExpr : DStmt<Expr>;
+def ASTMemberVariableSizeExpr : DStmt<Expr>;
+def ASTMemberVariableNameExpr : DStmt<Expr>;
+def ASTMemberVariableExpr : DStmt<Expr>;
+def ASTMemberAppendExpr : DStmt<Expr>;
 
 // Microsoft Extensions.
 def MSPropertyRefExpr : DStmt<Expr>;

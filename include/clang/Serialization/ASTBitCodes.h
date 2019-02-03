@@ -1736,6 +1736,18 @@ namespace serialization {
       /// An TestCashExpr record.
       EXPR_TEST_CASH,
 
+      /// An ASTMemberVariableSizeExpr record.
+      EXPR_AST_MEMBER_VARIABLE_SIZE,
+
+      /// An ASTMemberVariableNameExpr record.
+      EXPR_AST_MEMBER_VARIABLE_NAME,
+
+      /// An ASTMemberVariableExpr record.
+      EXPR_AST_MEMBER_VARIABLE,
+
+      /// An ASTMemberAppendExpr record.
+      EXPR_AST_MEMBER_APPEND,
+
       // Objective-C
 
       /// An ObjCStringLiteral record.

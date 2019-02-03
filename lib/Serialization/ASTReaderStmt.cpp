@@ -1728,6 +1728,27 @@ void ASTStmtReader::VisitTestCashExpr(TestCashExpr *E) {
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
+void ASTStmtReader::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberVariableExpr(ASTMemberVariableExpr *E) {
+  VisitExpr(E);
+  E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberAppendExpr(ASTMemberAppendExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements
 //===----------------------------------------------------------------------===//
@@ -3446,6 +3467,22 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_TEST_CASH:
       S = new (Context) TestCashExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_VARIABLE_SIZE:
+      S = new (Context) ASTMemberVariableSizeExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_VARIABLE_NAME:
+      S = new (Context) ASTMemberVariableNameExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_VARIABLE:
+      S = new (Context) ASTMemberVariableExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_APPEND:
+      S = new (Context) ASTMemberAppendExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

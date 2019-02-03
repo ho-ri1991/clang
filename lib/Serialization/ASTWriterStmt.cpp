@@ -1723,6 +1723,31 @@ void ASTStmtWriter::VisitTestCashExpr(TestCashExpr *E) {
   Code = serialization::EXPR_TEST_CASH;
 }
 
+void ASTStmtWriter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_AST_MEMBER_VARIABLE_SIZE;
+}
+
+void ASTStmtWriter::VisitASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_AST_MEMBER_VARIABLE_NAME;
+}
+
+void ASTStmtWriter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getASTExpr());
+  Record.AddStmt(E->getIndexExpr());
+  Code = serialization::EXPR_AST_MEMBER_VARIABLE;
+}
+
+void ASTStmtWriter::VisitASTMemberAppendExpr(ASTMemberAppendExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_AST_MEMBER_APPEND;
+}
+
 //===----------------------------------------------------------------------===//
 // CUDA Expressions and Statements.
 //===----------------------------------------------------------------------===//

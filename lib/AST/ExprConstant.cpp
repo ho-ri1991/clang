@@ -4051,6 +4051,38 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
 //    return EvaluateStmt(Result, Info, cast<TestCashExpr>(S)->getDeclRef(), Case);
   }
 
+  case Stmt::ASTMemberAppendExprClass : {
+    auto E = cast<ASTMemberAppendExpr>(S);
+    auto ASTExpr = E->getImplicitCastExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return ESR_Failed;
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    ASTMemberAppendExpr::CachedTokens Tokens;
+    for (auto&& MetaTok: E->Tokens)
+    {
+      if (MetaTok.Expr)
+      {
+        APSInt CharPtrVal;
+        if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
+          return ESR_Failed;
+        auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
+        auto LateTokens = E->LateTokenizeFn(E->LateParser, Chars);
+        for (auto tok: LateTokens)
+          Tokens.push_back(tok);
+      }
+      else
+      {
+        Tokens.push_back(MetaTok.Tok);
+      }
+    }
+    auto LateDecl = E->LateParseFn(E->LateParser, Tokens);
+//    if (LateDecl)
+//      ClassDecl->addDecl(LateDecl);
+    return ESR_Succeeded;
+  }
+
   case Stmt::DeclStmtClass: {
     const DeclStmt *DS = cast<DeclStmt>(S);
     for (const auto *DclIt : DS->decls()) {
@@ -7165,6 +7197,80 @@ public:
   }
   bool VisitCharacterLiteral(const CharacterLiteral *E) {
     return Success(E->getValue(), E);
+  }
+
+  bool VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExpr *E) {
+    auto SubExpr = E->getImplicitCastExpr();
+    APSInt Val;
+    if (!EvaluateInteger(SubExpr, Val, Info))
+      return false;
+    auto Int = Val.getExtValue();
+    auto Ast = reinterpret_cast<Decl*>(Int);
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    auto MemberRange = ClassDecl->fields();
+    uint64_t MemberNum = 0;
+    for (auto itr = MemberRange.begin() ; itr != MemberRange.end(); ++itr)
+      ++MemberNum;
+    return Success(MemberNum, E);
+  }
+
+  bool VisitASTMemberVariableNameExpr(const ASTMemberVariableNameExpr *E) {
+    auto SubExpr = E->getImplicitCastExpr();
+    APSInt Val;
+    if (!EvaluateInteger(SubExpr, Val, Info))
+      return false;
+    auto Int = Val.getExtValue();
+    auto Ast = reinterpret_cast<Decl*>(Int);
+    auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
+    return Success(reinterpret_cast<uint64_t>(FieldDeclPtr->getIdentifier()->getNameStart()), E);
+  }
+
+  bool VisitASTMemberVariableExpr(const ASTMemberVariableExpr *E) {
+    auto ASTExpr = E->getASTExpr();
+    auto IndexExpr = E->getIndexExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    APSInt IndexVal;
+    if (!EvaluateInteger(IndexExpr, IndexVal, Info))
+      return false;
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto Index = IndexVal.getExtValue();
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    auto MemberVarItr = ClassDecl->field_begin();
+    while (Index--) { ++MemberVarItr; }
+    return Success(reinterpret_cast<uint64_t>(*MemberVarItr), E);
+  }
+
+  bool VisitASTMemberAppendExpr(const ASTMemberAppendExpr *E) {
+    auto ASTExpr = E->getImplicitCastExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    ASTMemberAppendExpr::CachedTokens Tokens;
+    for (auto&& MetaTok: E->Tokens)
+    {
+      if (MetaTok.Expr)
+      {
+        APSInt CharPtrVal;
+        if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
+          return false;
+        auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
+        auto LateTokens = E->LateTokenizeFn(E->LateParser, Chars);
+        for (auto tok: LateTokens)
+          Tokens.push_back(tok);
+      }
+      else
+      {
+        Tokens.push_back(MetaTok.Tok);
+      }
+    }
+    auto LateDecl = E->LateParseFn(E->LateParser, Tokens);
+//    if (LateDecl)
+//      ClassDecl->addDecl(LateDecl);
+    return false;
   }
 
   bool CheckReferencedDecl(const Expr *E, const Decl *D);
@@ -10849,6 +10955,10 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::DependentCoawaitExprClass:
   case Expr::CoyieldExprClass:
   case Expr::TestCashExprClass:
+  case Expr::ASTMemberVariableSizeExprClass:
+  case Expr::ASTMemberVariableNameExprClass:
+  case Expr::ASTMemberVariableExprClass:
+  case Expr::ASTMemberAppendExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::InitListExprClass: {
