@@ -141,18 +141,17 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
         case 0:
           if (tok.is(tok::cashcash))
             state = 1;
-          else
-            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
         case 1:
           if (tok.is(tok::identifier))
             state = 2;
-//          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
         case 2:
           if (tok.is(tok::l_paren))
             state = 3;
-//            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
         case 3:
           if (tok.is(tok::identifier))
@@ -179,10 +178,10 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
           else if (tok.is(tok::r_paren))
           {
             state = 0;
-//            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           }
-//          else
-//            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          else
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
         default:
             MetaTokens.push_back(ASTMetaToken{tok, nullptr});

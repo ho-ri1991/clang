@@ -4060,21 +4060,106 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
     auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
     ASTMemberAppendExpr::CachedTokens Tokens;
+    int MetaFuncKind = 0; //1: type, 2: identifier
+    int state = 0;
+    std::string identifierData{};
+    SourceLocation identifierLoc{};
     for (auto&& MetaTok: E->Tokens)
     {
-      if (MetaTok.Expr)
+      switch (state)
       {
-        APSInt CharPtrVal;
-        if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
-          return ESR_Failed;
-        auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
-        auto LateTokens = E->LateTokenizeFn(E->LateParser, Chars);
-        for (auto tok: LateTokens)
-          Tokens.push_back(tok);
-      }
-      else
-      {
-        Tokens.push_back(MetaTok.Tok);
+      case 0: // wait for begining of meta function $$
+        if (MetaTok.Tok.is(tok::cashcash))
+          state = 1;
+        else
+          Tokens.push_back(MetaTok.Tok);
+        break;
+      case 1: // consume meta function name
+        if (MetaTok.Tok.is(tok::identifier))
+        {
+          const char* name = MetaTok.Tok.getIdentifierInfo()->getNameStart();
+          if (std::strcmp(name, "type") == 0)
+          {
+            state = 2;
+            MetaFuncKind = 1;
+            break;
+          }
+          else if (std::strcmp(name, "identifier") == 0)
+          {
+            state = 2;
+            MetaFuncKind = 2;
+            break;
+          }
+          else
+            assert(false);
+        }
+        assert(false);
+        break;
+      case 2: // consume l_paren of meta function
+        assert(MetaTok.Tok.is(tok::l_paren));
+        state = 3;
+        break;
+      case 3: { // consume arguments
+          switch (MetaFuncKind)
+          {
+          case 1: { // type
+            assert(MetaTok.Expr);
+            APSInt FieldDeclInt;
+            if (!EvaluateInteger(MetaTok.Expr, FieldDeclInt, Info))
+              return ESR_Failed;
+            auto Ast = reinterpret_cast<Decl*>(FieldDeclInt.getExtValue());
+            auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
+            auto T = FieldDeclPtr->getType();
+            identifierData += T.getAsString();
+            identifierLoc = MetaTok.Tok.getLocation();
+            state = 4;
+            break;
+          }
+          case 2: // identifier
+            if (MetaTok.Expr)
+            {
+              APSInt CharPtrVal;
+              if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
+                return ESR_Failed;
+              auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
+              identifierData += Chars;
+              identifierLoc = MetaTok.Tok.getLocation();
+            }
+            else
+            {
+              assert(MetaTok.Tok.is(tok::string_literal));
+              identifierData.append(&(MetaTok.Tok.getLiteralData()[1]), MetaTok.Tok.getLength() - 2);
+              if (identifierLoc.isInvalid())
+                identifierLoc = MetaTok.Tok.getLocation();
+            }
+            state = 4;
+            break;
+          default:
+            assert(false);
+            break;
+          }
+          break;
+        }
+      case 4:
+        if (MetaTok.Tok.is(tok::comma))
+        { state = 3; }
+        else if (MetaTok.Tok.is(tok::r_paren))
+        {
+          auto tmp = new std::string(identifierData); // TODO memory management
+          auto LateTokens = E->LateTokenizeFn(E->LateParser, tmp->c_str());
+          for (auto tok: LateTokens)
+          {
+            tok.setLocation(identifierLoc);
+            Tokens.push_back(tok);
+          }
+          state = 0;
+          MetaFuncKind = 0;
+          identifierData.clear();
+          identifierLoc = SourceLocation{};
+        }
+        else
+          assert(false);
+        break;
       }
     }
     auto LateDecl = E->LateParseFn(E->LateParser, Tokens);
@@ -7250,21 +7335,86 @@ public:
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
     auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
     ASTMemberAppendExpr::CachedTokens Tokens;
+    int MetaFuncKind = 0; //1: typename, 2: identifier
+    int state = 0;
+    std::string identifierData;
     for (auto&& MetaTok: E->Tokens)
     {
-      if (MetaTok.Expr)
+      switch (state)
       {
-        APSInt CharPtrVal;
-        if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
-          return false;
-        auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
-        auto LateTokens = E->LateTokenizeFn(E->LateParser, Chars);
-        for (auto tok: LateTokens)
-          Tokens.push_back(tok);
-      }
-      else
-      {
-        Tokens.push_back(MetaTok.Tok);
+      case 0: // wait for begining of meta function $$
+        if (MetaTok.Tok.is(tok::cashcash))
+          state = 1;
+        else
+          Tokens.push_back(MetaTok.Tok);
+        break;
+      case 1: // consume meta function name
+        if (MetaTok.Tok.is(tok::identifier))
+        {
+          const char* name = MetaTok.Tok.getIdentifierInfo()->getNameStart();
+          if (std::strcmp(name, "typename") == 0)
+          {
+            state = 2;
+            MetaFuncKind = 1;
+            break;
+          }
+          else if (std::strcmp(name, "identifier") == 0)
+          {
+            state = 2;
+            MetaFuncKind = 2;
+            break;
+          }
+          else
+            assert(false);
+        }
+        assert(false);
+        break;
+      case 2: // consume l_paren of meta function
+        assert(MetaTok.Tok.is(tok::l_paren));
+        state = 3;
+        break;
+      case 3: { // consume arguments
+          switch (MetaFuncKind)
+          {
+          case 0: // typename 
+            assert(false); // not yet implemented...
+            break;
+          case 1: // identifier
+            if (MetaTok.Expr)
+            {
+              APSInt CharPtrVal;
+              if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
+                return false;
+              auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
+              identifierData += Chars;
+            }
+            else
+            {
+              assert(MetaTok.Tok.is(tok::string_literal));
+              identifierData.append(&(MetaTok.Tok.getLiteralData()[1]), MetaTok.Tok.getLength() - 2);
+            }
+            state = 4;
+            break;
+          default:
+            assert(false);
+            break;
+          }
+          break;
+        }
+      case 4:
+        if (MetaTok.Tok.is(tok::comma))
+        { state = 3; }
+        else if (MetaTok.Tok.is(tok::r_paren))
+        {
+          auto tmp = new std::string(identifierData); // TODO memory management
+          auto LateTokens = E->LateTokenizeFn(E->LateParser, tmp->c_str());
+          for (auto tok: LateTokens)
+            Tokens.push_back(tok);
+          state = 0;
+        }
+        else
+          assert(false);
+        break;
       }
     }
     auto LateDecl = E->LateParseFn(E->LateParser, Tokens);
