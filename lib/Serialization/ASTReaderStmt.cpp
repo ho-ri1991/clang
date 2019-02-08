@@ -1748,6 +1748,10 @@ void ASTStmtReader::VisitASTMemberAppendExpr(ASTMemberAppendExpr *E) {
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
+void ASTStmtReader::VisitASTInjectExpr(ASTInjectExpr *E) {
+  VisitExpr(E);
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements
 //===----------------------------------------------------------------------===//
@@ -3474,6 +3478,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_AST_MEMBER_APPEND:
       S = new (Context) ASTMemberAppendExpr(Empty);
+      break;
+
+    case EXPR_AST_INJECT:
+      S = new (Context) ASTInjectExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

@@ -1202,6 +1202,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ASTMemberVariableNameExprClass:
     case Stmt::ASTMemberVariableExprClass:
     case Stmt::ASTMemberAppendExprClass:
+    case Stmt::ASTInjectExprClass:
     case Stmt::CXXNoexceptExprClass:
     case Stmt::PackExpansionExprClass:
     case Stmt::SubstNonTypeTemplateParmPackExprClass:

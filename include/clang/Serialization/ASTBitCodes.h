@@ -1745,6 +1745,9 @@ namespace serialization {
       /// An ASTMemberAppendExpr record.
       EXPR_AST_MEMBER_APPEND,
 
+      /// An ASTMemberAppendExpr record.
+      EXPR_AST_INJECT,
+
       // Objective-C
 
       /// An ObjCStringLiteral record.

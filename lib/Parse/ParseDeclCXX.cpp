@@ -3285,6 +3285,16 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       auto b = MetaCall->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
       if (!b)
         std::cerr << "ERROR" << std::endl;
+      InjectTokenBuffer.push_back(Tok);
+      PP.EnterTokenStream(InjectTokenBuffer, true);
+      ConsumeAnyToken();
+      // While we still have something to read, read the member-declarations.
+      while (!tryParseMisplacedModuleImport() && Tok.isNot(tok::r_brace) &&
+             Tok.isNot(tok::eof)) {
+        // Each iteration of this loop reads one member-declaration.
+        ParseCXXClassMemberDeclarationWithPragmas(
+            CurAS, AccessAttrs, static_cast<DeclSpec::TST>(TagType), TagDecl);
+      }
     }
     T.consumeClose();
   } else {

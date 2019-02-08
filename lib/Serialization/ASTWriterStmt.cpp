@@ -1747,6 +1747,11 @@ void ASTStmtWriter::VisitASTMemberAppendExpr(ASTMemberAppendExpr *E) {
   Code = serialization::EXPR_AST_MEMBER_APPEND;
 }
 
+void ASTStmtWriter::VisitASTInjectExpr(ASTInjectExpr *E) {
+  VisitExpr(E);
+  Code = serialization::EXPR_AST_INJECT;
+}
+
 //===----------------------------------------------------------------------===//
 // CUDA Expressions and Statements.
 //===----------------------------------------------------------------------===//

@@ -5473,6 +5473,7 @@ struct ASTMetaToken
 {
   Token Tok;
   ImplicitCastExpr* Expr;
+  Stmt* EvalCompoundStmt;
 };
 
 class ASTMemberAppendExpr final : public Expr
@@ -5517,6 +5518,39 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
+class ASTInjectExpr final : public Expr
+{
+public:
+  using CachedTokens = SmallVector<Token, 4>;
+  using LateTokenizeFunction = CachedTokens(*)(Parser*, const char*);
+  CachedTokens* InjectTokenBuffer;
+  std::vector<ASTMetaToken> Tokens;
+  Parser* LateParser;
+  LateTokenizeFunction LateTokenizeFn;
+
+public:
+  ASTInjectExpr(CachedTokens& InjectTokenBuffer, QualType Type, std::vector<ASTMetaToken>&& Tokens, Parser* P, LateTokenizeFunction TokenizeFn)
+    : Expr(ASTInjectExprClass, Type, VK_RValue, OK_Ordinary, false, false, false, false)
+    , InjectTokenBuffer(&InjectTokenBuffer)
+    , Tokens(std::move(Tokens))
+    , LateParser(P)
+    , LateTokenizeFn(TokenizeFn)
+  {}
+  /// Create an empty test cash expression.
+  explicit ASTInjectExpr(EmptyShell Shell)
+    : Expr(ASTInjectExprClass, Shell), InjectTokenBuffer(nullptr) { }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ASTInjectExprClass;
+  }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+  const_child_range children() const {
+    return const_child_range(const_child_iterator(), const_child_iterator());
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+};
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXPR_H

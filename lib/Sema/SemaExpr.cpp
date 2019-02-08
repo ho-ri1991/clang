@@ -16617,3 +16617,8 @@ ExprResult Sema::ActOnASTMemberAppendExpr(ExprResult ASTDeclRef, std::vector<AST
   }
 }
 
+ExprResult Sema::ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn)
+{
+  return new(Context) ASTInjectExpr(InjectTokenBuffer, Context.getSizeType(), std::move(Tokens), LateParser, LateTokenzeFn);
+}
+

@@ -188,6 +188,7 @@ def ASTMemberVariableSizeExpr : DStmt<Expr>;
 def ASTMemberVariableNameExpr : DStmt<Expr>;
 def ASTMemberVariableExpr : DStmt<Expr>;
 def ASTMemberAppendExpr : DStmt<Expr>;
+def ASTInjectExpr : DStmt<Expr>;
 
 // Microsoft Extensions.
 def MSPropertyRefExpr : DStmt<Expr>;

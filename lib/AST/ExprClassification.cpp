@@ -197,6 +197,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
   case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTInjectExprClass:
     return Cl::CL_PRValue;
 
     // Next come the complicated cases.
