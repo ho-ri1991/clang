@@ -1982,6 +1982,7 @@ public:
   ExprResult ActOnASTMemberVariableNameExpr(ExprResult DeclRef);
   ExprResult ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
   ExprResult ActOnASTMemberAppendExpr(ExprResult ASTDeclRef, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTMemberAppendExpr::LateParseFunction LateParseFn, ASTMemberAppendExpr::LateTokenizeFunction LateTokenzeFn);
+  ExprResult ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);

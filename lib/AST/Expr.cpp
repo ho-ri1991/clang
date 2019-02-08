@@ -3097,6 +3097,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case ASTMemberVariableNameExprClass:
   case ASTMemberVariableExprClass:
   case ASTMemberAppendExprClass:
+  case ASTInjectExprClass:
     // These never have a side-effect.
     return false;
 

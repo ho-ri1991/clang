@@ -3529,6 +3529,7 @@ recurse:
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
   case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTInjectExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

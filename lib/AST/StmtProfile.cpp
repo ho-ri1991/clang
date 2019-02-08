@@ -1873,6 +1873,10 @@ void StmtProfiler::VisitASTMemberAppendExpr(const ASTMemberAppendExpr *E) {
   VisitExpr(E);
 }
 
+void StmtProfiler::VisitASTInjectExpr(const ASTInjectExpr *E) {
+  VisitExpr(E);
+}
+
 void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {
   VisitExpr(S);
 }

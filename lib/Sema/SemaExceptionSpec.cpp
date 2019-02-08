@@ -1248,6 +1248,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
   case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTInjectExprClass:
     // FIXME: Can any of the above throw?  If so, when?
     return CT_Cannot;
 

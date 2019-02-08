@@ -110,7 +110,9 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       }
       BDT.consumeClose();
       std::vector<ASTMetaToken> MetaTokens;
-      int state = 0; //0: normal, 1: cashcash, 2: meta-func, 3: l_paren, 4: arg for meta-func, 5: r_paren
+      int state = 0; //0: normal, 1: cashcash, 2: meta-func, 3: l_paren, 4: arg for meta-func, 5: r_paren, 6: eval (experimental)
+      CachedTokens EvalTokens;
+      std::size_t EvalBraceCnt = 0;
       for (auto&& tok: Toks)
       {
         switch(state)
@@ -122,8 +124,20 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
           break;
         case 1:
           if (tok.is(tok::identifier))
-            state = 2;
-          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+          {
+            if (std::strcmp(tok.getIdentifierInfo()->getNameStart(), "eval") == 0)
+            {
+              MetaTokens.pop_back();
+              state = 6;
+            }
+            else
+            {
+              MetaTokens.push_back(ASTMetaToken{tok, nullptr});
+              state = 2;
+            }
+          }
+          else
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
         case 2:
           if (tok.is(tok::l_paren))
@@ -167,12 +181,151 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
           else
             MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
+        case 6: {
+          assert(tok.is(tok::l_brace));
+          ++EvalBraceCnt;
+          EvalTokens.push_back(tok);
+          state = 7;
+          break;
+        }
+        case 7:
+          if (tok.is(tok::l_brace))
+            ++EvalBraceCnt;
+          else if (tok.is(tok::r_brace))
+            --EvalBraceCnt;
+          EvalTokens.push_back(tok);
+          if (EvalBraceCnt == 0)
+          {
+            EvalTokens.push_back(Tok);
+            PP.EnterTokenStream(EvalTokens, true);
+            ConsumeAnyToken();
+            auto EvalAST = ParseCompoundStatement(false);
+            EvalTokens.clear();
+            state = 0;
+          }
+          break;
         default:
             MetaTokens.push_back(ASTMetaToken{tok, nullptr});
           break;
         }
       }
       return Actions.ActOnASTMemberAppendExpr(DeclRef, std::move(MetaTokens), this, MetaLateParser, MetaLateTokenizer).get();
+    }
+    else if (std::strcmp(name, "inject") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      CachedTokens Toks;
+      {
+        BalancedDelimiterTracker BDT(*this, tok::l_brace);
+        BDT.consumeOpen();
+        ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
+        BDT.consumeClose();
+      }
+      BDT.consumeClose();
+      std::vector<ASTMetaToken> MetaTokens;
+      int state = 0; //0: normal, 1: cashcash, 2: meta-func, 3: l_paren, 4: arg for meta-func, 5: r_paren, 6: eval (experimental)
+      CachedTokens EvalTokens;
+      std::size_t EvalBraceCnt = 0;
+      for (auto&& tok: Toks)
+      {
+        switch(state)
+        {
+        case 0:
+          if (tok.is(tok::cashcash))
+            state = 1;
+          MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+          break;
+        case 1:
+          if (tok.is(tok::identifier))
+          {
+            if (std::strcmp(tok.getIdentifierInfo()->getNameStart(), "eval") == 0)
+            {
+              MetaTokens.pop_back();
+              state = 6;
+            }
+            else
+            {
+              MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+              state = 2;
+            }
+          }
+          else
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+          break;
+        case 2:
+          if (tok.is(tok::l_paren))
+            state = 3;
+          MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+          break;
+        case 3:
+          if (tok.is(tok::identifier))
+          {
+            UnqualifiedId Id;
+            Id.setIdentifier(tok.getIdentifierInfo(), tok.getLocation());
+            CXXScopeSpec ScopeSpec;
+            auto IdExpr = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, SourceLocation{}, Id, false, false);
+            auto DeclRef = cast<DeclRefExpr>(IdExpr.get());
+            MetaTokens.push_back(ASTMetaToken{tok, ImplicitCastExpr::Create(Actions.getASTContext(), DeclRef->getDecl()->getType(), CK_LValueToRValue, DeclRef, nullptr, VK_RValue), nullptr});
+
+//            CachedTokens TmpToks;
+//            TmpToks.push_back(tok);
+//            TmpToks.push_back(GenerateToken(tok::semi));
+//            TmpToks.push_back(Tok);
+//            PP.EnterTokenStream(TmpToks, true);
+//            ConsumeAnyToken();
+//            auto TmpDeclRef = ParseExpression();
+//            if (Tok.is(tok::semi))
+//              ConsumeToken(); // semi
+//            auto Type = TmpDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+//            auto expr = ImplicitCastExpr::Create(Actions.getASTContext(), Type, CK_LValueToRValue, TmpDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+//            MetaTokens.push_back(ASTMetaToken{tok, expr});
+            break;
+
+//            DeclarationName DeclName(tok.getIdentifierInfo());
+//            DeclarationNameInfo DeclNameInfo(DeclName, tok.getLocation());
+//            LookupResult Result(Actions, DeclNameInfo, LookupOrdinaryName);
+//            Actions.LookupName(Result, getCurScope());
+          }
+          else if (tok.is(tok::r_paren))
+          {
+            state = 0;
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+          }
+          else
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+          break;
+        case 6: {
+          assert(tok.is(tok::l_brace));
+          ++EvalBraceCnt;
+          EvalTokens.push_back(tok);
+          state = 7;
+          break;
+        }
+        case 7:
+          if (tok.is(tok::l_brace))
+            ++EvalBraceCnt;
+          else if (tok.is(tok::r_brace))
+            --EvalBraceCnt;
+          EvalTokens.push_back(tok);
+          if (EvalBraceCnt == 0)
+          {
+            EvalTokens.push_back(Tok);
+            PP.EnterTokenStream(EvalTokens, true);
+            ConsumeAnyToken();
+            auto EvalAST = ParseCompoundStatement(false);
+            MetaTokens.push_back(ASTMetaToken{Token{}, nullptr, EvalAST.get()});
+            EvalTokens.clear();
+            state = 0;
+          }
+          break;
+        default:
+            MetaTokens.push_back(ASTMetaToken{tok, nullptr, nullptr});
+          break;
+        }
+      }
+      return Actions.ActOnASTInjectExpr(InjectTokenBuffer, std::move(MetaTokens), this, MetaLateTokenizer).get();
     }
   }
   return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
@@ -250,6 +403,7 @@ void ExtendParser::ParseDeclarationSpecifiers(
 {
   if (Tok.isOneOf(tok::kw_class, tok::kw_struct) && NextToken().is(tok::l_paren))
   {
+    InjectTokenBuffer.clear();
     auto ClassTok = Tok;
     ConsumeToken(); // consume tok::kw_class
     std::string MetaFunctionCallExpr;

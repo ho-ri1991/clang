@@ -2547,6 +2547,7 @@ DEF_TRAVERSE_STMT(ASTMemberVariableSizeExpr, {})
 DEF_TRAVERSE_STMT(ASTMemberVariableNameExpr, {})
 DEF_TRAVERSE_STMT(ASTMemberVariableExpr, {})
 DEF_TRAVERSE_STMT(ASTMemberAppendExpr, {})
+DEF_TRAVERSE_STMT(ASTInjectExpr, {})
 DEF_TRAVERSE_STMT(CUDAKernelCallExpr, {})
 
 // These operators (all of them) do not need any action except

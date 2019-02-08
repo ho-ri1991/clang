@@ -2821,6 +2821,10 @@ void StmtPrinter::VisitASTMemberAppendExpr(ASTMemberAppendExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitASTInjectExpr(ASTInjectExpr *Node) {
+  OS << "$inject()";
+}
+
 void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
   OS << "__builtin_astype(";
   PrintExpr(Node->getSrcExpr());

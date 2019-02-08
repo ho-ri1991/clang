@@ -64,6 +64,10 @@ class Parser : public CodeCompletionHandler {
   friend class BalancedDelimiterTracker;
   friend class ExtendParser;
 
+protected:
+  CachedTokens InjectTokenBuffer;
+
+private:
   Preprocessor &PP;
 
   /// Tok - The current token we are peeking ahead.  All parsing methods assume

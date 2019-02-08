@@ -501,6 +501,7 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::ASTMemberVariableNameExprClass:
   case Stmt::ASTMemberVariableExprClass:
   case Stmt::ASTMemberAppendExprClass:
+  case Stmt::ASTInjectExprClass:
     K = CXCursor_DeclRefExpr;
     break;
       
