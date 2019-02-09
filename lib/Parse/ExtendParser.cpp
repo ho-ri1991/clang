@@ -93,125 +93,7 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
   {
     ConsumeToken();
     const char* name = Tok.getIdentifierInfo()->getNameStart();
-    if (std::strcmp(name, "append") == 0)
-    {
-      ConsumeToken();
-      BalancedDelimiterTracker BDT(*this, tok::l_paren);
-      BDT.consumeOpen();
-      auto DeclRef = Parser::ParseExpression();
-      if (Tok.is(tok::semi))
-        ConsumeToken(); // semi
-      CachedTokens Toks;
-      {
-        BalancedDelimiterTracker BDT(*this, tok::l_brace);
-        BDT.consumeOpen();
-        ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
-        BDT.consumeClose();
-      }
-      BDT.consumeClose();
-      std::vector<ASTMetaToken> MetaTokens;
-      int state = 0; //0: normal, 1: cashcash, 2: meta-func, 3: l_paren, 4: arg for meta-func, 5: r_paren, 6: eval (experimental)
-      CachedTokens EvalTokens;
-      std::size_t EvalBraceCnt = 0;
-      for (auto&& tok: Toks)
-      {
-        switch(state)
-        {
-        case 0:
-          if (tok.is(tok::cashcash))
-            state = 1;
-          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-          break;
-        case 1:
-          if (tok.is(tok::identifier))
-          {
-            if (std::strcmp(tok.getIdentifierInfo()->getNameStart(), "eval") == 0)
-            {
-              MetaTokens.pop_back();
-              state = 6;
-            }
-            else
-            {
-              MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-              state = 2;
-            }
-          }
-          else
-            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-          break;
-        case 2:
-          if (tok.is(tok::l_paren))
-            state = 3;
-          MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-          break;
-        case 3:
-          if (tok.is(tok::identifier))
-          {
-            UnqualifiedId Id;
-            Id.setIdentifier(tok.getIdentifierInfo(), tok.getLocation());
-            CXXScopeSpec ScopeSpec;
-            auto IdExpr = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, SourceLocation{}, Id, false, false);
-            auto DeclRef = cast<DeclRefExpr>(IdExpr.get());
-            MetaTokens.push_back(ASTMetaToken{tok, ImplicitCastExpr::Create(Actions.getASTContext(), DeclRef->getDecl()->getType(), CK_LValueToRValue, DeclRef, nullptr, VK_RValue)});
-
-//            CachedTokens TmpToks;
-//            TmpToks.push_back(tok);
-//            TmpToks.push_back(GenerateToken(tok::semi));
-//            TmpToks.push_back(Tok);
-//            PP.EnterTokenStream(TmpToks, true);
-//            ConsumeAnyToken();
-//            auto TmpDeclRef = ParseExpression();
-//            if (Tok.is(tok::semi))
-//              ConsumeToken(); // semi
-//            auto Type = TmpDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
-//            auto expr = ImplicitCastExpr::Create(Actions.getASTContext(), Type, CK_LValueToRValue, TmpDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-//            MetaTokens.push_back(ASTMetaToken{tok, expr});
-            break;
-
-//            DeclarationName DeclName(tok.getIdentifierInfo());
-//            DeclarationNameInfo DeclNameInfo(DeclName, tok.getLocation());
-//            LookupResult Result(Actions, DeclNameInfo, LookupOrdinaryName);
-//            Actions.LookupName(Result, getCurScope());
-          }
-          else if (tok.is(tok::r_paren))
-          {
-            state = 0;
-            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-          }
-          else
-            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-          break;
-        case 6: {
-          assert(tok.is(tok::l_brace));
-          ++EvalBraceCnt;
-          EvalTokens.push_back(tok);
-          state = 7;
-          break;
-        }
-        case 7:
-          if (tok.is(tok::l_brace))
-            ++EvalBraceCnt;
-          else if (tok.is(tok::r_brace))
-            --EvalBraceCnt;
-          EvalTokens.push_back(tok);
-          if (EvalBraceCnt == 0)
-          {
-            EvalTokens.push_back(Tok);
-            PP.EnterTokenStream(EvalTokens, true);
-            ConsumeAnyToken();
-            auto EvalAST = ParseCompoundStatement(false);
-            EvalTokens.clear();
-            state = 0;
-          }
-          break;
-        default:
-            MetaTokens.push_back(ASTMetaToken{tok, nullptr});
-          break;
-        }
-      }
-      return Actions.ActOnASTMemberAppendExpr(DeclRef, std::move(MetaTokens), this, MetaLateParser, MetaLateTokenizer).get();
-    }
-    else if (std::strcmp(name, "inject") == 0)
+    if (std::strcmp(name, "inject") == 0)
     {
       ConsumeToken();
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
@@ -349,40 +231,39 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ConsumeToken(); // var_size
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
       BDT.consumeOpen();
-      auto DeclRef = ParseExpression();
-      if (Tok.is(tok::semi))
-        ConsumeToken();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberVariableSizeExpr(DeclRef);
+      return Actions.ActOnASTMemberVariableSizeExpr(ArgExprs[0]);
     }
     else if (std::strcmp(name, "var") == 0)
     {
       ConsumeToken();
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
       BDT.consumeOpen();
-      auto DeclRefs = ParseExpression();
-      if (Tok.is(tok::semi))
-        ConsumeToken();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 2);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberVariableExpr(DeclRefs.getAs<BinaryOperator>()->getLHS(), DeclRefs.getAs<BinaryOperator>()->getRHS());
+      return Actions.ActOnASTMemberVariableExpr(ArgExprs[0], ArgExprs[1]);
     }
     else if (std::strcmp(name, "var_name") == 0)
     {
       ConsumeToken(); // var_name
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
       BDT.consumeOpen();
-      auto DeclRef = ParseExpression();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberVariableNameExpr(DeclRef);
+      return Actions.ActOnASTMemberVariableNameExpr(ArgExprs[0]);
     }
   }
   return Parser::ParseAssignmentExpression(isTypeCast);
-}
-
-bool
-ExtendParser::ParseTopLevelDecl(DeclGroupPtrTy &Result)
-{
-  return Parser::ParseTopLevelDecl(Result);
 }
 
 Parser::DeclGroupPtrTy ExtendParser::ParseCXXClassMemberDeclaration(
@@ -406,42 +287,28 @@ void ExtendParser::ParseDeclarationSpecifiers(
     InjectTokenBuffer.clear();
     auto ClassTok = Tok;
     ConsumeToken(); // consume tok::kw_class
-    std::string MetaFunctionCallExpr;
-    {
-      BalancedDelimiterTracker BDT(*this, tok::l_paren);
-      CachedTokens Toks;
-      BDT.consumeOpen();
-      ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
-      BDT.consumeClose();
-      for (auto& tok: Toks)
-      {
-        auto begin = PP.getSourceManager().getCharacterData(tok.getLocation());
-        auto end = begin + tok.getLength(); 
-        for (auto itr = begin; itr != end; ++itr)
-          MetaFunctionCallExpr.push_back(*itr);
-      }
-      MetaFunctionCallExpr += "(0LL);";
-    }
-    auto ClassNameTok = Tok;
-    llvm::SmallVector<char, 0> buf;
-    buf.append(MetaFunctionCallExpr.c_str(), MetaFunctionCallExpr.c_str() + MetaFunctionCallExpr.size() + 1);
-    buf.set_size(MetaFunctionCallExpr.size());
-    auto mem_buf = llvm::make_unique<llvm::SmallVectorMemoryBuffer>(std::move(buf));
-    auto fileId = PP.getSourceManager().createFileID(std::move(mem_buf), SrcMgr::C_User, 0, 0, Tok.getLocation());
-    PP.EnterSourceFile(fileId, nullptr, Tok.getLocation());
-    ConsumeToken(); // consume class name
-    ExprResult metaFuncCallExpr = ParseAssignmentExpression();
-    if (Tok.is(tok::semi))
-      ConsumeToken();
-    if (metaFuncCallExpr.isInvalid())
-      return;
+
+    BalancedDelimiterTracker BDT(*this, tok::l_paren);
+    BDT.consumeOpen();
+    // TODO: nested namespace
+    UnqualifiedId Id;
+    Id.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+    CXXScopeSpec ScopeSpec;
+    auto IdExpr = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, SourceLocation{}, Id, false, false);
+    ConsumeToken(); // consume identifier
+    BDT.consumeClose();
+
+    llvm::APInt Int(64, 0);
+    Expr* IntNode = IntegerLiteral::Create(Actions.getASTContext(), Int, Actions.getASTContext().getIntPtrType(), Tok.getLocation());
+    MultiExprArg Args(IntNode);
+    auto MetaFuncCallExpr = Actions.ActOnCallExpr(getCurScope(), IdExpr.get(), BDT.getOpenLocation(), Args, BDT.getCloseLocation());
+
     CachedTokens Toks;
     Toks.push_back(ClassTok);
-    Toks.push_back(ClassNameTok);
     Toks.push_back(Tok);
     PP.EnterTokenStream(Toks, true);
     ConsumeAnyToken();
-    return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs, metaFuncCallExpr.get());
+    return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs, MetaFuncCallExpr.get());
   }
   return Parser::ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC, LateAttrs);
 }

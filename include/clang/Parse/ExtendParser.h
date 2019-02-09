@@ -42,8 +42,6 @@ public:
   ExprResult
   ParseExpression(TypeCastState isTypeCast = NotTypeCast) override;
 
-  bool ParseTopLevelDecl(DeclGroupPtrTy &Result) override;
-
 public:
   DeclGroupPtrTy ParseCXXClassMemberDeclaration(
       AccessSpecifier AS, AttributeList *Attr,
