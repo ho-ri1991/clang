@@ -7,15 +7,6 @@
 
 using namespace clang;
 
-static Token GenerateToken(tok::TokenKind Kind, SourceLocation Loc = SourceLocation{})
-{
-  Token Tok;
-  Tok.startToken();
-  Tok.setKind(Kind);
-  Tok.setLocation(std::move(Loc));
-  return Tok;
-}
-
 static Token GenerateIdentifierToken(IdentifierInfo* II, SourceLocation Loc = SourceLocation{})
 {
   Token Tok;
@@ -69,15 +60,6 @@ CachedTokens MetaLateTokenizer(Parser* P, const char* Chars)
     Result.push_back(tok);
   }
   return Result;
-}
-
-Decl* MetaLateParser(Parser* P, CachedTokens& Tokens)
-{
-  Tokens.push_back(P->getCurToken());
-  P->getPreprocessor().EnterTokenStream(Tokens, true);
-  P->ConsumeAnyToken();
-  auto Result = P->ParseCXXClassMemberDeclaration(AS_public, nullptr);
-  return Result.get().getSingleDecl();
 }
 
 ExtendParser::ExtendParser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies)
@@ -209,6 +191,42 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       }
       return Actions.ActOnASTInjectExpr(InjectTokenBuffer, std::move(MetaTokens), this, MetaLateTokenizer).get();
     }
+    else if (std::strcmp(name, "make_public") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_public).get();
+    }
+    else if (std::strcmp(name, "make_private") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_private).get();
+    }
+    else if (std::strcmp(name, "make_protected") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_protected).get();
+    }
   }
   return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
 }
@@ -228,7 +246,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
     const char* name = Tok.getIdentifierInfo()->getNameStart();
     if (std::strcmp(name, "var_size") ==0 )
     {
-      ConsumeToken(); // var_size
+      SourceLocation Loc = ConsumeToken(); // var_size
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
       BDT.consumeOpen();
       ExprVector ArgExprs;
@@ -236,7 +254,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberVariableSizeExpr(ArgExprs[0]);
+      return Actions.ActOnASTMemberVariableSizeExpr(ArgExprs[0], Loc);
     }
     else if (std::strcmp(name, "var") == 0)
     {
@@ -262,16 +280,80 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       BDT.consumeClose();
       return Actions.ActOnASTMemberVariableNameExpr(ArgExprs[0]);
     }
+    else if (std::strcmp(name, "func_size") ==0 )
+    {
+      ConsumeToken(); // func_size
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberFunctionSizeExpr(ArgExprs[0]);
+    }
+    else if (std::strcmp(name, "func") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 2);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberFunctionExpr(ArgExprs[0], ArgExprs[1]);
+    }
+    else if (std::strcmp(name, "func_name") == 0)
+    {
+      ConsumeToken(); // func_name
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberFunctionNameExpr(ArgExprs[0]);
+    }
+    else if (std::strcmp(name, "is_public") == 0)
+    {
+      ConsumeToken(); 
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberCheckAccessSpecExpr(ArgExprs[0], AS_public);
+    }
+    else if (std::strcmp(name, "is_private") == 0)
+    {
+      ConsumeToken(); 
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberCheckAccessSpecExpr(ArgExprs[0], AS_private);
+    }
+    else if (std::strcmp(name, "is_protected") == 0)
+    {
+      ConsumeToken(); 
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnASTMemberCheckAccessSpecExpr(ArgExprs[0], AS_protected);
+    }
   }
   return Parser::ParseAssignmentExpression(isTypeCast);
-}
-
-Parser::DeclGroupPtrTy ExtendParser::ParseCXXClassMemberDeclaration(
-    AccessSpecifier AS, AttributeList *Attr,
-    const ParsedTemplateInfo &TemplateInfo,
-    ParsingDeclRAIIObject *DiagsFromTParams)
-{
-  return Parser::ParseCXXClassMemberDeclaration(AS, Attr, TemplateInfo, DiagsFromTParams);
 }
 
 void ExtendParser::ParseDeclarationSpecifiers(

@@ -1243,11 +1243,14 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::UnresolvedLookupExprClass:
   case Expr::UnresolvedMemberExprClass:
   case Expr::TypoExprClass:
-  case Expr::TestCashExprClass:
   case Expr::ASTMemberVariableSizeExprClass:
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
-  case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTMemberFunctionSizeExprClass:
+  case Expr::ASTMemberFunctionNameExprClass:
+  case Expr::ASTMemberFunctionExprClass:
+  case Expr::ASTMemberCheckAccessSpecExprClass:
+  case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
     // FIXME: Can any of the above throw?  If so, when?
     return CT_Cannot;

@@ -9137,12 +9137,6 @@ TreeTransform<Derived>::TransformTypoExpr(TypoExpr *E) {
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformTestCashExpr(TestCashExpr *E) {
-  return E;
-}
-
-template<typename Derived>
-ExprResult
 TreeTransform<Derived>::TransformASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
   return E;
 }
@@ -9161,7 +9155,31 @@ TreeTransform<Derived>::TransformASTMemberVariableExpr(ASTMemberVariableExpr *E)
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberAppendExpr(ASTMemberAppendExpr *E) {
+TreeTransform<Derived>::TransformASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberFunctionExpr(ASTMemberFunctionExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *E) {
+  return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *E) {
   return E;
 }
 

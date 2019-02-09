@@ -5473,37 +5473,6 @@ public:
 };
 
 ///
-class TestCashExpr final : public Expr
-{
-//  Stmt* DeclRefExprs[1];
-  Stmt* SubExprs[1];
-public:
-  TestCashExpr(ImplicitCastExpr* cast)
-    : Expr(TestCashExprClass, cast->getType(), VK_LValue, OK_Ordinary, true, true, true, false)
-  {
-    SubExprs[0] = cast;
-  }
-  /// Create an empty test cash expression.
-  explicit TestCashExpr(EmptyShell Shell)
-    : Expr(TestCashExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == TestCashExprClass;
-  }
-  child_range children() {
-    return child_range(&SubExprs[0], &SubExprs[0] + 1);
-  }
-  const_child_range children() const {
-    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
-  }
-  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
-
-  static TestCashExpr* Create(ImplicitCastExpr* ref);
-};
-
 class ASTMemberVariableExpr final : public Expr
 {
   enum Index
@@ -5572,9 +5541,11 @@ public:
 class ASTMemberVariableSizeExpr final : public Expr
 {
   Stmt* SubExprs[1];
+  SourceLocation Loc;
 public:
-  ASTMemberVariableSizeExpr(ImplicitCastExpr* cast)
-    : Expr(ASTMemberVariableSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  ASTMemberVariableSizeExpr(ImplicitCastExpr* cast, SourceLocation Loc)
+    : Expr(ASTMemberVariableSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
+    , Loc(Loc)
   {
     SubExprs[0] = cast;
   }
@@ -5593,6 +5564,151 @@ public:
   const_child_range children() const {
     return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
   }
+  SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+};
+
+class ASTMemberFunctionExpr final : public Expr
+{
+  enum Index
+  {
+    INDEX_AST = 0,
+    INDEX_INDEX = 1,
+    INDEX_SIZE = 2
+  };
+  Stmt* SubExprs[INDEX_SIZE];
+public:
+  ASTMemberFunctionExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
+    : Expr(ASTMemberFunctionExprClass, ast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  {
+    SubExprs[INDEX_AST] = ast;
+    SubExprs[INDEX_INDEX] = index;
+  }
+  explicit ASTMemberFunctionExpr(EmptyShell Shell)
+    : Expr(ASTMemberFunctionExprClass, Shell) { }
+  void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
+  Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
+  const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
+  void setIndexExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_INDEX] = cast; }
+  Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
+  const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ASTMemberFunctionExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+};
+
+class ASTMemberFunctionNameExpr final : public Expr
+{
+  Stmt* SubExprs[1];
+public:
+  ASTMemberFunctionNameExpr(ImplicitCastExpr* cast)
+    : Expr(ASTMemberFunctionNameExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  {
+    SubExprs[0] = cast;
+  }
+  /// Create an empty test cash expression.
+  explicit ASTMemberFunctionNameExpr(EmptyShell Shell)
+    : Expr(ASTMemberFunctionNameExprClass, Shell) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ASTMemberFunctionNameExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+};
+
+class ASTMemberFunctionSizeExpr final : public Expr
+{
+  Stmt* SubExprs[1];
+public:
+  ASTMemberFunctionSizeExpr(ImplicitCastExpr* cast)
+    : Expr(ASTMemberFunctionSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  {
+    SubExprs[0] = cast;
+  }
+  /// Create an empty test cash expression.
+  explicit ASTMemberFunctionSizeExpr(EmptyShell Shell)
+    : Expr(ASTMemberFunctionSizeExprClass, Shell) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ASTMemberFunctionSizeExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+};
+
+class ASTMemberCheckAccessSpecExpr final : public Expr
+{
+  Stmt* SubExprs[1];
+  AccessSpecifier AS;
+public:
+  ASTMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
+  /// Create an empty test cash expression.
+  explicit ASTMemberCheckAccessSpecExpr(EmptyShell Shell)
+    : Expr(ASTMemberCheckAccessSpecExprClass, Shell), AS(AS_none) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  AccessSpecifier getAccessSpecifier() const { return AS; }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ASTMemberCheckAccessSpecExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+};
+
+class ASTMemberUpdateAccessSpecExpr final : public Expr
+{
+  Stmt* SubExprs[1];
+  AccessSpecifier AS;
+public:
+  ASTMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
+  /// Create an empty test cash expression.
+  explicit ASTMemberUpdateAccessSpecExpr(EmptyShell Shell)
+    : Expr(ASTMemberUpdateAccessSpecExprClass, Shell), AS(AS_none) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  AccessSpecifier getAccessSpecifier() const { return AS; }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ASTMemberUpdateAccessSpecExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
   SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
@@ -5604,48 +5720,6 @@ struct ASTMetaToken
   Token Tok;
   ImplicitCastExpr* Expr;
   Stmt* EvalCompoundStmt;
-};
-
-class ASTMemberAppendExpr final : public Expr
-{
-public:
-  using CachedTokens = SmallVector<Token, 4>;
-  using LateParseFunction = Decl*(*)(Parser*, CachedTokens&);
-  using LateTokenizeFunction = CachedTokens(*)(Parser*, const char*);
-  std::vector<ASTMetaToken> Tokens;
-  Parser* LateParser;
-  LateParseFunction LateParseFn;
-  LateTokenizeFunction LateTokenizeFn;
-private:
-  Stmt* SubExprs[1];
-
-public:
-  ASTMemberAppendExpr(ImplicitCastExpr* cast, std::vector<ASTMetaToken>&& Tokens, Parser* P, LateParseFunction ParseFn, LateTokenizeFunction TokenizeFn)
-    : Expr(ASTMemberAppendExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
-    , Tokens(std::move(Tokens))
-    , LateParser(P)
-    , LateParseFn(ParseFn)
-    , LateTokenizeFn(TokenizeFn)
-  {
-    SubExprs[0] = cast;
-  }
-  /// Create an empty test cash expression.
-  explicit ASTMemberAppendExpr(EmptyShell Shell)
-    : Expr(ASTMemberAppendExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberAppendExprClass;
-  }
-  child_range children() {
-    return child_range(&SubExprs[0], &SubExprs[0] + 1);
-  }
-  const_child_range children() const {
-    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
-  }
-  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
 class ASTInjectExpr final : public Expr

@@ -3092,12 +3092,13 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case ObjCAvailabilityCheckExprClass:
   case CXXUuidofExprClass:
   case OpaqueValueExprClass:
-  case TestCashExprClass:
   case ASTMemberVariableSizeExprClass:
   case ASTMemberVariableNameExprClass:
   case ASTMemberVariableExprClass:
-  case ASTMemberAppendExprClass:
-  case ASTInjectExprClass:
+  case ASTMemberFunctionSizeExprClass:
+  case ASTMemberFunctionNameExprClass:
+  case ASTMemberFunctionExprClass:
+  case ASTMemberCheckAccessSpecExprClass:
     // These never have a side-effect.
     return false;
 
@@ -3133,6 +3134,8 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CoawaitExprClass:
   case DependentCoawaitExprClass:
   case CoyieldExprClass:
+  case ASTMemberUpdateAccessSpecExprClass:
+  case ASTInjectExprClass:
     // These always have a side-effect.
     return true;
 
@@ -4195,4 +4198,20 @@ QualType OMPArraySectionExpr::getBaseOriginalType(const Expr *Base) {
     }
   }
   return OriginalTy;
+}
+
+
+ASTMemberUpdateAccessSpecExpr::ASTMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
+  : Expr(ASTMemberUpdateAccessSpecExprClass, C.VoidTy, VK_RValue, OK_Ordinary, false, false, false, false)
+  , AS(AS)
+{
+  SubExprs[0] = cast;
+}
+
+
+ASTMemberCheckAccessSpecExpr::ASTMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
+  : Expr(ASTMemberCheckAccessSpecExprClass, C.BoolTy, VK_RValue, OK_Ordinary, false, false, false, false)
+  , AS(AS)
+{
+  SubExprs[0] = cast;
 }

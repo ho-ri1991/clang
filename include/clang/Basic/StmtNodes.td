@@ -183,11 +183,14 @@ def ConvertVectorExpr : DStmt<Expr>;
 def BlockExpr : DStmt<Expr>;
 def OpaqueValueExpr : DStmt<Expr>;
 def TypoExpr : DStmt<Expr>;
-def TestCashExpr : DStmt<Expr>;
 def ASTMemberVariableSizeExpr : DStmt<Expr>;
 def ASTMemberVariableNameExpr : DStmt<Expr>;
 def ASTMemberVariableExpr : DStmt<Expr>;
-def ASTMemberAppendExpr : DStmt<Expr>;
+def ASTMemberFunctionSizeExpr : DStmt<Expr>;
+def ASTMemberFunctionNameExpr : DStmt<Expr>;
+def ASTMemberFunctionExpr : DStmt<Expr>;
+def ASTMemberCheckAccessSpecExpr : DStmt<Expr>;
+def ASTMemberUpdateAccessSpecExpr : DStmt<Expr>;
 def ASTInjectExpr : DStmt<Expr>;
 
 // Microsoft Extensions.

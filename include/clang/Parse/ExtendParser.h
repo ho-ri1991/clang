@@ -7,29 +7,6 @@ namespace clang {
 
 class ExtendParser : public Parser {
 public:
-  struct MemberVariableToken
-  {
-    CachedTokens TypenameTokens;
-    Token NameToken;
-    CachedTokens InitializerTokens;
-    AccessSpecifier AS;
-  };
-  struct FunctionParamToken
-  {
-    CachedTokens TypenameTokens;
-    Token NameToken;
-    CachedTokens DefaultTokens;
-  };
-  struct MemberFunctionToken
-  {
-    CachedTokens TypenameTokens;
-    Token NameToken;
-    std::vector<FunctionParamToken> Params;
-    CachedTokens QualifierTokens;
-    CachedTokens BodyTokens;
-    AccessSpecifier AS;
-  };
-
   ExtendParser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies);
   ~ExtendParser() override;
 
@@ -42,11 +19,6 @@ public:
   ExprResult
   ParseExpression(TypeCastState isTypeCast = NotTypeCast) override;
 
-public:
-  DeclGroupPtrTy ParseCXXClassMemberDeclaration(
-      AccessSpecifier AS, AttributeList *Attr,
-      const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
-      ParsingDeclRAIIObject *DiagsFromTParams = nullptr) override;
 private:
 
   void ParseDeclarationSpecifiers(
@@ -56,20 +28,6 @@ private:
       DeclSpecContext DSC = DeclSpecContext::DSC_normal,
       LateParsedAttrList *LateAttrs = nullptr,
       Expr* MetaCall = nullptr) override;
-
-  ExprResult ParseClassMemberAndGenerateMetaFunctionCallExpr(const CachedTokens& qualifiedMetaFunction, AccessSpecifier AS);
-
-  bool ConsumeAndStoreTypename(CachedTokens& Result);
-
-  std::string GenerateMetaFunctionCallExpr(
-      const std::vector<MemberVariableToken> MemberVariables,
-      const std::vector<MemberFunctionToken> MemberFunctions,
-      const CachedTokens& QualifiedMetaFunction
-  );
-
-  void AppendToken(const Token& Tok, std::string& Target);
-                   
-  void AppendTokenStr(const Token& Source, std::string& Dest);
 };
 
 }
