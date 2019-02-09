@@ -4040,136 +4040,9 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
   case Stmt::NullStmtClass:
     return ESR_Succeeded;
 
-  case Stmt::TestCashExprClass: {
-    APSInt Int;
-    if (!EvaluateInteger(cast<TestCashExpr>(S)->getImplicitCastExpr(), Int, Info))
-      return ESR_Failed;
-    auto Integer = Int.getExtValue();
-    auto Ast = reinterpret_cast<Decl*>(Integer);
-    Ast->dump();
-    return ESR_Succeeded;
-//    return EvaluateStmt(Result, Info, cast<TestCashExpr>(S)->getDeclRef(), Case);
-  }
-
-  case Stmt::ASTMemberAppendExprClass : {
-    auto E = cast<ASTMemberAppendExpr>(S);
-    auto ASTExpr = E->getImplicitCastExpr();
-    APSInt ASTVal;
-    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
-      return ESR_Failed;
-    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
-    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
-    ASTMemberAppendExpr::CachedTokens Tokens;
-    int MetaFuncKind = 0; //1: type, 2: identifier
-    int state = 0;
-    std::string identifierData{};
-    SourceLocation identifierLoc{};
-    for (auto&& MetaTok: E->Tokens)
-    {
-      switch (state)
-      {
-      case 0: // wait for begining of meta function $$
-        if (MetaTok.Tok.is(tok::cashcash))
-          state = 1;
-        else
-          Tokens.push_back(MetaTok.Tok);
-        break;
-      case 1: // consume meta function name
-        if (MetaTok.Tok.is(tok::identifier))
-        {
-          const char* name = MetaTok.Tok.getIdentifierInfo()->getNameStart();
-          if (std::strcmp(name, "type") == 0)
-          {
-            state = 2;
-            MetaFuncKind = 1;
-            break;
-          }
-          else if (std::strcmp(name, "identifier") == 0)
-          {
-            state = 2;
-            MetaFuncKind = 2;
-            break;
-          }
-          else
-            assert(false);
-        }
-        assert(false);
-        break;
-      case 2: // consume l_paren of meta function
-        assert(MetaTok.Tok.is(tok::l_paren));
-        state = 3;
-        break;
-      case 3: { // consume arguments
-          switch (MetaFuncKind)
-          {
-          case 1: { // type
-            assert(MetaTok.Expr);
-            APSInt FieldDeclInt;
-            if (!EvaluateInteger(MetaTok.Expr, FieldDeclInt, Info))
-              return ESR_Failed;
-            auto Ast = reinterpret_cast<Decl*>(FieldDeclInt.getExtValue());
-            auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
-            auto T = FieldDeclPtr->getType();
-            identifierData += T.getAsString();
-            identifierLoc = MetaTok.Tok.getLocation();
-            state = 4;
-            break;
-          }
-          case 2: // identifier
-            if (MetaTok.Expr)
-            {
-              APSInt CharPtrVal;
-              if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
-                return ESR_Failed;
-              auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
-              identifierData += Chars;
-              identifierLoc = MetaTok.Tok.getLocation();
-            }
-            else
-            {
-              assert(MetaTok.Tok.is(tok::string_literal));
-              identifierData.append(&(MetaTok.Tok.getLiteralData()[1]), MetaTok.Tok.getLength() - 2);
-              if (identifierLoc.isInvalid())
-                identifierLoc = MetaTok.Tok.getLocation();
-            }
-            state = 4;
-            break;
-          default:
-            assert(false);
-            break;
-          }
-          break;
-        }
-      case 4:
-        if (MetaTok.Tok.is(tok::comma))
-        { state = 3; }
-        else if (MetaTok.Tok.is(tok::r_paren))
-        {
-          auto tmp = new std::string(identifierData); // TODO memory management
-          auto LateTokens = E->LateTokenizeFn(E->LateParser, tmp->c_str());
-          for (auto tok: LateTokens)
-          {
-            tok.setLocation(identifierLoc);
-            Tokens.push_back(tok);
-          }
-          state = 0;
-          MetaFuncKind = 0;
-          identifierData.clear();
-          identifierLoc = SourceLocation{};
-        }
-        else
-          assert(false);
-        break;
-      }
-    }
-    auto LateDecl = E->LateParseFn(E->LateParser, Tokens);
-//    if (LateDecl)
-//      ClassDecl->addDecl(LateDecl);
-    return ESR_Succeeded;
-  }
-
   case Stmt::ASTInjectExprClass : {
     auto E = cast<ASTInjectExpr>(S);
+    FullExpressionRAII Scope(Info);
     int MetaFuncKind = 0; //1: type, 2: identifier
     int state = 0;
     std::string identifierData{};
@@ -4290,6 +4163,19 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
         break;
       }
     }
+    return ESR_Succeeded;
+  }
+
+  case Stmt::ASTMemberUpdateAccessSpecExprClass : {
+    auto E = cast<ASTMemberUpdateAccessSpecExpr>(S);
+    auto ASTExpr = E->getImplicitCastExpr();
+    auto AS = E->getAccessSpecifier();
+    FullExpressionRAII Scope(Info);
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return ESR_Failed;
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    Ast->setAccess(AS);
     return ESR_Succeeded;
   }
 
@@ -7421,7 +7307,7 @@ public:
     uint64_t MemberNum = 0;
     for (auto itr = MemberRange.begin() ; itr != MemberRange.end(); ++itr)
       ++MemberNum;
-    return Success(MemberNum, E);
+    return Success(0, E);
   }
 
   bool VisitASTMemberVariableNameExpr(const ASTMemberVariableNameExpr *E) {
@@ -7452,100 +7338,57 @@ public:
     return Success(reinterpret_cast<uint64_t>(*MemberVarItr), E);
   }
 
-  bool VisitASTMemberAppendExpr(const ASTMemberAppendExpr *E) {
+  bool VisitASTMemberFunctionSizeExpr(const ASTMemberFunctionSizeExpr *E) {
+    auto SubExpr = E->getImplicitCastExpr();
+    APSInt Val;
+    if (!EvaluateInteger(SubExpr, Val, Info))
+      return false;
+    auto Int = Val.getExtValue();
+    auto Ast = reinterpret_cast<Decl*>(Int);
+    auto ClassDecl = cast<CXXRecordDecl>(Ast);
+    auto MemberRange = ClassDecl->methods();
+    uint64_t MemberNum = 0;
+    for (auto itr = MemberRange.begin() ; itr != MemberRange.end(); ++itr)
+      ++MemberNum;
+    return Success(MemberNum, E);
+  }
+
+  bool VisitASTMemberFunctionNameExpr(const ASTMemberFunctionNameExpr *E) {
+    auto SubExpr = E->getImplicitCastExpr();
+    APSInt Val;
+    if (!EvaluateInteger(SubExpr, Val, Info))
+      return false;
+    auto Int = Val.getExtValue();
+    auto Ast = reinterpret_cast<Decl*>(Int);
+    auto MethodDeclPtr = cast<CXXMethodDecl>(Ast);
+    return Success(reinterpret_cast<uint64_t>(MethodDeclPtr->getIdentifier()->getNameStart()), E);
+  }
+
+  bool VisitASTMemberFunctionExpr(const ASTMemberFunctionExpr *E) {
+    auto ASTExpr = E->getASTExpr();
+    auto IndexExpr = E->getIndexExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    APSInt IndexVal;
+    if (!EvaluateInteger(IndexExpr, IndexVal, Info))
+      return false;
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto Index = IndexVal.getExtValue();
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    auto MemberFuncItr = ClassDecl->method_begin();
+    while (Index--) { ++MemberFuncItr; }
+    return Success(reinterpret_cast<uint64_t>(*MemberFuncItr), E);
+  }
+
+  bool VisitASTMemberCheckAccessSpecExpr(const ASTMemberCheckAccessSpecExpr *E) {
     auto ASTExpr = E->getImplicitCastExpr();
+    auto AS = E->getAccessSpecifier();
     APSInt ASTVal;
     if (!EvaluateInteger(ASTExpr, ASTVal, Info))
       return false;
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
-    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
-    ASTMemberAppendExpr::CachedTokens Tokens;
-    int MetaFuncKind = 0; //1: typename, 2: identifier
-    int state = 0;
-    std::string identifierData;
-    for (auto&& MetaTok: E->Tokens)
-    {
-      switch (state)
-      {
-      case 0: // wait for begining of meta function $$
-        if (MetaTok.Tok.is(tok::cashcash))
-          state = 1;
-        else
-          Tokens.push_back(MetaTok.Tok);
-        break;
-      case 1: // consume meta function name
-        if (MetaTok.Tok.is(tok::identifier))
-        {
-          const char* name = MetaTok.Tok.getIdentifierInfo()->getNameStart();
-          if (std::strcmp(name, "typename") == 0)
-          {
-            state = 2;
-            MetaFuncKind = 1;
-            break;
-          }
-          else if (std::strcmp(name, "identifier") == 0)
-          {
-            state = 2;
-            MetaFuncKind = 2;
-            break;
-          }
-          else
-            assert(false);
-        }
-        assert(false);
-        break;
-      case 2: // consume l_paren of meta function
-        assert(MetaTok.Tok.is(tok::l_paren));
-        state = 3;
-        break;
-      case 3: { // consume arguments
-          switch (MetaFuncKind)
-          {
-          case 0: // typename 
-            assert(false); // not yet implemented...
-            break;
-          case 1: // identifier
-            if (MetaTok.Expr)
-            {
-              APSInt CharPtrVal;
-              if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
-                return false;
-              auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
-              identifierData += Chars;
-            }
-            else
-            {
-              assert(MetaTok.Tok.is(tok::string_literal));
-              identifierData.append(&(MetaTok.Tok.getLiteralData()[1]), MetaTok.Tok.getLength() - 2);
-            }
-            state = 4;
-            break;
-          default:
-            assert(false);
-            break;
-          }
-          break;
-        }
-      case 4:
-        if (MetaTok.Tok.is(tok::comma))
-        { state = 3; }
-        else if (MetaTok.Tok.is(tok::r_paren))
-        {
-          auto tmp = new std::string(identifierData); // TODO memory management
-          auto LateTokens = E->LateTokenizeFn(E->LateParser, tmp->c_str());
-          for (auto tok: LateTokens)
-            Tokens.push_back(tok);
-          state = 0;
-        }
-        else
-          assert(false);
-        break;
-      }
-    }
-    auto LateDecl = E->LateParseFn(E->LateParser, Tokens);
-//    if (LateDecl)
-//      ClassDecl->addDecl(LateDecl);
-    return false;
+    return Success(Ast->getAccess() == AS ? 1 : 0, E);
   }
 
   bool CheckReferencedDecl(const Expr *E, const Decl *D);
@@ -11229,11 +11072,14 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::CoawaitExprClass:
   case Expr::DependentCoawaitExprClass:
   case Expr::CoyieldExprClass:
-  case Expr::TestCashExprClass:
   case Expr::ASTMemberVariableSizeExprClass:
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
-  case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTMemberFunctionSizeExprClass:
+  case Expr::ASTMemberFunctionNameExprClass:
+  case Expr::ASTMemberFunctionExprClass:
+  case Expr::ASTMemberCheckAccessSpecExprClass:
+  case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 

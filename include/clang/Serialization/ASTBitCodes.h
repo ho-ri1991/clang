@@ -1730,9 +1730,6 @@ namespace serialization {
       /// An AtomicExpr record.
       EXPR_ATOMIC,
 
-      /// An TestCashExpr record.
-      EXPR_TEST_CASH,
-
       /// An ASTMemberVariableSizeExpr record.
       EXPR_AST_MEMBER_VARIABLE_SIZE,
 
@@ -1742,10 +1739,22 @@ namespace serialization {
       /// An ASTMemberVariableExpr record.
       EXPR_AST_MEMBER_VARIABLE,
 
-      /// An ASTMemberAppendExpr record.
-      EXPR_AST_MEMBER_APPEND,
+      /// An ASTMemberFunctionSizeExpr record.
+      EXPR_AST_MEMBER_FUNCTION_SIZE,
 
-      /// An ASTMemberAppendExpr record.
+      /// An ASTMemberFunctionNameExpr record.
+      EXPR_AST_MEMBER_FUNCTION_NAME,
+
+      /// An ASTMemberFunctionExpr record.
+      EXPR_AST_MEMBER_FUNCTION,
+
+      /// An ASTMemberCheckAccessSpecExpr record.
+      EXPR_AST_MEMBER_CHECK_ACCESS_SPEC,
+
+      /// An ASTMemberUpdateAccessSpecExpr record.
+      EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC,
+
+      /// An ASTInjectExpr record.
       EXPR_AST_INJECT,
 
       // Objective-C

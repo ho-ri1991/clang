@@ -1716,12 +1716,6 @@ void ASTStmtWriter::VisitTypoExpr(TypoExpr *E) {
   llvm_unreachable("Cannot write TypoExpr nodes");
 }
 
-void ASTStmtWriter::VisitTestCashExpr(TestCashExpr *E) {
-  VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
-  Code = serialization::EXPR_TEST_CASH;
-}
-
 void ASTStmtWriter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
@@ -1741,10 +1735,35 @@ void ASTStmtWriter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *E) {
   Code = serialization::EXPR_AST_MEMBER_VARIABLE;
 }
 
-void ASTStmtWriter::VisitASTMemberAppendExpr(ASTMemberAppendExpr *E) {
+void ASTStmtWriter::VisitASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
-  Code = serialization::EXPR_AST_MEMBER_APPEND;
+  Code = serialization::EXPR_AST_MEMBER_FUNCTION_SIZE;
+}
+
+void ASTStmtWriter::VisitASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_AST_MEMBER_FUNCTION_NAME;
+}
+
+void ASTStmtWriter::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getASTExpr());
+  Record.AddStmt(E->getIndexExpr());
+  Code = serialization::EXPR_AST_MEMBER_FUNCTION;
+}
+
+void ASTStmtWriter::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_AST_MEMBER_CHECK_ACCESS_SPEC;
+}
+
+void ASTStmtWriter::VisitASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC;
 }
 
 void ASTStmtWriter::VisitASTInjectExpr(ASTInjectExpr *E) {

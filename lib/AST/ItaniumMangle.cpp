@@ -3468,11 +3468,14 @@ recurse:
   case Expr::TypoExprClass:  // This should no longer exist in the AST by now.
   case Expr::OMPArraySectionExprClass:
   case Expr::CXXInheritedCtorInitExprClass:
-  case Expr::TestCashExprClass:
   case Expr::ASTMemberVariableSizeExprClass:
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
-  case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTMemberFunctionSizeExprClass:
+  case Expr::ASTMemberFunctionNameExprClass:
+  case Expr::ASTMemberFunctionExprClass:
+  case Expr::ASTMemberCheckAccessSpecExprClass:
+  case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
     llvm_unreachable("unexpected statement kind");
 

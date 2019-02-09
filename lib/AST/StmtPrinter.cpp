@@ -2790,11 +2790,6 @@ void StmtPrinter::VisitTypoExpr(TypoExpr *Node) {
   llvm_unreachable("Cannot print TypoExpr nodes");
 }
 
-void StmtPrinter::VisitTestCashExpr(TestCashExpr *Node) {
-  OS << "$";
-  PrintExpr(Node->getImplicitCastExpr());
-}
-
 void StmtPrinter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *Node) {
   OS << "$var_size(";
   PrintExpr(Node->getImplicitCastExpr());
@@ -2815,8 +2810,62 @@ void StmtPrinter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *Node) {
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberAppendExpr(ASTMemberAppendExpr *Node) {
-  OS << "$append(";
+void StmtPrinter::VisitASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *Node) {
+  OS << "$func_size(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *Node) {
+  OS << "$func_name(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *Node) {
+  OS << "$func(";
+  PrintExpr(Node->getASTExpr());
+  OS << ", ";
+  PrintExpr(Node->getIndexExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *Node) {
+  switch (Node->getAccessSpecifier())
+  {
+  case AS_public:
+    OS << "$is_public(";
+    break;
+  case AS_protected:
+    OS << "$is_protected(";
+    break;
+  case AS_private:
+    OS << "$is_private(";
+    break;
+  case AS_none:
+    OS << "$is_none(";
+    break;
+  }
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *Node) {
+  switch (Node->getAccessSpecifier())
+  {
+  case AS_public:
+    OS << "$make_public(";
+    break;
+  case AS_protected:
+    OS << "$make_protected(";
+    break;
+  case AS_private:
+    OS << "$make_private(";
+    break;
+  case AS_none:
+    OS << "$make_none(";
+    break;
+  }
   PrintExpr(Node->getImplicitCastExpr());
   OS << ")";
 }

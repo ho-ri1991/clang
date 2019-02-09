@@ -3284,7 +3284,16 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
       auto b = MetaCall->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
       if (!b)
+      {
         std::cerr << "ERROR" << std::endl;
+        if (Eval.Diag)
+        {
+          for (auto& PDiag: *Eval.Diag)
+          {
+            Actions.Diag(PDiag.first, PDiag.second);
+          }
+        }
+      }
       InjectTokenBuffer.push_back(Tok);
       PP.EnterTokenStream(InjectTokenBuffer, true);
       ConsumeAnyToken();

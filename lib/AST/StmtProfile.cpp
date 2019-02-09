@@ -1850,10 +1850,6 @@ void StmtProfiler::VisitTypoExpr(const TypoExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitTestCashExpr(const TestCashExpr *E) {
-  VisitExpr(E);
-}
-
 void StmtProfiler::VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExpr *E) {
   VisitExpr(E);
 }
@@ -1866,7 +1862,23 @@ void StmtProfiler::VisitASTMemberVariableExpr(const ASTMemberVariableExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberAppendExpr(const ASTMemberAppendExpr *E) {
+void StmtProfiler::VisitASTMemberFunctionSizeExpr(const ASTMemberFunctionSizeExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberFunctionNameExpr(const ASTMemberFunctionNameExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberFunctionExpr(const ASTMemberFunctionExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberCheckAccessSpecExpr(const ASTMemberCheckAccessSpecExpr *E) {
+  VisitExpr(E);
+}
+
+void StmtProfiler::VisitASTMemberUpdateAccessSpecExpr(const ASTMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
 }
 

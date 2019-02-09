@@ -1722,11 +1722,6 @@ void ASTStmtReader::VisitTypoExpr(TypoExpr *E) {
   llvm_unreachable("Cannot read TypoExpr nodes");
 }
 
-void ASTStmtReader::VisitTestCashExpr(TestCashExpr *E) {
-  VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
-}
-
 void ASTStmtReader::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
@@ -1743,7 +1738,28 @@ void ASTStmtReader::VisitASTMemberVariableExpr(ASTMemberVariableExpr *E) {
   E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberAppendExpr(ASTMemberAppendExpr *E) {
+void ASTStmtReader::VisitASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *E) {
+  VisitExpr(E);
+  E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
@@ -3460,10 +3476,6 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) BlockExpr(Empty);
       break;
 
-    case EXPR_TEST_CASH:
-      S = new (Context) TestCashExpr(Empty);
-      break;
-
     case EXPR_AST_MEMBER_VARIABLE_SIZE:
       S = new (Context) ASTMemberVariableSizeExpr(Empty);
       break;
@@ -3476,8 +3488,24 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) ASTMemberVariableExpr(Empty);
       break;
 
-    case EXPR_AST_MEMBER_APPEND:
-      S = new (Context) ASTMemberAppendExpr(Empty);
+    case EXPR_AST_MEMBER_FUNCTION_SIZE:
+      S = new (Context) ASTMemberFunctionSizeExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_FUNCTION_NAME:
+      S = new (Context) ASTMemberFunctionNameExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_FUNCTION:
+      S = new (Context) ASTMemberFunctionExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_CHECK_ACCESS_SPEC:
+      S = new (Context) ASTMemberCheckAccessSpecExpr(Empty);
+      break;
+
+    case EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC:
+      S = new (Context) ASTMemberUpdateAccessSpecExpr(Empty);
       break;
 
     case EXPR_AST_INJECT:

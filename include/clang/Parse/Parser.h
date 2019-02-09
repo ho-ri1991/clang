@@ -2703,7 +2703,7 @@ private:
   void MaybeParseAndDiagnoseDeclSpecAfterCXX11VirtSpecifierSeq(Declarator &D,
                                                                VirtSpecifiers &VS);
 public:
-  virtual DeclGroupPtrTy ParseCXXClassMemberDeclaration(
+  DeclGroupPtrTy ParseCXXClassMemberDeclaration(
       AccessSpecifier AS, AttributeList *Attr,
       const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
       ParsingDeclRAIIObject *DiagsFromTParams = nullptr);

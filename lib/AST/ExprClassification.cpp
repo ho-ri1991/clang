@@ -192,11 +192,14 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::ArrayInitIndexExprClass:
   case Expr::NoInitExprClass:
   case Expr::DesignatedInitUpdateExprClass:
-  case Expr::TestCashExprClass:
   case Expr::ASTMemberVariableSizeExprClass:
   case Expr::ASTMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
-  case Expr::ASTMemberAppendExprClass:
+  case Expr::ASTMemberFunctionSizeExprClass:
+  case Expr::ASTMemberFunctionNameExprClass:
+  case Expr::ASTMemberFunctionExprClass:
+  case Expr::ASTMemberCheckAccessSpecExprClass:
+  case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
     return Cl::CL_PRValue;
 
