@@ -3281,6 +3281,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       llvm::APInt Int(64, reinterpret_cast<uint64_t>(ClassDecl));
       IntegerNode->setValue(Actions.getASTContext(), Int);
       Expr::EvalResult Eval;
+      llvm::SmallVector<PartialDiagnosticAt, 0> Diags;
+      Eval.Diag = &Diags;
       Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
       auto b = MetaCall->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
       if (!b)
@@ -3288,21 +3290,39 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
         std::cerr << "ERROR" << std::endl;
         if (Eval.Diag)
         {
-          for (auto& PDiag: *Eval.Diag)
+          if (Diags.size() == 1 &&
+              Diags[0].second.getDiagID() == diag::note_invalid_subexpr_in_const_expr)
           {
-            Actions.Diag(PDiag.first, PDiag.second);
+            Actions.Diag(Diags[0].first, diag::err_expr_not_cce) << Expr::EvaluateForCodeGen;
           }
+          else
+          {
+            Actions.Diag(MetaCall->getLocStart(), diag::err_expr_not_cce)
+              << Expr::EvaluateForCodeGen << MetaCall->getSourceRange();
+            for (unsigned I = 0; I < Diags.size(); ++I)
+              Actions.Diag(Diags[I].first, Diags[I].second);
+          }
+//          for (auto& PDiag: *Eval.Diag)
+//          {
+//            Diag(PDiag.first, PDiag.second.getDiagID()) << "foo";
+//        Diag(PDiag.first, diag::err_expected_either);// << tok::l_brace
+//                                                      //     << tok::comma;
+//          }
         }
+        SkipUntil(tok::r_brace);
       }
-      InjectTokenBuffer.push_back(Tok);
-      PP.EnterTokenStream(InjectTokenBuffer, true);
-      ConsumeAnyToken();
-      // While we still have something to read, read the member-declarations.
-      while (!tryParseMisplacedModuleImport() && Tok.isNot(tok::r_brace) &&
-             Tok.isNot(tok::eof)) {
-        // Each iteration of this loop reads one member-declaration.
-        ParseCXXClassMemberDeclarationWithPragmas(
-            CurAS, AccessAttrs, static_cast<DeclSpec::TST>(TagType), TagDecl);
+      else
+      {
+        InjectTokenBuffer.push_back(Tok);
+        PP.EnterTokenStream(InjectTokenBuffer, true);
+        ConsumeAnyToken();
+        // While we still have something to read, read the member-declarations.
+        while (!tryParseMisplacedModuleImport() && Tok.isNot(tok::r_brace) &&
+               Tok.isNot(tok::eof)) {
+          // Each iteration of this loop reads one member-declaration.
+          ParseCXXClassMemberDeclarationWithPragmas(
+              CurAS, AccessAttrs, static_cast<DeclSpec::TST>(TagType), TagDecl);
+        }
       }
     }
     T.consumeClose();

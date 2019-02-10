@@ -7297,17 +7297,18 @@ public:
 
   bool VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExpr *E) {
     auto SubExpr = E->getImplicitCastExpr();
-    APSInt Val;
-    if (!EvaluateInteger(SubExpr, Val, Info))
+    if (!Visit(SubExpr))
       return false;
-    auto Int = Val.getExtValue();
+    if (!Result.isInt()) return Error(E);
+    const APSInt &Value = Result.getInt();
+    auto Int = Value.getExtValue();
     auto Ast = reinterpret_cast<Decl*>(Int);
     auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
     auto MemberRange = ClassDecl->fields();
     uint64_t MemberNum = 0;
     for (auto itr = MemberRange.begin() ; itr != MemberRange.end(); ++itr)
       ++MemberNum;
-    return Success(0, E);
+    return Success(MemberNum, E);
   }
 
   bool VisitASTMemberVariableNameExpr(const ASTMemberVariableNameExpr *E) {
@@ -11072,15 +11073,6 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::CoawaitExprClass:
   case Expr::DependentCoawaitExprClass:
   case Expr::CoyieldExprClass:
-  case Expr::ASTMemberVariableSizeExprClass:
-  case Expr::ASTMemberVariableNameExprClass:
-  case Expr::ASTMemberVariableExprClass:
-  case Expr::ASTMemberFunctionSizeExprClass:
-  case Expr::ASTMemberFunctionNameExprClass:
-  case Expr::ASTMemberFunctionExprClass:
-  case Expr::ASTMemberCheckAccessSpecExprClass:
-  case Expr::ASTMemberUpdateAccessSpecExprClass:
-  case Expr::ASTInjectExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::InitListExprClass: {
@@ -11326,6 +11318,32 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
       return ICEDiag(IK_NotICE, E->getLocStart());
     }
   }
+
+  case Expr::ASTMemberVariableSizeExprClass:
+    return CheckICE(cast<ASTMemberVariableSizeExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ASTMemberVariableNameExprClass:
+    return CheckICE(cast<ASTMemberVariableNameExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ASTMemberFunctionSizeExprClass:
+    return CheckICE(cast<ASTMemberFunctionSizeExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ASTMemberFunctionNameExprClass:
+    return CheckICE(cast<ASTMemberFunctionNameExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ASTMemberCheckAccessSpecExprClass:
+    return CheckICE(cast<ASTMemberCheckAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ASTMemberUpdateAccessSpecExprClass:
+    return CheckICE(cast<ASTMemberUpdateAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+
+  case Expr::ASTMemberVariableExprClass: {
+    auto Exp = cast<ASTMemberVariableExpr>(E);
+    ICEDiag ASTResult = CheckICE(Exp->getASTExpr(), Ctx);
+    if (ASTResult.Kind == IK_NotICE) return ASTResult;
+    ICEDiag IdxResult = CheckICE(Exp->getIndexExpr(), Ctx);
+    return IdxResult;
+  }
+  case Expr::ASTMemberFunctionExprClass:
+
+  case Expr::ASTInjectExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
+
   case Expr::BinaryConditionalOperatorClass: {
     const BinaryConditionalOperator *Exp = cast<BinaryConditionalOperator>(E);
     ICEDiag CommonResult = CheckICE(Exp->getCommon(), Ctx);
