@@ -4330,8 +4330,7 @@ public:
       NamedDecl *FirstQualifierInScope, const DeclarationNameInfo &NameInfo,
       const TemplateArgumentListInfo *TemplateArgs,
       const Scope *S,
-      ActOnMemberAccessExtraArgs *ExtraArgs = nullptr,
-      bool* isPropertyCall = nullptr);
+      ActOnMemberAccessExtraArgs *ExtraArgs = nullptr);
 
   ExprResult
   BuildMemberReferenceExpr(Expr *Base, QualType BaseType, SourceLocation OpLoc,
@@ -4369,8 +4368,7 @@ public:
                                    CXXScopeSpec &SS,
                                    SourceLocation TemplateKWLoc,
                                    UnqualifiedId &Member,
-                                   Decl *ObjCImpDecl,
-                                   bool* isPropertyCall = nullptr);
+                                   Decl *ObjCImpDecl);
 
   void ActOnDefaultCtorInitializers(Decl *CDtorDecl);
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
