@@ -3092,6 +3092,9 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case ObjCAvailabilityCheckExprClass:
   case CXXUuidofExprClass:
   case OpaqueValueExprClass:
+    // These never have a side-effect.
+    return false;
+
   case ASTMemberVariableSizeExprClass:
   case ASTMemberVariableNameExprClass:
   case ASTMemberVariableExprClass:
@@ -3099,8 +3102,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case ASTMemberFunctionNameExprClass:
   case ASTMemberFunctionExprClass:
   case ASTMemberCheckAccessSpecExprClass:
-    // These never have a side-effect.
-    return false;
+    break;
 
   case CallExprClass:
   case CXXOperatorCallExprClass:
