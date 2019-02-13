@@ -2,10 +2,20 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/SmallVectorMemoryBuffer.h"
 #include "clang/Parse/RAIIObjectsForParser.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include <iostream>
 #include <cassert>
 
 using namespace clang;
+
+static Token GenerateToken(tok::TokenKind kind, SourceLocation Loc = SourceLocation{})
+{
+  Token Tok;
+  Tok.startToken();
+  Tok.setKind(kind);
+  Tok.setLocation(std::move(Loc));
+  return Tok;
+}
 
 static Token GenerateIdentifierToken(IdentifierInfo* II, SourceLocation Loc = SourceLocation{})
 {
@@ -191,6 +201,57 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       }
       return Actions.ActOnASTInjectExpr(InjectTokenBuffer, std::move(MetaTokens), this, MetaLateTokenizer).get();
     }
+    else if (std::strcmp(name, "__constexpr") == 0)
+    {
+      ConsumeToken(); 
+      CachedTokens Toks;
+      Toks.push_back(GenerateToken(tok::l_square, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::r_square, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::l_paren, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::r_paren, Tok.getLocation()));
+      Toks.push_back(Tok);
+      BalancedDelimiterTracker BDT(*this, tok::l_brace);
+      BDT.consumeOpen();
+      ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
+      Toks.push_back(GenerateToken(tok::kw_return, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::kw_nullptr, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::semi, Tok.getLocation()));
+      Toks.push_back(Tok);
+      BDT.consumeClose();
+      Toks.push_back(GenerateToken(tok::l_paren, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::r_paren, Tok.getLocation()));
+      Toks.push_back(GenerateToken(tok::semi, Tok.getLocation()));
+      Toks.push_back(Tok);
+      PP.EnterTokenStream(Toks, true);
+      ConsumeAnyToken();
+      auto LambdaCall = Parser::ParseExpression().get();
+      Expr::EvalResult Eval;
+      llvm::SmallVector<PartialDiagnosticAt, 0> Diags;
+      Eval.Diag = &Diags;
+      Expr::ConstExprUsage Usage = Expr::EvaluateForCodeGen;
+
+      InjectTokenBuffer.clear();
+      auto b = LambdaCall->EvaluateAsConstantExpr(Eval, Usage, Actions.Context);
+      if (!Diags.empty())
+      {
+        if (Diags.size() == 1 &&
+            Diags[0].second.getDiagID() == diag::note_invalid_subexpr_in_const_expr)
+        {
+          Actions.Diag(Diags[0].first, diag::err_expr_not_cce) << Expr::EvaluateForCodeGen;
+        }
+        else
+        {
+          Actions.Diag(LambdaCall->getLocStart(), diag::err_expr_not_cce)
+            << Expr::EvaluateForCodeGen << LambdaCall->getSourceRange();
+          for (unsigned I = 0; I < Diags.size(); ++I)
+            Actions.Diag(Diags[I].first, Diags[I].second);
+        }
+        return StmtResult{};
+      }
+      InjectTokenBuffer.push_back(Tok);
+      PP.EnterTokenStream(InjectTokenBuffer, true);
+      return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
+    }
     else if (std::strcmp(name, "make_public") == 0)
     {
       ConsumeToken();
@@ -244,7 +305,21 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
   {
     ConsumeToken(); //cash
     const char* name = Tok.getIdentifierInfo()->getNameStart();
-    if (std::strcmp(name, "var_size") ==0 )
+    if (std::strcmp(name, "reflexpr") == 0)
+    {
+      SourceLocation Loc = ConsumeToken(); // reflexpr
+      bool isCastExpr = false;
+      ParsedType CastTy;
+      SourceRange CastRange;
+      auto Operand = ParseExprAfterUnaryExprOrTypeTrait(GenerateToken(tok::kw_sizeof, Loc), isCastExpr, CastTy, CastRange);
+      TypeSourceInfo *TInfo;
+      (void) Sema::GetTypeFromParser(ParsedType::getFromOpaquePtr(CastTy.getAsOpaquePtr()), &TInfo);
+      auto Record = TInfo->getType().getTypePtr()->getAsCXXRecordDecl();
+      assert(Record);
+      llvm::APInt Int(64, reinterpret_cast<uint64_t>(Record));
+      return IntegerLiteral::Create(Actions.getASTContext(), Int, Actions.getASTContext().getIntPtrType(), Loc);
+    }
+    else if (std::strcmp(name, "var_size") == 0)
     {
       SourceLocation Loc = ConsumeToken(); // var_size
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
@@ -280,7 +355,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       BDT.consumeClose();
       return Actions.ActOnASTMemberVariableNameExpr(ArgExprs[0]);
     }
-    else if (std::strcmp(name, "func_size") ==0 )
+    else if (std::strcmp(name, "func_size") == 0)
     {
       ConsumeToken(); // func_size
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
