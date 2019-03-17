@@ -3533,6 +3533,7 @@ recurse:
   case Expr::ASTMemberCheckAccessSpecExprClass:
   case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
+  case Expr::ReflexprExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

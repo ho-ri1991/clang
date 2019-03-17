@@ -1772,6 +1772,14 @@ void ASTStmtWriter::VisitASTInjectExpr(ASTInjectExpr *E) {
   Code = serialization::EXPR_AST_INJECT;
 }
 
+void ASTStmtWriter::VisitReflexprExpr(ReflexprExpr *E) {
+  VisitExpr(E);
+  Record.AddTypeSourceInfo(E->getArgumentTypeInfo());
+  Record.AddSourceLocation(E->getOperatorLoc());
+  Record.AddSourceLocation(E->getRParenLoc());
+  Code = serialization::EXPR_REFLEXPR;
+}
+
 //===----------------------------------------------------------------------===//
 // CUDA Expressions and Statements.
 //===----------------------------------------------------------------------===//

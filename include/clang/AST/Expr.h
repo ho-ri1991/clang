@@ -5484,7 +5484,7 @@ class ASTMemberVariableExpr final : public Expr
   Stmt* SubExprs[INDEX_SIZE];
 public:
   ASTMemberVariableExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
-    : Expr(ASTMemberVariableExprClass, ast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+    : Expr(ASTMemberVariableExprClass, ast->getType(), VK_RValue, OK_Ordinary, ast->isTypeDependent() || index->isTypeDependent(), ast->isValueDependent() || index->isValueDependent(), false, false)
   {
     SubExprs[INDEX_AST] = ast;
     SubExprs[INDEX_INDEX] = index;
@@ -5514,11 +5514,7 @@ class ASTMemberVariableNameExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ASTMemberVariableNameExpr(ImplicitCastExpr* cast)
-    : Expr(ASTMemberVariableNameExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
-  {
-    SubExprs[0] = cast;
-  }
+  ASTMemberVariableNameExpr(ImplicitCastExpr* cast, ASTContext& Context);
   /// Create an empty test cash expression.
   explicit ASTMemberVariableNameExpr(EmptyShell Shell)
     : Expr(ASTMemberVariableNameExprClass, Shell) { }
@@ -5755,6 +5751,69 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
+
+class ReflexprExpr : public Expr {
+  union {
+    TypeSourceInfo *Ty;
+    Stmt *Ex;
+  } Argument;
+  SourceLocation OpLoc, RParenLoc;
+
+public:
+  ReflexprExpr(TypeSourceInfo *TInfo,
+               QualType resultType, SourceLocation op,
+               SourceLocation rp) :
+      Expr(ReflexprExprClass, resultType, VK_RValue, OK_Ordinary,
+           false, // Never type-dependent (C++ [temp.dep.expr]p3).
+           // Value-dependent if the argument is type-dependent.
+           TInfo->getType()->isDependentType(),
+           TInfo->getType()->isInstantiationDependentType(),
+           TInfo->getType()->containsUnexpandedParameterPack()),
+      OpLoc(op), RParenLoc(rp) {
+    Argument.Ty = TInfo;
+  }
+
+  /// Construct an empty sizeof/alignof expression.
+  explicit ReflexprExpr(EmptyShell Empty)
+    : Expr(ReflexprExprClass, Empty) { }
+
+  QualType getArgumentType() const {
+    return getArgumentTypeInfo()->getType();
+  }
+  TypeSourceInfo *getArgumentTypeInfo() const {
+    return Argument.Ty;
+  }
+
+  void setArgument(TypeSourceInfo *TInfo) {
+    Argument.Ty = TInfo;
+  }
+
+  /// Gets the argument type, or the type of the argument expression, whichever
+  /// is appropriate.
+  QualType getTypeOfArgument() const {
+    return getArgumentType();
+  }
+
+  SourceLocation getOperatorLoc() const { return OpLoc; }
+  void setOperatorLoc(SourceLocation L) { OpLoc = L; }
+
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const LLVM_READONLY { return OpLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflexprExprClass;
+  }
+
+  // Iterators
+  child_range children();
+  const_child_range children() const;
+};
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXPR_H

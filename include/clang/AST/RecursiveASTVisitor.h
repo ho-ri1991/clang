@@ -2550,6 +2550,7 @@ DEF_TRAVERSE_STMT(ASTMemberFunctionNameExpr, {})
 DEF_TRAVERSE_STMT(ASTMemberFunctionExpr, {})
 DEF_TRAVERSE_STMT(ASTMemberCheckAccessSpecExpr, {})
 DEF_TRAVERSE_STMT(ASTMemberUpdateAccessSpecExpr, {})
+DEF_TRAVERSE_STMT(ReflexprExpr, {})
 DEF_TRAVERSE_STMT(ASTInjectExpr, {})
 DEF_TRAVERSE_STMT(CUDAKernelCallExpr, {})
 

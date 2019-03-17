@@ -1769,6 +1769,13 @@ void ASTStmtReader::VisitASTInjectExpr(ASTInjectExpr *E) {
   VisitExpr(E);
 }
 
+void ASTStmtReader::VisitReflexprExpr(ReflexprExpr *E) {
+  VisitExpr(E);
+  E->setArgument(GetTypeSourceInfo());
+  E->setOperatorLoc(ReadSourceLocation());
+  E->setRParenLoc(ReadSourceLocation());
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements
 //===----------------------------------------------------------------------===//
@@ -3519,6 +3526,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_AST_INJECT:
       S = new (Context) ASTInjectExpr(Empty);
+      break;
+
+    case EXPR_REFLEXPR:
+      S = new (Context) ReflexprExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

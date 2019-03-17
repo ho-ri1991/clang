@@ -1173,6 +1173,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ASTMemberCheckAccessSpecExprClass:
     case Stmt::ASTMemberUpdateAccessSpecExprClass:
     case Stmt::ASTInjectExprClass:
+    case Stmt::ReflexprExprClass:
     case Stmt::CXXNoexceptExprClass:
     case Stmt::PackExpansionExprClass:
     case Stmt::SubstNonTypeTemplateParmPackExprClass:

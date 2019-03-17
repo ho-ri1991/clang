@@ -9138,19 +9138,90 @@ TreeTransform<Derived>::TransformTypoExpr(TypoExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
-  return E;
+  ExprResult SubExpr = TransformExpr(E->getImplicitCastExpr());
+  if (SubExpr.isInvalid())
+    return ExprError();
+  llvm::APSInt Int(64);
+  if (SubExpr.get()->isValueDependent() || !SubExpr.get()->EvaluateAsInt(Int, getSema().getASTContext()))
+  {
+    E->setImplicitCastExpr(cast<ImplicitCastExpr>(SubExpr.get()));
+    return E;
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    auto MemberRange = ClassDecl->fields();
+    uint64_t MemberNum = 0;
+    for (auto itr = MemberRange.begin() ; itr != MemberRange.end(); ++itr)
+      ++MemberNum;
+    llvm::APInt Sz(64, MemberNum);
+    return IntegerLiteral::Create(getSema().getASTContext(), Sz, getSema().getASTContext().getSizeType(), E->getLocStart());
+  }
 }
 
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
-  return E;
+  ExprResult SubExpr = TransformExpr(E->getImplicitCastExpr());
+  if (SubExpr.isInvalid())
+    return ExprError();
+  llvm::APSInt Int(64);
+  if (SubExpr.get()->isValueDependent() || !SubExpr.get()->EvaluateAsInt(Int, getSema().getASTContext()))
+  {
+    E->setImplicitCastExpr(cast<ImplicitCastExpr>(SubExpr.get()));
+    return E;
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+    auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
+
+    SmallVector<SourceLocation, 4> StringTokLocs;
+    StringTokLocs.push_back(SubExpr.get()->getExprLoc());
+    StringRef lit(FieldDeclPtr->getIdentifier()->getNameStart());
+    QualType CharTy = getSema().getASTContext().CharTy;
+    CharTy.addConst();
+    CharTy = getSema().getASTContext().adjustStringLiteralBaseType(CharTy);
+    QualType StrTy = getSema().getASTContext().getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+    return StringLiteral::Create(
+        getSema().getASTContext(),
+        lit,
+        StringLiteral::Ascii,
+        /*Pascal*/false, 
+        StrTy,
+        &StringTokLocs[0],
+        /*NumConcatenated*/1);
+  }
 }
 
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformASTMemberVariableExpr(ASTMemberVariableExpr *E) {
-  return E;
+  ExprResult AstExpr = TransformExpr(E->getASTExpr());
+  ExprResult IndexExpr = TransformExpr(E->getIndexExpr());
+  if (AstExpr.isInvalid() || IndexExpr.isInvalid())
+    return ExprError();
+  llvm::APSInt AstInt(64);
+  llvm::APSInt IndexInt(64);
+  if (AstExpr.get()->isValueDependent() || IndexExpr.get()->isValueDependent() ||
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
+      !IndexExpr.get()->EvaluateAsInt(IndexInt, getSema().getASTContext()))
+  {
+    E->setASTExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+    E->setIndexExpr(cast<ImplicitCastExpr>(IndexExpr.get()));
+    return E;
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+    auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
+    auto Index = IndexInt.getExtValue();
+    auto MemberVarItr = ClassDecl->field_begin();
+    while (Index--) { ++MemberVarItr; }
+    llvm::APInt Ptr(64, reinterpret_cast<uint64_t>(*MemberVarItr));
+    return IntegerLiteral::Create(getSema().getASTContext(), Ptr, getSema().getASTContext().getIntPtrType(), AstExpr.get()->getExprLoc());
+  }
 }
 
 template<typename Derived>
@@ -9187,6 +9258,20 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformASTInjectExpr(ASTInjectExpr *E) {
   return E;
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
+  TypeSourceInfo *OldT = E->getArgumentTypeInfo();
+
+  TypeSourceInfo *NewT = getDerived().TransformType(OldT);
+  if (!NewT)
+    return ExprError();
+
+  auto Record = static_cast<Decl*>(NewT->getType().getTypePtr()->getAsTagDecl());
+  llvm::APInt Int(64, reinterpret_cast<uint64_t>(Record));
+  return IntegerLiteral::Create(SemaRef.getASTContext(), Int, SemaRef.getASTContext().getIntPtrType(), E->getOperatorLoc());
 }
 
 template<typename Derived>

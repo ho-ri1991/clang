@@ -4202,6 +4202,11 @@ QualType OMPArraySectionExpr::getBaseOriginalType(const Expr *Base) {
   return OriginalTy;
 }
 
+ASTMemberVariableNameExpr::ASTMemberVariableNameExpr(ImplicitCastExpr* cast, ASTContext& Context)
+  : Expr(ASTMemberVariableNameExprClass, Context.DependentTy, VK_LValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
+{
+  SubExprs[0] = cast;
+}
 
 ASTMemberUpdateAccessSpecExpr::ASTMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
   : Expr(ASTMemberUpdateAccessSpecExprClass, C.VoidTy, VK_RValue, OK_Ordinary, false, false, false, false)
@@ -4217,3 +4222,18 @@ ASTMemberCheckAccessSpecExpr::ASTMemberCheckAccessSpecExpr(ASTContext& C, Implic
 {
   SubExprs[0] = cast;
 }
+
+// ReflexprExpr 
+Stmt::child_range ReflexprExpr::children() {
+  const_child_range CCR =
+      const_cast<const ReflexprExpr *>(this)->children();
+  return child_range(cast_away_const(CCR.begin()), cast_away_const(CCR.end()));
+}
+
+Stmt::const_child_range ReflexprExpr::children() const {
+  if (const VariableArrayType *T =
+          dyn_cast<VariableArrayType>(getArgumentType().getTypePtr()))
+    return const_child_range(const_child_iterator(T), const_child_iterator());
+  return const_child_range(const_child_iterator(), const_child_iterator());
+}
+

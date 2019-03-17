@@ -1889,6 +1889,11 @@ void StmtProfiler::VisitASTInjectExpr(const ASTInjectExpr *E) {
   VisitExpr(E);
 }
 
+void StmtProfiler::VisitReflexprExpr(const ReflexprExpr *E) {
+  VisitExpr(E);
+  VisitType(E->getArgumentType());
+}
+
 void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {
   VisitExpr(S);
 }

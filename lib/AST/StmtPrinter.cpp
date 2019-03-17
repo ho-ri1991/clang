@@ -2874,6 +2874,12 @@ void StmtPrinter::VisitASTInjectExpr(ASTInjectExpr *Node) {
   OS << "$inject()";
 }
 
+void StmtPrinter::VisitReflexprExpr(ReflexprExpr *Node){
+  OS << "reflexpr(";
+  Node->getArgumentType().print(OS, Policy);
+  OS << ')';
+}
+
 void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
   OS << "__builtin_astype(";
   PrintExpr(Node->getSrcExpr());

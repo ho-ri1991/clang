@@ -16561,7 +16561,7 @@ ExprResult Sema::ActOnASTMemberVariableNameExpr(ExprResult DeclRef)
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberVariableNameExpr(Cast);
+    return new(Context) ASTMemberVariableNameExpr(Cast, getASTContext());
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
@@ -16705,5 +16705,10 @@ ExprResult Sema::ActOnASTMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSp
 ExprResult Sema::ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn)
 {
   return new(Context) ASTInjectExpr(InjectTokenBuffer, Context.VoidTy, std::move(Tokens), LateParser, LateTokenzeFn);
+}
+
+ExprResult Sema::ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange)
+{
+  return new(Context) ReflexprExpr(Ty, Context.getIntPtrType(), ArgRange.getBegin(), ArgRange.getEnd());
 }
 

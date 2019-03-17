@@ -7392,6 +7392,18 @@ public:
     return Success(Ast->getAccess() == AS ? 1 : 0, E);
   }
 
+  bool VisitReflexprExpr(const ReflexprExpr* E) {
+    QualType SrcTy = E->getTypeOfArgument();
+    // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
+    //   the result is the size of the referenced type."
+    if (const ReferenceType *Ref = SrcTy->getAs<ReferenceType>())
+      SrcTy = Ref->getPointeeType();
+
+    uint64_t Ptr = reinterpret_cast<uint64_t>(SrcTy.getTypePtr()->getAsTagDecl());
+    return Success(Ptr, E);
+  }
+
+
   bool CheckReferencedDecl(const Expr *E, const Decl *D);
   bool VisitDeclRefExpr(const DeclRefExpr *E) {
     if (CheckReferencedDecl(E, E->getDecl()))
@@ -11331,6 +11343,8 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
     return CheckICE(cast<ASTMemberCheckAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
   case Expr::ASTMemberUpdateAccessSpecExprClass:
     return CheckICE(cast<ASTMemberUpdateAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflexprExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::ASTMemberVariableExprClass: {
     auto Exp = cast<ASTMemberVariableExpr>(E);

@@ -20,6 +20,7 @@ public:
   ParseExpression(TypeCastState isTypeCast = NotTypeCast) override;
 
 private:
+  bool isExpandReflection;
 
   void ParseDeclarationSpecifiers(
       DeclSpec &DS,

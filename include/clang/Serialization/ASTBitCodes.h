@@ -1760,6 +1760,9 @@ namespace serialization {
       /// An ASTInjectExpr record.
       EXPR_AST_INJECT,
 
+      /// An ReflexprExpr record.
+      EXPR_REFLEXPR,
+
       // Objective-C
 
       /// An ObjCStringLiteral record.

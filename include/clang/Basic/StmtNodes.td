@@ -192,6 +192,7 @@ def ASTMemberFunctionExpr : DStmt<Expr>;
 def ASTMemberCheckAccessSpecExpr : DStmt<Expr>;
 def ASTMemberUpdateAccessSpecExpr : DStmt<Expr>;
 def ASTInjectExpr : DStmt<Expr>;
+def ReflexprExpr : DStmt<Expr>;
 
 // Microsoft Extensions.
 def MSPropertyRefExpr : DStmt<Expr>;

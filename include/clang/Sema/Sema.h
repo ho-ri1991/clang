@@ -1986,6 +1986,7 @@ public:
   ExprResult ActOnASTMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
   ExprResult ActOnASTMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
   ExprResult ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn);
+  ExprResult ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);
