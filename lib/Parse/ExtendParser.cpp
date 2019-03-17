@@ -34,6 +34,17 @@ static Token GenerateIdentifierToken(Preprocessor& PP, const char* Name, SourceL
   return GenerateIdentifierToken(II, std::move(Loc));
 }
 
+static Token GenerateLiteralToken(tok::TokenKind kind, const char* literalData, unsigned length, SourceLocation Loc = SourceLocation{})
+{
+  Token Tok;
+  Tok.startToken();
+  Tok.setKind(kind);
+  Tok.setLocation(std::move(Loc));
+  Tok.setLiteralData(literalData);
+  Tok.setLength(length);
+  return Tok;
+}
+
 CachedTokens MetaLateTokenizer(Parser* P, const char* Chars)
 {
   llvm::SmallVector<char, 0> buf;
@@ -289,59 +300,45 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_protected).get();
     }
   }
-//  else if (Tok.is(tok::kw_for) && NextToken().is(tok::ellipsis))
-//  { // expansion statement
-//    BalancedDelimiterTracker BDT(*this, tok::l_paren);
-//    BDT.consumeOpen();
-//    CachedTokens RangeDeclToks;
-//    ConsumeAndStoreUntil(tok::colon, RangeDeclToks, /*StopAtSemi=*/true, /*ConsumeFinalToken=*/false);
-//    ConsumeToken(); // consume colon
-//    assert(Tok.is(tok::cash));
-//    ConsumeToken();
-//    assert(Tok.is(tok::identifier));
-//    const char* name = NextToken().getIdentifierInfo()->getNameStart();
-//    ConsumeToken();
-//    if (std::strcmp(name, "enum_fields") == 0)
-//    {
-//      BalancedDelimiterTracker FuncBDT(*this, tok::l_paren);
-//      FuncBDT.consumeOpen();
-//      ExprVector ArgExprs;
-//      CommaLocsTy CommaLocs;
-//      ParseExpressionList(ArgExprs, CommaLocs);
-//      assert(ArgExprs.size() == 1);
-//      FuncBDT.consumeClose();
-//      BDT.consumeClose();
-//      CachedTokens Toks;
-//      if (Tok.is(tok::l_brace))
-//      {
-//        BalancedDelimiterTracker BodyBDT(*this, tok::l_brace);
-//        Toks.push_back(Tok);
-//        BodyBDT.consumeOpen();
-//        for (tok: RangeDeclToks)
-//          Toks.push_back(tok);
-//        Toks.push_back(GenerateToken(tok::equal, Toks.back().getLocation()));
-//        Toks.push_back(GenerateToken(tok::cash, Toks.back().getLocation()));
-//        Toks.push_back(GenerateIdentifierToken(PP, "reflexpr", Toks.back().getLocation()));
-//        Toks.push_back(GenerateToken(tok::l_paren, Toks.back().getLocation()));
-//        Toks.push_back(GenerateToken(tok::kw_int, Toks.back().getLocation()));
-//        Toks.push_back(GenerateToken(tok::r_paren, Toks.back().getLocation()));
-//        Toks.push_back(GenerateToken(tok::semi, Toks.back().getLocation()));
-//        ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false, /*ConsumeFinalToken=*/false);
-//        Toks.push_back(Tok);
-//        BodyBDT.consumeClose();
-//        auto StmtRes = ParseCompoundStatement(false);
-//      }
-//      else
-//      {
-//      }
-//    }
-//    else if (std::strcmp(name, "member_var_fields") == 0)
-//    {
-//    }
-//    else if (std::strcmp(name, "member_fun_fields") == 0)
-//    {
-//    }
-//  }
+  else if (Tok.is(tok::kw_for) && NextToken().is(tok::ellipsis))
+  { // expansion statement
+    ConsumeToken(); // consume kw_for
+    ConsumeToken(); // consume ellipsis
+    BalancedDelimiterTracker BDT(*this, tok::l_paren);
+    BDT.consumeOpen();
+    CachedTokens RangeDeclToks;
+    ConsumeAndStoreUntil(tok::colon, RangeDeclToks, /*StopAtSemi=*/true, /*ConsumeFinalToken=*/false);
+    ConsumeToken(); // consume colon
+    ExprVector ArgExprs;
+    CommaLocsTy CommaLocs;
+    this->isExpandReflection = false;
+    ParseExpressionList(ArgExprs, CommaLocs); // parse $enum_fields(E)/member_var_fields(X)/..
+    assert(ArgExprs.size() == 1);
+    BDT.consumeClose();
+
+    StmtVector Stmts;
+    {
+      ParseScope CompoundScope(this, Scope::DeclScope | Scope::CompoundStmtScope);
+      RangeDeclToks.push_back(GenerateToken(tok::equal, BDT.getCloseLocation()));
+      RangeDeclToks.push_back(GenerateToken(tok::cash, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateIdentifierToken(PP, "reflexpr", RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateToken(tok::l_paren, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateLiteralToken(tok::numeric_constant, "0", 1, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateToken(tok::r_paren, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateToken(tok::semi, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(Tok);
+      PP.EnterTokenStream(RangeDeclToks, true);
+      ConsumeAnyToken();
+      auto R1 = ParseStatementOrDeclaration(Stmts, ACK_Any);
+      Stmts.push_back(R1.get());
+      auto R2 = ParseStatementOrDeclaration(Stmts, ACK_Any);
+      Stmts.push_back(R2.get());
+    }
+
+    this->isExpandReflection = true;
+    return Actions.ActOnCompoundStmt(BDT.getOpenLocation(), BDT.getCloseLocation(),
+                                     Stmts, /*isStmtExpr=*/false);
+  }
   return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
 }
 
@@ -609,6 +606,18 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
         CXXScopeSpec ScopeSpec;
         return Actions.BuildDeclRefExpr(EnumConstDeclPtr, EnumConstDeclPtr->getType(), VK_RValue, Tok.getLocation(), &ScopeSpec);
       }
+    }
+    else if (std::strcmp(name, "enum_fields") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnReflectionEnumFieldsExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()));
     }
   }
   return Parser::ParseAssignmentExpression(isTypeCast);

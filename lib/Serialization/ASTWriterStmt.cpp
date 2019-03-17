@@ -185,6 +185,17 @@ void ASTStmtWriter::VisitForStmt(ForStmt *S) {
   Code = serialization::STMT_FOR;
 }
 
+void ASTStmtWriter::VisitExpansionForStmt(ExpansionForStmt *S) {
+  VisitStmt(S);
+  Record.AddStmt(S->getVarDecl());
+  Record.AddStmt(S->getInit());
+  Record.AddStmt(S->getBody());
+  Record.AddSourceLocation(S->getForLoc());
+  Record.AddSourceLocation(S->getLParenLoc());
+  Record.AddSourceLocation(S->getRParenLoc());
+  Code = serialization::STMT_EXPANSION_FOR;
+}
+
 void ASTStmtWriter::VisitGotoStmt(GotoStmt *S) {
   VisitStmt(S);
   Record.AddDeclRef(S->getLabel());
@@ -1778,6 +1789,31 @@ void ASTStmtWriter::VisitReflexprExpr(ReflexprExpr *E) {
   Record.AddSourceLocation(E->getOperatorLoc());
   Record.AddSourceLocation(E->getRParenLoc());
   Code = serialization::EXPR_REFLEXPR;
+}
+
+void ASTStmtWriter::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
+  VisitExpr(E);
+//  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_REFLECTION_ENUM_FIELDS;
+}
+
+void ASTStmtWriter::VisitReflectionEnumFieldExpr(ReflectionEnumFieldExpr *E) {
+  VisitExpr(E);
+//  Record.AddStmt(E->getImplicitCastExpr());
+//  Record.AddStmt(E->getIndexExpr());
+  Code = serialization::EXPR_REFLECTION_ENUM_FIELD;
+}
+
+void ASTStmtWriter::VisitReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
+  VisitExpr(E);
+//  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_REFLECTION_ENUM_FIELD_VALUE;
+}
+
+void ASTStmtWriter::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *E) {
+  VisitExpr(E);
+//  Record.AddStmt(E->getImplicitCastExpr());
+  Code = serialization::EXPR_REFLECTION_ENUM_FIELD_NAME;
 }
 
 //===----------------------------------------------------------------------===//

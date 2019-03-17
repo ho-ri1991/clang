@@ -140,6 +140,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
     K = CXCursor_ForStmt;
     break;
   
+  case Stmt::ExpansionForStmtClass:
+    K = CXCursor_ForStmt;
+    break;
+  
   case Stmt::GotoStmtClass:
     K = CXCursor_GotoStmt;
     break;
@@ -506,6 +510,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::ASTMemberCheckAccessSpecExprClass:
   case Stmt::ASTMemberUpdateAccessSpecExprClass:
   case Stmt::ASTInjectExprClass:
+  case Stmt::ReflectionEnumFieldsExprClass:
+  case Stmt::ReflectionEnumFieldExprClass:
+  case Stmt::ReflectionEnumFieldValueExprClass:
+  case Stmt::ReflectionEnumFieldNameExprClass:
     K = CXCursor_DeclRefExpr;
     break;
       

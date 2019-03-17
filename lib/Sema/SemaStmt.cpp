@@ -1768,6 +1768,16 @@ StmtResult Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
               Body, ForLoc, LParenLoc, RParenLoc);
 }
 
+StmtResult Sema::ActOnExpansionForStmt(SourceLocation ForLoc,
+                                       SourceLocation LParenLoc,
+                                       Stmt* Var,
+                                       Expr* Init,
+                                       SourceLocation RParenLoc,
+                                       Stmt *Body)
+{
+  return new (Context) ExpansionForStmt(Var, Init, Body, ForLoc, LParenLoc, RParenLoc);
+}
+  
 /// In an Objective C collection iteration statement:
 ///   for (x in y)
 /// x can be an arbitrary l-value expression.  Bind it up as a

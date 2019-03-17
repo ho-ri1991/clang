@@ -18,6 +18,7 @@ def SwitchStmt : Stmt;
 def WhileStmt : Stmt;
 def DoStmt : Stmt;
 def ForStmt : Stmt;
+def ExpansionForStmt : Stmt;
 def GotoStmt : Stmt;
 def IndirectGotoStmt : Stmt;
 def ContinueStmt : Stmt;
@@ -193,6 +194,10 @@ def ASTMemberCheckAccessSpecExpr : DStmt<Expr>;
 def ASTMemberUpdateAccessSpecExpr : DStmt<Expr>;
 def ASTInjectExpr : DStmt<Expr>;
 def ReflexprExpr : DStmt<Expr>;
+def ReflectionEnumFieldsExpr : DStmt<Expr>;
+def ReflectionEnumFieldExpr : DStmt<Expr>;
+def ReflectionEnumFieldValueExpr : DStmt<Expr>;
+def ReflectionEnumFieldNameExpr : DStmt<Expr>;
 
 // Microsoft Extensions.
 def MSPropertyRefExpr : DStmt<Expr>;

@@ -3534,6 +3534,10 @@ recurse:
   case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
   case Expr::ReflexprExprClass:
+  case Expr::ReflectionEnumFieldsExprClass:
+  case Expr::ReflectionEnumFieldExprClass:
+  case Expr::ReflectionEnumFieldValueExprClass:
+  case Expr::ReflectionEnumFieldNameExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

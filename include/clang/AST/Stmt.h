@@ -2335,6 +2335,57 @@ public:
   child_range children();
 };
 
+
+class ExpansionForStmt : public Stmt {
+  SourceLocation ForLoc;
+  enum { VAR_DECL, INIT, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR];
+  SourceLocation LParenLoc, RParenLoc;
+
+public:
+  ExpansionForStmt(Stmt *VarDeclStmt, Expr *Init, Stmt *Body,
+                   SourceLocation FL, SourceLocation LP, SourceLocation RP);
+
+  /// Build an empty for statement.
+  explicit ExpansionForStmt(EmptyShell Empty) : Stmt(ExpansionForStmtClass, Empty) {}
+
+  Expr *getInit() { return reinterpret_cast<Expr*>(SubExprs[INIT]); }
+  Stmt *getBody() { return SubExprs[BODY]; }
+  Stmt *getVarDecl() { return SubExprs[VAR_DECL]; }
+
+  const Expr *getInit() const { return reinterpret_cast<Expr*>(SubExprs[INIT]); }
+  const Stmt *getBody() const { return SubExprs[BODY]; }
+  const Stmt *getVarDecl() const { return SubExprs[VAR_DECL]; }
+
+  void setInit(Expr *Init) { SubExprs[INIT] = reinterpret_cast<Stmt*>(Init); }
+  void setBody(Stmt* Body) { SubExprs[BODY] = Body; }
+  void setVarDecl(Stmt* Var) { SubExprs[VAR_DECL] = Var; }
+
+  SourceLocation getForLoc() const { return ForLoc; }
+  void setForLoc(SourceLocation L) { ForLoc = L; }
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  void setLParenLoc(SourceLocation L) { LParenLoc = L; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const LLVM_READONLY { return ForLoc; }
+
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
+    return SubExprs[BODY]->getLocEnd();
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ExpansionForStmtClass;
+  }
+
+  // Iterators
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0]+END_EXPR);
+  }
+};
+
 } // namespace clang
 
 #endif // LLVM_CLANG_AST_STMT_H

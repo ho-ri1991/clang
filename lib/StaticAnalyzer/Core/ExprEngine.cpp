@@ -1174,6 +1174,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ASTMemberUpdateAccessSpecExprClass:
     case Stmt::ASTInjectExprClass:
     case Stmt::ReflexprExprClass:
+    case Stmt::ReflectionEnumFieldsExprClass:
+    case Stmt::ReflectionEnumFieldExprClass:
+    case Stmt::ReflectionEnumFieldValueExprClass:
+    case Stmt::ReflectionEnumFieldNameExprClass:
     case Stmt::CXXNoexceptExprClass:
     case Stmt::PackExpansionExprClass:
     case Stmt::SubstNonTypeTemplateParmPackExprClass:
@@ -1254,6 +1258,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::DefaultStmtClass:
     case Stmt::DoStmtClass:
     case Stmt::ForStmtClass:
+    case Stmt::ExpansionForStmtClass:
     case Stmt::GotoStmtClass:
     case Stmt::IfStmtClass:
     case Stmt::IndirectGotoStmtClass:

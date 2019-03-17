@@ -4015,6 +4015,12 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
       break;
     }
 
+    case Stmt::ExpansionForStmtClass: {
+      const ExpansionForStmt *FS = cast<ExpansionForStmt>(S);
+      assert(false && "unimplemented now");
+      break;
+    }
+
     case Stmt::DeclStmtClass:
       // FIXME: If the variable has initialization that can't be jumped over,
       // bail out of any immediately-surrounding compound-statement too.
@@ -4300,6 +4306,12 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
           return ESR_Failed;
       }
     }
+    return ESR_Succeeded;
+  }
+
+  case Stmt::ExpansionForStmtClass: {
+    const ExpansionForStmt *FS = cast<ExpansionForStmt>(S);
+    assert(false && "unimplemented now");
     return ESR_Succeeded;
   }
 
@@ -7401,6 +7413,26 @@ public:
 
     uint64_t Ptr = reinterpret_cast<uint64_t>(SrcTy.getTypePtr()->getAsTagDecl());
     return Success(Ptr, E);
+  }
+
+  bool VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {
+    assert("unimplemented now");
+    return false;
+  }
+
+  bool VisitReflectionEnumFieldExpr(const ReflectionEnumFieldExpr *E) {
+    assert("unimplemented now");
+    return false;
+  }
+
+  bool VisitReflectionEnumFieldValueExpr(const ReflectionEnumFieldValueExpr *E) {
+    assert("unimplemented now");
+    return false;
+  }
+
+  bool VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
+    assert("unimplemented now");
+    return false;
   }
 
 
@@ -11344,6 +11376,14 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::ASTMemberUpdateAccessSpecExprClass:
     return CheckICE(cast<ASTMemberUpdateAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
   case Expr::ReflexprExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
+  case Expr::ReflectionEnumFieldsExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
+  case Expr::ReflectionEnumFieldExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
+  case Expr::ReflectionEnumFieldValueExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
+  case Expr::ReflectionEnumFieldNameExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::ASTMemberVariableExprClass: {

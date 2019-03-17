@@ -1987,6 +1987,10 @@ public:
   ExprResult ActOnASTMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
   ExprResult ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn);
   ExprResult ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange);
+  ExprResult ActOnReflectionEnumFieldsExpr(ExprResult DeclRef, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldExpr(ExprResult DeclRef, ExprResult IndexDeclRef, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldValueExpr(ExprResult DeclRef, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldNameExpr(ExprResult DeclRef, SourceRange Range);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);
@@ -3783,6 +3787,14 @@ public:
                           FullExprArg Third,
                           SourceLocation RParenLoc,
                           Stmt *Body);
+
+  StmtResult ActOnExpansionForStmt(SourceLocation ForLoc,
+                                   SourceLocation LParenLoc,
+                                   Stmt* Var,
+                                   Expr* Init,
+                                   SourceLocation RParenLoc,
+                                   Stmt *Body);
+  
   ExprResult CheckObjCForCollectionOperand(SourceLocation forLoc,
                                            Expr *collection);
   StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,

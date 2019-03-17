@@ -1586,6 +1586,9 @@ namespace serialization {
       /// A ForStmt record.
       STMT_FOR,
 
+      /// A ExpansionForStmt record.
+      STMT_EXPANSION_FOR,
+
       /// A GotoStmt record.
       STMT_GOTO,
 
@@ -1762,6 +1765,18 @@ namespace serialization {
 
       /// An ReflexprExpr record.
       EXPR_REFLEXPR,
+
+      /// An ReflectionEnumFieldsExpr record.
+      EXPR_REFLECTION_ENUM_FIELDS,
+
+      /// An ReflectionEnumFieldExpr record.
+      EXPR_REFLECTION_ENUM_FIELD,
+
+      /// An ReflectionEnumFieldValueExpr record.
+      EXPR_REFLECTION_ENUM_FIELD_VALUE,
+
+      /// An ReflectionEnumFieldNameExpr record.
+      EXPR_REFLECTION_ENUM_FIELD_NAME,
 
       // Objective-C
 

@@ -16712,3 +16712,65 @@ ExprResult Sema::ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, Sou
   return new(Context) ReflexprExpr(Ty, Context.getIntPtrType(), ArgRange.getBegin(), ArgRange.getEnd());
 }
 
+ExprResult Sema::ActOnReflectionEnumFieldsExpr(ExprResult DeclRef, SourceRange Range)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ReflectionEnumFieldsExpr(Cast, Range);
+  }
+}
+
+ExprResult Sema::ActOnReflectionEnumFieldExpr(ExprResult DeclRef, ExprResult IndexDeclRef, SourceRange Range)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass || IndexDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+    auto ASTType = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto ASTCast = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    auto IndexType = IndexDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto IndexCast = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ReflectionEnumFieldExpr(ASTCast, IndexCast, Range);
+  }
+}
+
+ExprResult Sema::ActOnReflectionEnumFieldValueExpr(ExprResult DeclRef, SourceRange Range)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ReflectionEnumFieldValueExpr(Cast, Range);
+  }
+}
+
+ExprResult Sema::ActOnReflectionEnumFieldNameExpr(ExprResult DeclRef, SourceRange Range)
+{
+  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  {
+    // TODO: Diag expect lvalue
+    return ExprResult{};
+  }
+  else
+  {
+    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(Context) ReflectionEnumFieldNameExpr(Cast, Context, Range);
+  }
+}
+

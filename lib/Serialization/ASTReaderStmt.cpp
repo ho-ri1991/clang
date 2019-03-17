@@ -274,6 +274,16 @@ void ASTStmtReader::VisitForStmt(ForStmt *S) {
   S->setRParenLoc(ReadSourceLocation());
 }
 
+void ASTStmtReader::VisitExpansionForStmt(ExpansionForStmt *S) {
+  VisitStmt(S);
+  S->setVarDecl(Record.readSubStmt());
+  S->setInit(Record.readSubExpr());
+  S->setBody(Record.readSubStmt());
+  S->setForLoc(ReadSourceLocation());
+  S->setLParenLoc(ReadSourceLocation());
+  S->setRParenLoc(ReadSourceLocation());
+}
+
 void ASTStmtReader::VisitGotoStmt(GotoStmt *S) {
   VisitStmt(S);
   S->setLabel(ReadDeclAs<LabelDecl>());
@@ -1776,6 +1786,27 @@ void ASTStmtReader::VisitReflexprExpr(ReflexprExpr *E) {
   E->setRParenLoc(ReadSourceLocation());
 }
 
+void ASTStmtReader::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitReflectionEnumFieldExpr(ReflectionEnumFieldExpr *E) {
+  VisitExpr(E);
+  E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *E) {
+  VisitExpr(E);
+  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements
 //===----------------------------------------------------------------------===//
@@ -3240,6 +3271,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) ForStmt(Empty);
       break;
 
+    case STMT_EXPANSION_FOR:
+      S = new (Context) ExpansionForStmt(Empty);
+      break;
+
     case STMT_GOTO:
       S = new (Context) GotoStmt(Empty);
       break;
@@ -3530,6 +3565,22 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_REFLEXPR:
       S = new (Context) ReflexprExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_ENUM_FIELDS:
+      S = new (Context) ReflectionEnumFieldsExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_ENUM_FIELD:
+      S = new (Context) ReflectionEnumFieldExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_ENUM_FIELD_VALUE:
+      S = new (Context) ReflectionEnumFieldValueExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_ENUM_FIELD_NAME:
+      S = new (Context) ReflectionEnumFieldNameExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

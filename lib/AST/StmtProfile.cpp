@@ -283,6 +283,10 @@ void StmtProfiler::VisitForStmt(const ForStmt *S) {
   VisitStmt(S);
 }
 
+void StmtProfiler::VisitExpansionForStmt(const ExpansionForStmt *S) {
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitGotoStmt(const GotoStmt *S) {
   VisitStmt(S);
   VisitDecl(S->getLabel());
@@ -1892,6 +1896,27 @@ void StmtProfiler::VisitASTInjectExpr(const ASTInjectExpr *E) {
 void StmtProfiler::VisitReflexprExpr(const ReflexprExpr *E) {
   VisitExpr(E);
   VisitType(E->getArgumentType());
+}
+
+void StmtProfiler::VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getImplicitCastExpr());
+}
+
+void StmtProfiler::VisitReflectionEnumFieldExpr(const ReflectionEnumFieldExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getASTExpr());
+  VisitExpr(E->getIndexExpr());
+}
+
+void StmtProfiler::VisitReflectionEnumFieldValueExpr(const ReflectionEnumFieldValueExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getImplicitCastExpr());
+}
+
+void StmtProfiler::VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getImplicitCastExpr());
 }
 
 void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {

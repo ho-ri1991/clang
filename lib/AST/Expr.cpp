@@ -3092,6 +3092,11 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case ObjCAvailabilityCheckExprClass:
   case CXXUuidofExprClass:
   case OpaqueValueExprClass:
+  case ReflexprExprClass:
+  case ReflectionEnumFieldsExprClass:
+  case ReflectionEnumFieldExprClass:
+  case ReflectionEnumFieldValueExprClass:
+  case ReflectionEnumFieldNameExprClass:
     // These never have a side-effect.
     return false;
 
@@ -4235,5 +4240,10 @@ Stmt::const_child_range ReflexprExpr::children() const {
           dyn_cast<VariableArrayType>(getArgumentType().getTypePtr()))
     return const_child_range(const_child_iterator(T), const_child_iterator());
   return const_child_range(const_child_iterator(), const_child_iterator());
+}
+
+ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, ASTContext& Context, SourceRange Range)
+  : Expr(ReflectionEnumFieldNameExprClass, Context.DependentTy, VK_LValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
+{
 }
 

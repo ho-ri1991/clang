@@ -202,6 +202,10 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::ASTMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
   case Expr::ReflexprExprClass:
+  case Expr::ReflectionEnumFieldsExprClass:
+  case Expr::ReflectionEnumFieldExprClass:
+  case Expr::ReflectionEnumFieldValueExprClass:
+  case Expr::ReflectionEnumFieldNameExprClass:
     return Cl::CL_PRValue;
 
     // Next come the complicated cases.

@@ -6804,6 +6804,12 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
 
 template<typename Derived>
 StmtResult
+TreeTransform<Derived>::TransformExpansionForStmt(ExpansionForStmt *S) {
+  return StmtError();
+}
+
+template<typename Derived>
+StmtResult
 TreeTransform<Derived>::TransformGotoStmt(GotoStmt *S) {
   Decl *LD = getDerived().TransformDecl(S->getLabel()->getLocation(),
                                         S->getLabel());
@@ -9272,6 +9278,100 @@ TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
   auto Record = static_cast<Decl*>(NewT->getType().getTypePtr()->getAsTagDecl());
   llvm::APInt Int(64, reinterpret_cast<uint64_t>(Record));
   return IntegerLiteral::Create(SemaRef.getASTContext(), Int, SemaRef.getASTContext().getIntPtrType(), E->getOperatorLoc());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
+  assert("unimplemented now");
+  return ExprError();
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflectionEnumFieldExpr(ReflectionEnumFieldExpr *E) {
+  ExprResult AstExpr = TransformExpr(E->getASTExpr());
+  ExprResult IndexExpr = TransformExpr(E->getIndexExpr());
+  if (AstExpr.isInvalid() || IndexExpr.isInvalid())
+    return ExprError();
+  llvm::APSInt AstInt(64);
+  llvm::APSInt IndexInt(64);
+  if (AstExpr.get()->isValueDependent() || IndexExpr.get()->isValueDependent() ||
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
+      !IndexExpr.get()->EvaluateAsInt(IndexInt, getSema().getASTContext()))
+  {
+    E->setASTExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+    E->setIndexExpr(cast<ImplicitCastExpr>(IndexExpr.get()));
+    return E;
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+    auto ClassDecl = static_cast<EnumDecl*>(Ast);
+    auto Index = IndexInt.getExtValue();
+    auto enumFieldItr = ClassDecl->enumerator_begin();
+    while (Index--) { ++enumFieldItr; }
+    llvm::APInt Ptr(64, reinterpret_cast<uint64_t>(*enumFieldItr));
+    return IntegerLiteral::Create(getSema().getASTContext(), Ptr, getSema().getASTContext().getIntPtrType(), AstExpr.get()->getExprLoc());
+  }
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
+  ExprResult AstExpr = TransformExpr(E->getImplicitCastExpr());
+  if (AstExpr.isInvalid())
+    return ExprError();
+  llvm::APSInt AstInt(64);
+  if (AstExpr.get()->isValueDependent() ||
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()))
+  {
+    E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+    return E;
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+    auto EnumConstDecl = static_cast<EnumConstantDecl*>(Ast);
+    CXXScopeSpec ScopeSpec;
+    return getSema().BuildDeclRefExpr(EnumConstDecl, EnumConstDecl->getType(), VK_RValue, E->getLocStart(), &ScopeSpec);
+  }
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *E) {
+  ExprResult AstExpr = TransformExpr(E->getImplicitCastExpr());
+  if (AstExpr.isInvalid())
+    return ExprError();
+  llvm::APSInt AstInt(64);
+  if (AstExpr.get()->isValueDependent() ||
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()))
+  {
+    E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+    return E;
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+    auto EnumConstDecl = static_cast<EnumConstantDecl*>(Ast);
+
+    SmallVector<SourceLocation, 4> StringTokLocs;
+    StringTokLocs.push_back(E->getImplicitCastExpr()->getExprLoc());
+    StringRef lit(EnumConstDecl->getIdentifier()->getNameStart());
+    QualType CharTy = getSema().getASTContext().CharTy;
+    CharTy.addConst();
+    CharTy = getSema().getASTContext().adjustStringLiteralBaseType(CharTy);
+    QualType StrTy = getSema().getASTContext().getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+    return StringLiteral::Create(
+        getSema().getASTContext(),
+        lit,
+        StringLiteral::Ascii,
+        /*Pascal*/false, 
+        StrTy,
+        &StringTokLocs[0],
+        /*NumConcatenated*/1);
+  }
 }
 
 template<typename Derived>

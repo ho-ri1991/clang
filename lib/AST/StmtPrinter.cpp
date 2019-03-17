@@ -328,6 +328,27 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
   }
 }
 
+void StmtPrinter::VisitExpansionForStmt(ExpansionForStmt *Node) {
+  Indent() << "for...(";
+  if (Node->getVarDecl())
+  {
+    PrintStmt(Node->getVarDecl());
+  }
+  OS << ";";
+  if (Node->getInit()) {
+    PrintExpr(cast<Expr>(Node->getInit()));
+  }
+  OS << ") ";
+
+  if (auto *CS = dyn_cast<CompoundStmt>(Node->getBody())) {
+    PrintRawCompoundStmt(CS);
+    OS << "\n";
+  } else {
+    OS << "\n";
+    PrintStmt(Node->getBody());
+  }
+}
+
 void StmtPrinter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *Node) {
   Indent() << "for (";
   if (auto *DS = dyn_cast<DeclStmt>(Node->getElement()))
@@ -2877,6 +2898,32 @@ void StmtPrinter::VisitASTInjectExpr(ASTInjectExpr *Node) {
 void StmtPrinter::VisitReflexprExpr(ReflexprExpr *Node){
   OS << "reflexpr(";
   Node->getArgumentType().print(OS, Policy);
+  OS << ')';
+}
+
+void StmtPrinter::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *Node){
+  OS << "enum_fields(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ')';
+}
+
+void StmtPrinter::VisitReflectionEnumFieldExpr(ReflectionEnumFieldExpr *Node){
+  OS << "enum_field(";
+  PrintExpr(Node->getASTExpr());
+  OS << ',';
+  PrintExpr(Node->getIndexExpr());
+  OS << ')';
+}
+
+void StmtPrinter::VisitReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *Node){
+  OS << "enum_value(";
+  PrintExpr(Node->getImplicitCastExpr());
+  OS << ')';
+}
+
+void StmtPrinter::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *Node){
+  OS << "enum_name(";
+  PrintExpr(Node->getImplicitCastExpr());
   OS << ')';
 }
 

@@ -5752,7 +5752,8 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ReflexprExpr : public Expr {
+class ReflexprExpr : public Expr
+{
   union {
     TypeSourceInfo *Ty;
     Stmt *Ex;
@@ -5766,9 +5767,9 @@ public:
       Expr(ReflexprExprClass, resultType, VK_RValue, OK_Ordinary,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
-           TInfo->getType()->isDependentType(),
-           TInfo->getType()->isInstantiationDependentType(),
-           TInfo->getType()->containsUnexpandedParameterPack()),
+           TInfo ? TInfo->getType()->isDependentType() : true,
+           TInfo ? TInfo->getType()->isInstantiationDependentType() : true,
+           TInfo ? TInfo->getType()->containsUnexpandedParameterPack() : false),
       OpLoc(op), RParenLoc(rp) {
     Argument.Ty = TInfo;
   }
@@ -5812,6 +5813,135 @@ public:
   // Iterators
   child_range children();
   const_child_range children() const;
+};
+
+// $enum_fields($reflexpr(E));
+// only for expansion statements
+class ReflectionEnumFieldsExpr : public Expr
+{
+  Stmt* SubExprs[1];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionEnumFieldsExpr(ImplicitCastExpr* cast, SourceRange Range)
+    : Expr(ReflectionEnumFieldsExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
+    , BeginLoc(Range.getBegin())
+    , EndLoc(Range.getEnd())
+  {
+    SubExprs[0] = cast;
+  }
+  explicit ReflectionEnumFieldsExpr(EmptyShell Shell)
+    : Expr(ReflectionEnumFieldsExprClass, Shell) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionEnumFieldsExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return BeginLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
+};
+
+// $enum_field(e, i);
+class ReflectionEnumFieldExpr : public Expr
+{
+  enum Index
+  {
+    INDEX_AST = 0,
+    INDEX_INDEX = 1,
+    INDEX_SIZE = 2
+  };
+  Stmt* SubExprs[INDEX_SIZE];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionEnumFieldExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index, SourceRange Range)
+    : Expr(ReflectionEnumFieldExprClass, ast->getType(), VK_RValue, OK_Ordinary, ast->isTypeDependent() || index->isTypeDependent(), ast->isValueDependent() || index->isValueDependent(), false, false)
+    , BeginLoc(Range.getBegin())
+    , EndLoc(Range.getEnd())
+  {
+    SubExprs[INDEX_AST] = ast;
+    SubExprs[INDEX_INDEX] = index;
+  }
+  explicit ReflectionEnumFieldExpr(EmptyShell Shell)
+    : Expr(ReflectionEnumFieldExprClass, Shell) { }
+  void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
+  Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
+  const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
+  void setIndexExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_INDEX] = cast; }
+  Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
+  const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionEnumFieldExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return BeginLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
+};
+
+// $enum_value($enum_field(e, i));
+class ReflectionEnumFieldValueExpr : public Expr
+{
+  Stmt* SubExprs[1];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionEnumFieldValueExpr(ImplicitCastExpr* cast, SourceRange Range)
+    : Expr(ReflectionEnumFieldValueExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
+    , BeginLoc(Range.getBegin())
+    , EndLoc(Range.getEnd())
+  {
+    SubExprs[0] = cast;
+  }
+  explicit ReflectionEnumFieldValueExpr(EmptyShell Shell)
+    : Expr(ReflectionEnumFieldValueExprClass, Shell) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionEnumFieldValueExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return BeginLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
+};
+
+// $enum_name($enum_field(e, i));
+class ReflectionEnumFieldNameExpr : public Expr
+{
+  Stmt* SubExprs[1];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, ASTContext& Context, SourceRange Range);
+  explicit ReflectionEnumFieldNameExpr(EmptyShell Shell)
+    : Expr(ReflectionEnumFieldNameExprClass, Shell) { }
+  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
+  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionEnumFieldNameExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
 } // end namespace clang
