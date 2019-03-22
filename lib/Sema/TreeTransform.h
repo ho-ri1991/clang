@@ -430,7 +430,7 @@ public:
                                            Expr *Expr,
                                            Sema::ConditionKind Kind);
 
-  /// Transform the attributes associated with the given declaration and
+  /// Transform the attributes associated with thE given declaration and
   /// place them on the new declaration.
   ///
   /// By default, this operation does nothing. Subclasses may override this
@@ -6805,6 +6805,7 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
 template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformExpansionForStmt(ExpansionForStmt *S) {
+  // Transform the initialization statement
   return StmtError();
 }
 
@@ -9275,6 +9276,13 @@ TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
   if (!NewT)
     return ExprError();
 
+  if (!getDerived().AlwaysRebuild() && NewT == OldT)
+    return E;
+
+  auto TypePtr = NewT->getType().getTypePtr();
+  if (!TypePtr || TypePtr->isDependentType())
+    return getSema().ActOnReflexprExpr(E->getOperatorLoc(), NewT, SourceRange(E->getOperatorLoc(), E->getRParenLoc()));
+
   auto Record = static_cast<Decl*>(NewT->getType().getTypePtr()->getAsTagDecl());
   llvm::APInt Int(64, reinterpret_cast<uint64_t>(Record));
   return IntegerLiteral::Create(SemaRef.getASTContext(), Int, SemaRef.getASTContext().getIntPtrType(), E->getOperatorLoc());
@@ -9282,9 +9290,24 @@ TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
-  assert("unimplemented now");
-  return ExprError();
+TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E)
+{
+  ExprResult Result = TransformExpr(E->getImplicitCastExpr());
+  if (Result.isInvalid())
+    return ExprError();
+  if (Result.get()->getStmtClass() == Stmt::ImplicitCastExprClass)
+    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(cast<ImplicitCastExpr>(Result.get()), SourceRange(E->getLocStart(), E->getLocEnd()));
+  else if (Result.get()->getStmtClass() == Stmt::DeclRefExprClass)
+  {
+    getSema().MaybeODRUseExprs.erase(Result.get());
+    auto ASTType = Result.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto ASTCast = ImplicitCastExpr::Create(getSema().getASTContext(), ASTType, CK_LValueToRValue, Result.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(ASTCast, SourceRange(E->getLocStart(), E->getLocEnd()));
+  }
+  else
+  {
+    return ExprError();
+  }
 }
 
 template<typename Derived>
@@ -9319,15 +9342,26 @@ TreeTransform<Derived>::TransformReflectionEnumFieldExpr(ReflectionEnumFieldExpr
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
-  ExprResult AstExpr = TransformExpr(E->getImplicitCastExpr());
+  ExprResult AstExpr = getDerived().TransformExpr(E->getImplicitCastExpr());
   if (AstExpr.isInvalid())
     return ExprError();
+  getSema().MaybeODRUseExprs.erase(AstExpr.get());
   llvm::APSInt AstInt(64);
   if (AstExpr.get()->isValueDependent() ||
-      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()))
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
+      !AstInt.getExtValue())
   {
-    E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
-    return E;
+    if (AstExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+    {
+      auto Cast = ImplicitCastExpr::Create(getSema().getASTContext(), AstExpr.get()->getType(), CK_LValueToRValue, AstExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+      E->setImplicitCastExpr(Cast);
+      return E;
+    }
+    else
+    {
+      E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+      return E;
+    }
   }
   else
   {
@@ -9344,6 +9378,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumField
   ExprResult AstExpr = TransformExpr(E->getImplicitCastExpr());
   if (AstExpr.isInvalid())
     return ExprError();
+  getSema().MaybeODRUseExprs.erase(AstExpr.get());
   llvm::APSInt AstInt(64);
   if (AstExpr.get()->isValueDependent() ||
       !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()))

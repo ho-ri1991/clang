@@ -39,6 +39,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 
+#include "SemaTreeCopy.h"
+
 using namespace clang;
 using namespace sema;
 
@@ -1775,7 +1777,15 @@ StmtResult Sema::ActOnExpansionForStmt(SourceLocation ForLoc,
                                        SourceLocation RParenLoc,
                                        Stmt *Body)
 {
-  return new (Context) ExpansionForStmt(Var, Init, Body, ForLoc, LParenLoc, RParenLoc);
+  if (Init->isValueDependent() || Init->isTypeDependent())
+  {
+    return new (Context) ExpansionForStmt(Var, Init, Body, ForLoc, LParenLoc, RParenLoc);
+  }
+  else
+  {
+    auto For = new (Context) ExpansionForStmt(Var, Init, Body, ForLoc, LParenLoc, RParenLoc);
+    return ExpandForStmt(For, *this);
+  }
 }
   
 /// In an Objective C collection iteration statement:

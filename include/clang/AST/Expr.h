@@ -5767,8 +5767,8 @@ public:
       Expr(ReflexprExprClass, resultType, VK_RValue, OK_Ordinary,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
-           TInfo ? TInfo->getType()->isDependentType() : true,
-           TInfo ? TInfo->getType()->isInstantiationDependentType() : true,
+           TInfo ? TInfo->getType()->isDependentType() : false,
+           TInfo ? TInfo->getType()->isInstantiationDependentType() : false,
            TInfo ? TInfo->getType()->containsUnexpandedParameterPack() : false),
       OpLoc(op), RParenLoc(rp) {
     Argument.Ty = TInfo;
@@ -5779,7 +5779,8 @@ public:
     : Expr(ReflexprExprClass, Empty) { }
 
   QualType getArgumentType() const {
-    return getArgumentTypeInfo()->getType();
+    auto TInfo = getArgumentTypeInfo();
+    return TInfo ? TInfo->getType() : QualType{};
   }
   TypeSourceInfo *getArgumentTypeInfo() const {
     return Argument.Ty;
@@ -5894,13 +5895,7 @@ class ReflectionEnumFieldValueExpr : public Expr
   Stmt* SubExprs[1];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldValueExpr(ImplicitCastExpr* cast, SourceRange Range)
-    : Expr(ReflectionEnumFieldValueExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
-    , BeginLoc(Range.getBegin())
-    , EndLoc(Range.getEnd())
-  {
-    SubExprs[0] = cast;
-  }
+  ReflectionEnumFieldValueExpr(ImplicitCastExpr* cast, SourceRange Range, ASTContext& C, bool b);
   explicit ReflectionEnumFieldValueExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldValueExprClass, Shell) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }

@@ -4181,6 +4181,8 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
     if (!EvaluateInteger(ASTExpr, ASTVal, Info))
       return ESR_Failed;
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    if (!Ast)
+      return ESR_Succeeded;
     Ast->setAccess(AS);
     return ESR_Succeeded;
   }
@@ -7314,6 +7316,8 @@ public:
     if (!Result.isInt()) return Error(E);
     const APSInt &Value = Result.getInt();
     auto Int = Value.getExtValue();
+    if (!Int)
+      return Success(0ULL, E);
     auto Ast = reinterpret_cast<Decl*>(Int);
     auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
     auto MemberRange = ClassDecl->fields();
@@ -7329,6 +7333,8 @@ public:
     if (!EvaluateInteger(SubExpr, Val, Info))
       return false;
     auto Int = Val.getExtValue();
+    if (!Int)
+      return Success(0ULL, E);
     auto Ast = reinterpret_cast<Decl*>(Int);
     auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
     return Success(reinterpret_cast<uint64_t>(FieldDeclPtr->getIdentifier()->getNameStart()), E);
@@ -7343,6 +7349,8 @@ public:
     APSInt IndexVal;
     if (!EvaluateInteger(IndexExpr, IndexVal, Info))
       return false;
+    if (!ASTVal.getExtValue())
+      return Success(0ULL, E);
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
     auto Index = IndexVal.getExtValue();
     auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
@@ -7357,6 +7365,8 @@ public:
     if (!EvaluateInteger(SubExpr, Val, Info))
       return false;
     auto Int = Val.getExtValue();
+    if (!Int)
+      return Success(0ULL, E);
     auto Ast = reinterpret_cast<Decl*>(Int);
     auto ClassDecl = cast<CXXRecordDecl>(Ast);
     auto MemberRange = ClassDecl->methods();
@@ -7372,6 +7382,8 @@ public:
     if (!EvaluateInteger(SubExpr, Val, Info))
       return false;
     auto Int = Val.getExtValue();
+    if (!Int)
+      return Success(0ULL, E);
     auto Ast = reinterpret_cast<Decl*>(Int);
     auto MethodDeclPtr = cast<CXXMethodDecl>(Ast);
     return Success(reinterpret_cast<uint64_t>(MethodDeclPtr->getIdentifier()->getNameStart()), E);
@@ -7387,6 +7399,8 @@ public:
     if (!EvaluateInteger(IndexExpr, IndexVal, Info))
       return false;
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    if (!Ast)
+      return Success(0ULL, E);
     auto Index = IndexVal.getExtValue();
     auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
     auto MemberFuncItr = ClassDecl->method_begin();
@@ -7401,11 +7415,15 @@ public:
     if (!EvaluateInteger(ASTExpr, ASTVal, Info))
       return false;
     auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    if (!Ast)
+      return Success(0, E);
     return Success(Ast->getAccess() == AS ? 1 : 0, E);
   }
 
   bool VisitReflexprExpr(const ReflexprExpr* E) {
     QualType SrcTy = E->getTypeOfArgument();
+    if (SrcTy.isNull())
+      return Success(0ULL, E);
     // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
     //   the result is the size of the referenced type."
     if (const ReferenceType *Ref = SrcTy->getAs<ReferenceType>())
@@ -7416,23 +7434,19 @@ public:
   }
 
   bool VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {
-    assert("unimplemented now");
-    return false;
+    return Success(0, E);
   }
 
   bool VisitReflectionEnumFieldExpr(const ReflectionEnumFieldExpr *E) {
-    assert("unimplemented now");
-    return false;
+    return Success(0, E);
   }
 
   bool VisitReflectionEnumFieldValueExpr(const ReflectionEnumFieldValueExpr *E) {
-    assert("unimplemented now");
-    return false;
+    return Success(0, E);
   }
 
   bool VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
-    assert("unimplemented now");
-    return false;
+    return Success(0, E);
   }
 
 
@@ -11382,7 +11396,8 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::ReflectionEnumFieldExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
   case Expr::ReflectionEnumFieldValueExprClass:
-    return ICEDiag(IK_NotICE, E->getLocStart());
+    return NoDiag();
+//    return ICEDiag(IK_NotICE, E->getLocStart());
   case Expr::ReflectionEnumFieldNameExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 

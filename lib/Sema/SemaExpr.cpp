@@ -16755,7 +16755,7 @@ ExprResult Sema::ActOnReflectionEnumFieldValueExpr(ExprResult DeclRef, SourceRan
   {
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ReflectionEnumFieldValueExpr(Cast, Range);
+    return new(Context) ReflectionEnumFieldValueExpr(Cast, Range, Context, false);
   }
 }
 

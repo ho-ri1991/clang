@@ -302,7 +302,7 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
   }
   else if (Tok.is(tok::kw_for) && NextToken().is(tok::ellipsis))
   { // expansion statement
-    ConsumeToken(); // consume kw_for
+    auto ForLoc = ConsumeToken(); // consume kw_for
     ConsumeToken(); // consume ellipsis
     BalancedDelimiterTracker BDT(*this, tok::l_paren);
     BDT.consumeOpen();
@@ -323,7 +323,7 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       RangeDeclToks.push_back(GenerateToken(tok::cash, RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(GenerateIdentifierToken(PP, "reflexpr", RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(GenerateToken(tok::l_paren, RangeDeclToks.back().getLocation()));
-      RangeDeclToks.push_back(GenerateLiteralToken(tok::numeric_constant, "0", 1, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateToken(tok::kw_int, RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(GenerateToken(tok::r_paren, RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(GenerateToken(tok::semi, RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(Tok);
@@ -336,8 +336,11 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
     }
 
     this->isExpandReflection = true;
-    return Actions.ActOnCompoundStmt(BDT.getOpenLocation(), BDT.getCloseLocation(),
-                                     Stmts, /*isStmtExpr=*/false);
+
+    auto CompoundStmtResult =  Actions.ActOnCompoundStmt(BDT.getOpenLocation(), BDT.getCloseLocation(),
+                                                         Stmts, /*isStmtExpr=*/false);
+    return Actions.ActOnExpansionForStmt(ForLoc, BDT.getOpenLocation(), Stmts[0], ArgExprs[0], BDT.getCloseLocation(), CompoundStmtResult.get());
+
   }
   return Parser::ParseStatementOrDeclaration(Stmts, Allowed, TrailingElseLoc);
 }
@@ -386,15 +389,14 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      if (!isExpandReflection || ArgExprs[0]->isValueDependent())
+      llvm::APSInt Int(64);
+      if (!isExpandReflection || ArgExprs[0]->isValueDependent() ||
+          !ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext()))
       {
         return Actions.ActOnASTMemberVariableSizeExpr(ArgExprs[0], Loc);
       }
       else
       {
-        llvm::APSInt Int(64);
-        bool res = ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext());
-        assert(res);
         auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
         auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
         auto MemberRange = ClassDecl->fields();
@@ -415,18 +417,18 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 2);
       BDT.consumeClose();
-      if (!isExpandReflection || ArgExprs[0]->isValueDependent() || ArgExprs[1]->isValueDependent())
+      llvm::APSInt Int1(64);
+      llvm::APSInt Int2(64);
+      if (!isExpandReflection ||
+          ArgExprs[0]->isValueDependent() ||
+          ArgExprs[1]->isValueDependent() ||
+          !ArgExprs[0]->EvaluateAsInt(Int1, Actions.getASTContext()) ||
+          !ArgExprs[1]->EvaluateAsInt(Int2, Actions.getASTContext()))
       {
         return Actions.ActOnASTMemberVariableExpr(ArgExprs[0], ArgExprs[1]);
       }
       else
       {
-        llvm::APSInt Int1(64);
-        llvm::APSInt Int2(64);
-        bool res = ArgExprs[0]->EvaluateAsInt(Int1, Actions.getASTContext());
-        assert(res);
-        res = ArgExprs[1]->EvaluateAsInt(Int2, Actions.getASTContext());
-        assert(res);
         auto Ast = reinterpret_cast<Decl*>(Int1.getExtValue());
         auto ClassDecl = static_cast<CXXRecordDecl*>(Ast);
         auto Index = Int2.getExtValue();
@@ -448,15 +450,14 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      if (!isExpandReflection || ArgExprs[0]->isValueDependent())
+      llvm::APSInt Int(64);
+      if (!isExpandReflection || ArgExprs[0]->isValueDependent() ||
+          !ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext()))
       {
         return Actions.ActOnASTMemberVariableNameExpr(ArgExprs[0]);
       }
       else
       {
-        llvm::APSInt Int(64);
-        bool res = ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext());
-        assert(res);
         auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
         auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
 
@@ -559,19 +560,19 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 2);
       BDT.consumeClose();
-      if (ArgExprs[0]->isValueDependent() || ArgExprs[1]->isValueDependent())
+      llvm::APSInt Int1(64);
+      llvm::APSInt Int2(64);
+      if (!isExpandReflection ||
+          ArgExprs[0]->isValueDependent() ||
+          ArgExprs[1]->isValueDependent() ||
+          !ArgExprs[0]->EvaluateAsInt(Int1, Actions.getASTContext()) ||
+          !ArgExprs[1]->EvaluateAsInt(Int2, Actions.getASTContext()))
       {
-        return ExprError();
-//        return Actions.ActOnASTMemberVariableExpr(ArgExprs[0], ArgExprs[1]);
+        SourceRange Range(BDT.getOpenLocation(), BDT.getCloseLocation());
+        return Actions.ActOnReflectionEnumFieldExpr(ArgExprs[0], ArgExprs[1], Range);
       }
       else
       {
-        llvm::APSInt Int1(64);
-        llvm::APSInt Int2(64);
-        bool res = ArgExprs[0]->EvaluateAsInt(Int1, Actions.getASTContext());
-        assert(res);
-        res = ArgExprs[1]->EvaluateAsInt(Int2, Actions.getASTContext());
-        assert(res);
         auto Ast = reinterpret_cast<Decl*>(Int1.getExtValue());
         auto EnumDeclPtr = static_cast<EnumDecl*>(Ast);
         auto Index = Int2.getExtValue();
@@ -591,20 +592,56 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      if (ArgExprs[0]->isValueDependent())
+      llvm::APSInt Int(64);
+      if (!isExpandReflection || ArgExprs[0]->isValueDependent() ||
+          !ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext()))
       {
-        return ExprError();
-//        return Actions.ActOnASTMemberVariableExpr(ArgExprs[0], ArgExprs[1]);
+        return Actions.ActOnReflectionEnumFieldValueExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()));
       }
       else
       {
-        llvm::APSInt Int(64);
-        bool res = ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext());
-        assert(res);
         auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
         auto EnumConstDeclPtr = static_cast<EnumConstantDecl*>(Ast);
         CXXScopeSpec ScopeSpec;
         return Actions.BuildDeclRefExpr(EnumConstDeclPtr, EnumConstDeclPtr->getType(), VK_RValue, Tok.getLocation(), &ScopeSpec);
+      }
+    }
+    else if (std::strcmp(name, "enum_name") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      llvm::APSInt Int(64);
+      if (!isExpandReflection || ArgExprs[0]->isValueDependent() ||
+          !ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext()))
+      {
+        return Actions.ActOnReflectionEnumFieldNameExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()));
+      }
+      else
+      {
+        auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+        auto EnumConstDeclPtr = static_cast<EnumConstantDecl*>(Ast);
+
+        SmallVector<SourceLocation, 4> StringTokLocs;
+        StringTokLocs.push_back(ArgExprs[0]->getExprLoc());
+        StringRef lit(EnumConstDeclPtr->getIdentifier()->getNameStart());
+        QualType CharTy = Actions.getASTContext().CharTy;
+        CharTy.addConst();
+        CharTy = Actions.getASTContext().adjustStringLiteralBaseType(CharTy);
+        QualType StrTy = Actions.getASTContext().getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+        return StringLiteral::Create(
+            Actions.getASTContext(),
+            lit,
+            StringLiteral::Ascii,
+            /*Pascal*/false, 
+            StrTy,
+            &StringTokLocs[0],
+            /*NumConcatenated*/1);
       }
     }
     else if (std::strcmp(name, "enum_fields") == 0)

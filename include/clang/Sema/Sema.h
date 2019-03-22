@@ -198,6 +198,8 @@ namespace clang {
   class IndirectFieldDecl;
   struct DeductionFailureInfo;
   class TemplateSpecCandidateSet;
+  class TreeCopy;
+  template <typename T> class TreeTransform;
 
 namespace sema {
   class AccessedEntity;
@@ -523,6 +525,7 @@ public:
   /// element type here is ExprWithCleanups::Object.
   SmallVector<BlockDecl*, 8> ExprCleanupObjects;
 
+  template <typename T> friend class ::clang::TreeTransform;
   /// Store a list of either DeclRefExprs or MemberExprs
   ///  that contain a reference to a variable (constant) that may or may not
   ///  be odr-used in this Expr, and we won't know until all lvalue-to-rvalue
@@ -7594,6 +7597,7 @@ public:
     }
   };
 
+  friend ::clang::TreeCopy;
   /// The current instantiation scope used to store local
   /// variables.
   LocalInstantiationScope *CurrentInstantiationScope;

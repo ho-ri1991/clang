@@ -1134,7 +1134,7 @@ bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
 
 ExpansionForStmt::ExpansionForStmt(Stmt *Var, Expr *Init, Stmt *Body,
                                    SourceLocation FL, SourceLocation LP, SourceLocation RP)
-  : Stmt(ForStmtClass), ForLoc(FL), LParenLoc(LP), RParenLoc(RP)
+  : Stmt(ExpansionForStmtClass), ForLoc(FL), LParenLoc(LP), RParenLoc(RP)
 {
   SubExprs[INIT] = reinterpret_cast<Stmt*>(Init);
   SubExprs[VAR_DECL] = Var;

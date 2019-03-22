@@ -27,6 +27,8 @@
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/Sema/TemplateInstCallback.h"
 
+#include "SemaTreeCopy.h"
+
 using namespace clang;
 using namespace sema;
 
@@ -926,6 +928,22 @@ namespace {
       TemplateDeclInstantiator  DeclInstantiator(getSema(),
                         /* DeclContext *Owner */ Owner, TemplateArgs);
       return DeclInstantiator.SubstTemplateParams(OrigTPL);
+    }
+
+    StmtResult TransformExpansionForStmt(ExpansionForStmt* S)
+    {
+      ExprResult Init = TransformExpr(S->getInit());
+      if (Init.isInvalid() || Init.get()->isValueDependent() || Init.get()->isTypeDependent())
+        return StmtError();
+      StmtResult Body = TransformStmt(S->getBody());
+      if (Body.isInvalid())
+        return StmtError();
+      auto Result = ExpandForStmt(Init.get(), Body.get(), getSema());
+//      auto Result = ExpandForStmt(Init.get(), S->getBody(), getSema());
+      if (Result.isInvalid())
+        return StmtError();
+      return Result;
+//      return TransformStmt(Result.get());
     }
   private:
     ExprResult transformNonTypeTemplateParmRef(NonTypeTemplateParmDecl *parm,

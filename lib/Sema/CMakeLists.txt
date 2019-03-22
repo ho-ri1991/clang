@@ -56,6 +56,7 @@ add_clang_library(clangSema
   SemaTemplateVariadic.cpp
   SemaType.cpp
   TypeLocBuilder.cpp
+  SemaTreeCopy.cpp
 
   LINK_LIBS
   clangAST

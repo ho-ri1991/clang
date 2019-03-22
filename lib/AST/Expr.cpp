@@ -4236,6 +4236,8 @@ Stmt::child_range ReflexprExpr::children() {
 }
 
 Stmt::const_child_range ReflexprExpr::children() const {
+  if (getArgumentType().isNull())
+    return const_child_range(const_child_iterator(), const_child_iterator());
   if (const VariableArrayType *T =
           dyn_cast<VariableArrayType>(getArgumentType().getTypePtr()))
     return const_child_range(const_child_iterator(T), const_child_iterator());
@@ -4247,3 +4249,11 @@ ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast,
 {
 }
 
+ReflectionEnumFieldValueExpr::ReflectionEnumFieldValueExpr(
+    ImplicitCastExpr* cast, SourceRange Range, ASTContext& C, bool b)
+  : Expr(ReflectionEnumFieldValueExprClass, b ? cast->getType() : C.DependentTy, VK_RValue, OK_Ordinary, b ? cast->isTypeDependent() : true, b ? cast->isValueDependent() : true, false, false)
+  , BeginLoc(Range.getBegin())
+  , EndLoc(Range.getEnd())
+{
+  SubExprs[0] = cast;
+}
