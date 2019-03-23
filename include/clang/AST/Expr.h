@@ -5920,7 +5920,7 @@ class ReflectionEnumFieldNameExpr : public Expr
   Stmt* SubExprs[1];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, ASTContext& Context, SourceRange Range);
+  ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context, SourceRange Range);
   explicit ReflectionEnumFieldNameExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldNameExprClass, Shell) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }

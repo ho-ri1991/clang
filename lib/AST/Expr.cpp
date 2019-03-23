@@ -4244,9 +4244,10 @@ Stmt::const_child_range ReflexprExpr::children() const {
   return const_child_range(const_child_iterator(), const_child_iterator());
 }
 
-ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, ASTContext& Context, SourceRange Range)
-  : Expr(ReflectionEnumFieldNameExprClass, Context.DependentTy, VK_LValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
+ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context, SourceRange Range)
+  : Expr(ReflectionEnumFieldNameExprClass, T, VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
 {
+  SubExprs[0] = cast;
 }
 
 ReflectionEnumFieldValueExpr::ReflectionEnumFieldValueExpr(

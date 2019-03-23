@@ -16770,7 +16770,9 @@ ExprResult Sema::ActOnReflectionEnumFieldNameExpr(ExprResult DeclRef, SourceRang
   {
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ReflectionEnumFieldNameExpr(Cast, Context, Range);
+    QualType CharTy = Context.CharTy;
+    CharTy.addConst();
+    return new(Context) ReflectionEnumFieldNameExpr(Cast, Context.getPointerType(CharTy), Context, Range);
   }
 }
 

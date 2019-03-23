@@ -156,6 +156,7 @@ Decl* TreeCopy::TransformDefinition(SourceLocation Loc, Decl* D)
       if (NewInit.isInvalid())
         return D; // TODO: DeclError? like ExprError();
       NewDecl->setInit(NewInit.get());
+      transformedLocalDecl(D, NewDecl);
     }
     return NewDecl;
   }

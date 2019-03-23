@@ -9299,7 +9299,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsEx
     return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(cast<ImplicitCastExpr>(Result.get()), SourceRange(E->getLocStart(), E->getLocEnd()));
   else if (Result.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
-    getSema().MaybeODRUseExprs.erase(Result.get());
+//    getSema().MaybeODRUseExprs.erase(Result.get());
     auto ASTType = Result.getAs<DeclRefExpr>()->getDecl()->getType();
     auto ASTCast = ImplicitCastExpr::Create(getSema().getASTContext(), ASTType, CK_LValueToRValue, Result.getAs<DeclRefExpr>(), nullptr, VK_RValue);
     return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(ASTCast, SourceRange(E->getLocStart(), E->getLocEnd()));
@@ -9345,7 +9345,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldValueExpr(ReflectionEnumFiel
   ExprResult AstExpr = getDerived().TransformExpr(E->getImplicitCastExpr());
   if (AstExpr.isInvalid())
     return ExprError();
-  getSema().MaybeODRUseExprs.erase(AstExpr.get());
+//  getSema().MaybeODRUseExprs.erase(AstExpr.get());
   llvm::APSInt AstInt(64);
   if (AstExpr.get()->isValueDependent() ||
       !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
@@ -9378,11 +9378,23 @@ TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumField
   ExprResult AstExpr = TransformExpr(E->getImplicitCastExpr());
   if (AstExpr.isInvalid())
     return ExprError();
-  getSema().MaybeODRUseExprs.erase(AstExpr.get());
+//  getSema().MaybeODRUseExprs.erase(AstExpr.get());
   llvm::APSInt AstInt(64);
   if (AstExpr.get()->isValueDependent() ||
-      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()))
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
+      !AstInt.getExtValue())
   {
+    if (AstExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+    {
+      auto Cast = ImplicitCastExpr::Create(getSema().getASTContext(), AstExpr.get()->getType(), CK_LValueToRValue, AstExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+      E->setImplicitCastExpr(Cast);
+      return E;
+    }
+    else
+    {
+      E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+      return E;
+    }
     E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
     return E;
   }
@@ -9391,21 +9403,24 @@ TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumField
     auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
     auto EnumConstDecl = static_cast<EnumConstantDecl*>(Ast);
 
+    auto& Context = getSema().getASTContext();
     SmallVector<SourceLocation, 4> StringTokLocs;
     StringTokLocs.push_back(E->getImplicitCastExpr()->getExprLoc());
     StringRef lit(EnumConstDecl->getIdentifier()->getNameStart());
-    QualType CharTy = getSema().getASTContext().CharTy;
+    QualType CharTy = Context.CharTy;
     CharTy.addConst();
-    CharTy = getSema().getASTContext().adjustStringLiteralBaseType(CharTy);
-    QualType StrTy = getSema().getASTContext().getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
-    return StringLiteral::Create(
-        getSema().getASTContext(),
-        lit,
-        StringLiteral::Ascii,
-        /*Pascal*/false, 
-        StrTy,
-        &StringTokLocs[0],
-        /*NumConcatenated*/1);
+    CharTy = Context.adjustStringLiteralBaseType(CharTy);
+    QualType StrTy = Context.getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+    auto Str = StringLiteral::Create(
+                 Context,
+                 lit,
+                 StringLiteral::Ascii,
+                 /*Pascal*/false, 
+                 StrTy,
+                 &StringTokLocs[0],
+                 /*NumConcatenated*/1);
+//    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return ImplicitCastExpr::Create(Context, Context.getPointerType(CharTy), CK_ArrayToPointerDecay, Str, nullptr, VK_RValue);
   }
 }
 
