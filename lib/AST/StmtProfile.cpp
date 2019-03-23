@@ -1861,7 +1861,7 @@ void StmtProfiler::VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExp
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberVariableNameExpr(const ASTMemberVariableNameExpr *E) {
+void StmtProfiler::VisitReflectionMemberVariableNameExpr(const ReflectionMemberVariableNameExpr *E) {
   VisitExpr(E);
 }
 

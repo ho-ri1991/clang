@@ -5510,19 +5510,19 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ASTMemberVariableNameExpr final : public Expr
+class ReflectionMemberVariableNameExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ASTMemberVariableNameExpr(ImplicitCastExpr* cast, ASTContext& Context);
+  ReflectionMemberVariableNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context);
   /// Create an empty test cash expression.
-  explicit ASTMemberVariableNameExpr(EmptyShell Shell)
-    : Expr(ASTMemberVariableNameExprClass, Shell) { }
+  explicit ReflectionMemberVariableNameExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberVariableNameExprClass, Shell) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
   Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
   const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberVariableNameExprClass;
+    return T->getStmtClass() == ReflectionMemberVariableNameExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + 1);

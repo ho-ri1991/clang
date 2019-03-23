@@ -2817,7 +2817,7 @@ void StmtPrinter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *Node
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberVariableNameExpr(ASTMemberVariableNameExpr *Node) {
+void StmtPrinter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *Node) {
   OS << "$var_name(";
   PrintExpr(Node->getImplicitCastExpr());
   OS << ")";

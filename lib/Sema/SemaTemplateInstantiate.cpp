@@ -939,11 +939,9 @@ namespace {
       if (Body.isInvalid())
         return StmtError();
       auto Result = ExpandForStmt(Init.get(), Body.get(), getSema());
-//      auto Result = ExpandForStmt(Init.get(), S->getBody(), getSema());
       if (Result.isInvalid())
         return StmtError();
       return Result;
-//      return TransformStmt(Result.get());
     }
   private:
     ExprResult transformNonTypeTemplateParmRef(NonTypeTemplateParmDecl *parm,

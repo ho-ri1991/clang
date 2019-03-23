@@ -185,7 +185,7 @@ def BlockExpr : DStmt<Expr>;
 def OpaqueValueExpr : DStmt<Expr>;
 def TypoExpr : DStmt<Expr>;
 def ASTMemberVariableSizeExpr : DStmt<Expr>;
-def ASTMemberVariableNameExpr : DStmt<Expr>;
+def ReflectionMemberVariableNameExpr : DStmt<Expr>;
 def ASTMemberVariableExpr : DStmt<Expr>;
 def ASTMemberFunctionSizeExpr : DStmt<Expr>;
 def ASTMemberFunctionNameExpr : DStmt<Expr>;

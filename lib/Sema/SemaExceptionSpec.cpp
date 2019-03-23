@@ -1179,7 +1179,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::ConvertVectorExprClass:
   case Expr::VAArgExprClass:
   case Expr::ASTMemberVariableSizeExprClass:
-  case Expr::ASTMemberVariableNameExprClass:
+  case Expr::ReflectionMemberVariableNameExprClass:
   case Expr::ASTMemberVariableExprClass:
   case Expr::ASTMemberFunctionSizeExprClass:
   case Expr::ASTMemberFunctionNameExprClass:

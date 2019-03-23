@@ -1165,7 +1165,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::UnresolvedMemberExprClass:
     case Stmt::TypoExprClass:
     case Stmt::ASTMemberVariableSizeExprClass:
-    case Stmt::ASTMemberVariableNameExprClass:
+    case Stmt::ReflectionMemberVariableNameExprClass:
     case Stmt::ASTMemberVariableExprClass:
     case Stmt::ASTMemberFunctionSizeExprClass:
     case Stmt::ASTMemberFunctionNameExprClass:

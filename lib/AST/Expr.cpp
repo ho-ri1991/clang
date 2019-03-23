@@ -3101,7 +3101,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
     return false;
 
   case ASTMemberVariableSizeExprClass:
-  case ASTMemberVariableNameExprClass:
+  case ReflectionMemberVariableNameExprClass:
   case ASTMemberVariableExprClass:
   case ASTMemberFunctionSizeExprClass:
   case ASTMemberFunctionNameExprClass:
@@ -4207,8 +4207,8 @@ QualType OMPArraySectionExpr::getBaseOriginalType(const Expr *Base) {
   return OriginalTy;
 }
 
-ASTMemberVariableNameExpr::ASTMemberVariableNameExpr(ImplicitCastExpr* cast, ASTContext& Context)
-  : Expr(ASTMemberVariableNameExprClass, Context.DependentTy, VK_LValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
+ReflectionMemberVariableNameExpr::ReflectionMemberVariableNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context)
+  : Expr(ReflectionMemberVariableNameExprClass, T, VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
 {
   SubExprs[0] = cast;
 }

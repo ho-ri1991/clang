@@ -1739,7 +1739,7 @@ namespace serialization {
       /// An ASTMemberVariableSizeExpr record.
       EXPR_AST_MEMBER_VARIABLE_SIZE,
 
-      /// An ASTMemberVariableNameExpr record.
+      /// An ReflectionMemberVariableNameExpr record.
       EXPR_AST_MEMBER_VARIABLE_NAME,
 
       /// An ASTMemberVariableExpr record.

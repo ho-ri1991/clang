@@ -1734,7 +1734,7 @@ void ASTStmtWriter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E)
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_SIZE;
 }
 
-void ASTStmtWriter::VisitASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_NAME;

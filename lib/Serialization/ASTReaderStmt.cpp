@@ -1738,7 +1738,7 @@ void ASTStmtReader::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E)
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
+void ASTStmtReader::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
@@ -3532,7 +3532,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case EXPR_AST_MEMBER_VARIABLE_NAME:
-      S = new (Context) ASTMemberVariableNameExpr(Empty);
+      S = new (Context) ReflectionMemberVariableNameExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_VARIABLE:

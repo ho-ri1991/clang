@@ -16544,7 +16544,7 @@ ExprResult Sema::ActOnASTMemberVariableSizeExpr(ExprResult DeclRef, SourceLocati
   }
 }
 
-ExprResult Sema::ActOnASTMemberVariableNameExpr(ExprResult DeclRef)
+ExprResult Sema::ActOnReflectionMemberVariableNameExpr(ExprResult DeclRef)
 {
   if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16561,7 +16561,9 @@ ExprResult Sema::ActOnASTMemberVariableNameExpr(ExprResult DeclRef)
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberVariableNameExpr(Cast, getASTContext());
+    QualType CharTy = Context.CharTy;
+    CharTy.addConst();
+    return new(Context) ReflectionMemberVariableNameExpr(Cast, Context.getPointerType(CharTy), Context);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }

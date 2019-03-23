@@ -1981,7 +1981,7 @@ public:
   void ActOnInitializerError(Decl *Dcl);
 
   ExprResult ActOnASTMemberVariableSizeExpr(ExprResult DeclRef, SourceLocation Loc);
-  ExprResult ActOnASTMemberVariableNameExpr(ExprResult DeclRef);
+  ExprResult ActOnReflectionMemberVariableNameExpr(ExprResult DeclRef);
   ExprResult ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
   ExprResult ActOnASTMemberFunctionSizeExpr(ExprResult DeclRef);
   ExprResult ActOnASTMemberFunctionNameExpr(ExprResult DeclRef);

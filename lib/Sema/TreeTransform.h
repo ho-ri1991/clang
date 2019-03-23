@@ -9169,7 +9169,7 @@ TreeTransform<Derived>::TransformASTMemberVariableSizeExpr(ASTMemberVariableSize
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberVariableNameExpr(ASTMemberVariableNameExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *E) {
   ExprResult SubExpr = TransformExpr(E->getImplicitCastExpr());
   if (SubExpr.isInvalid())
     return ExprError();

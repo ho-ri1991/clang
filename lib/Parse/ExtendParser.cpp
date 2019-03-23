@@ -454,7 +454,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       if (!isExpandReflection || ArgExprs[0]->isValueDependent() ||
           !ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext()))
       {
-        return Actions.ActOnASTMemberVariableNameExpr(ArgExprs[0]);
+        return Actions.ActOnReflectionMemberVariableNameExpr(ArgExprs[0]);
       }
       else
       {

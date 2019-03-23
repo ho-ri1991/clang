@@ -5901,6 +5901,34 @@ public:
     return true;
   }
 
+  bool VisitReflectionMemberVariableNameExpr(const ReflectionMemberVariableNameExpr *E) {
+    llvm::APSInt Int;
+    if (!EvaluateInteger(E->getImplicitCastExpr(), Int, Info))
+      return false;
+
+    return Success(E);
+//    auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+//    auto EnumConstDecl = static_cast<CXXRecordDecl*>(Ast);
+//
+//    auto& Context = Info.Ctx;
+//    SmallVector<SourceLocation, 4> StringTokLocs;
+//    StringTokLocs.push_back(E->getImplicitCastExpr()->getExprLoc());
+//    StringRef lit(EnumConstDecl->getIdentifier()->getNameStart());
+//    QualType CharTy = Context.CharTy;
+//    CharTy.addConst();
+//    CharTy = Context.adjustStringLiteralBaseType(CharTy);
+//    QualType StrTy = Context.getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+//    auto Str = StringLiteral::Create(
+//                 Context,
+//                 lit,
+//                 StringLiteral::Ascii,
+//                 /*Pascal*/false, 
+//                 StrTy,
+//                 &StringTokLocs[0],
+//                 /*NumConcatenated*/1);
+//    return Success(Str);
+  }
+
   // FIXME: Missing: @protocol, @selector
 };
 } // end anonymous namespace
@@ -7327,7 +7355,7 @@ public:
     return Success(MemberNum, E);
   }
 
-  bool VisitASTMemberVariableNameExpr(const ASTMemberVariableNameExpr *E) {
+  bool VisitReflectionMemberVariableNameExpr(const ReflectionMemberVariableNameExpr *E) {
     auto SubExpr = E->getImplicitCastExpr();
     APSInt Val;
     if (!EvaluateInteger(SubExpr, Val, Info))
@@ -11379,8 +11407,8 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
 
   case Expr::ASTMemberVariableSizeExprClass:
     return CheckICE(cast<ASTMemberVariableSizeExpr>(E)->getImplicitCastExpr(), Ctx);
-  case Expr::ASTMemberVariableNameExprClass:
-    return CheckICE(cast<ASTMemberVariableNameExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflectionMemberVariableNameExprClass:
+    return CheckICE(cast<ReflectionMemberVariableNameExpr>(E)->getImplicitCastExpr(), Ctx);
   case Expr::ASTMemberFunctionSizeExprClass:
     return CheckICE(cast<ASTMemberFunctionSizeExpr>(E)->getImplicitCastExpr(), Ctx);
   case Expr::ASTMemberFunctionNameExprClass:
