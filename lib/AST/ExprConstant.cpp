@@ -4125,11 +4125,17 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
           case 2: // identifier
             if (MetaTok.Expr)
             {
-              APSInt CharPtrVal;
-              if (!EvaluateInteger(MetaTok.Expr, CharPtrVal, Info))
+              LValue Result;
+              if (!EvaluatePointer(MetaTok.Expr, Result, Info))
                 return ESR_Failed;
-              auto Chars = reinterpret_cast<const char*>(CharPtrVal.getExtValue());
-              identifierData += Chars;
+              auto E = Result.Base.get<const Expr*>();
+              auto MemberVariableNameExpr = cast<ReflectionMemberVariableNameExpr>(E);
+              llvm::APSInt Ast;
+              if (!EvaluateInteger(MemberVariableNameExpr->getImplicitCastExpr(), Ast, Info))
+                return ESR_Failed;
+              auto AstPtr = reinterpret_cast<Decl*>(Ast.getExtValue());
+              auto FieldDeclPtr = cast<FieldDecl>(AstPtr);
+              identifierData += FieldDeclPtr->getIdentifier()->getNameStart();
               identifierLoc = MetaTok.Tok.getLocation();
             }
             else
