@@ -9144,7 +9144,7 @@ TreeTransform<Derived>::TransformTypoExpr(TypoExpr *E) {
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *E) {
   ExprResult SubExpr = TransformExpr(E->getImplicitCastExpr());
   if (SubExpr.isInvalid())
     return ExprError();
@@ -9204,7 +9204,7 @@ TreeTransform<Derived>::TransformReflectionMemberVariableNameExpr(ReflectionMemb
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberVariableExpr(ASTMemberVariableExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
   ExprResult AstExpr = TransformExpr(E->getASTExpr());
   ExprResult IndexExpr = TransformExpr(E->getIndexExpr());
   if (AstExpr.isInvalid() || IndexExpr.isInvalid())
@@ -9233,31 +9233,31 @@ TreeTransform<Derived>::TransformASTMemberVariableExpr(ASTMemberVariableExpr *E)
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *E) {
   return E;
 }
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *E) {
   return E;
 }
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberFunctionExpr(ASTMemberFunctionExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberFunctionExpr(ReflectionMemberFunctionExpr *E) {
   return E;
 }
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheckAccessSpecExpr *E) {
   return E;
 }
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *E) {
+TreeTransform<Derived>::TransformReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpdateAccessSpecExpr *E) {
   return E;
 }
 
@@ -9290,14 +9290,11 @@ TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E)
-{
-  ExprResult Result = TransformExpr(E->getImplicitCastExpr());
+TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
+  ExprResult Result = TransformExpr(E->getSubExpr());
   if (Result.isInvalid())
     return ExprError();
-  if (Result.get()->getStmtClass() == Stmt::ImplicitCastExprClass)
-    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(cast<ImplicitCastExpr>(Result.get()), SourceRange(E->getLocStart(), E->getLocEnd()));
-  else if (Result.get()->getStmtClass() == Stmt::DeclRefExprClass)
+  if (Result.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
 //    getSema().MaybeODRUseExprs.erase(Result.get());
     auto ASTType = Result.getAs<DeclRefExpr>()->getDecl()->getType();
@@ -9305,9 +9302,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsEx
     return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(ASTCast, SourceRange(E->getLocStart(), E->getLocEnd()));
   }
   else
-  {
-    return ExprError();
-  }
+    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(Result.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
 }
 
 template<typename Derived>
@@ -9323,8 +9318,8 @@ TreeTransform<Derived>::TransformReflectionEnumFieldExpr(ReflectionEnumFieldExpr
       !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
       !IndexExpr.get()->EvaluateAsInt(IndexInt, getSema().getASTContext()))
   {
-    E->setASTExpr(cast<ImplicitCastExpr>(AstExpr.get()));
-    E->setIndexExpr(cast<ImplicitCastExpr>(IndexExpr.get()));
+    E->setASTExpr(AstExpr.get());
+    E->setIndexExpr(IndexExpr.get());
     return E;
   }
   else
@@ -9342,7 +9337,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldExpr(ReflectionEnumFieldExpr
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
-  ExprResult AstExpr = getDerived().TransformExpr(E->getImplicitCastExpr());
+  ExprResult AstExpr = getDerived().TransformExpr(E->getSubExpr());
   if (AstExpr.isInvalid())
     return ExprError();
 //  getSema().MaybeODRUseExprs.erase(AstExpr.get());
@@ -9354,12 +9349,12 @@ TreeTransform<Derived>::TransformReflectionEnumFieldValueExpr(ReflectionEnumFiel
     if (AstExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
     {
       auto Cast = ImplicitCastExpr::Create(getSema().getASTContext(), AstExpr.get()->getType(), CK_LValueToRValue, AstExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-      E->setImplicitCastExpr(Cast);
+      E->setSubExpr(Cast);
       return E;
     }
     else
     {
-      E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+      E->setSubExpr(AstExpr.get());
       return E;
     }
   }
@@ -9375,7 +9370,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldValueExpr(ReflectionEnumFiel
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *E) {
-  ExprResult AstExpr = TransformExpr(E->getImplicitCastExpr());
+  ExprResult AstExpr = TransformExpr(E->getSubExpr());
   if (AstExpr.isInvalid())
     return ExprError();
 //  getSema().MaybeODRUseExprs.erase(AstExpr.get());
@@ -9387,16 +9382,14 @@ TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumField
     if (AstExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
     {
       auto Cast = ImplicitCastExpr::Create(getSema().getASTContext(), AstExpr.get()->getType(), CK_LValueToRValue, AstExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-      E->setImplicitCastExpr(Cast);
+      E->setSubExpr(Cast);
       return E;
     }
     else
     {
-      E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
+      E->setSubExpr(AstExpr.get());
       return E;
     }
-    E->setImplicitCastExpr(cast<ImplicitCastExpr>(AstExpr.get()));
-    return E;
   }
   else
   {
@@ -9405,7 +9398,7 @@ TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumField
 
     auto& Context = getSema().getASTContext();
     SmallVector<SourceLocation, 4> StringTokLocs;
-    StringTokLocs.push_back(E->getImplicitCastExpr()->getExprLoc());
+    StringTokLocs.push_back(E->getSubExpr()->getExprLoc());
     StringRef lit(EnumConstDecl->getIdentifier()->getNameStart());
     QualType CharTy = Context.CharTy;
     CharTy.addConst();

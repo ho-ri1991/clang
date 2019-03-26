@@ -16522,7 +16522,7 @@ ExprResult Sema::ActOnObjCAvailabilityCheckExpr(
       ObjCAvailabilityCheckExpr(Version, AtLoc, RParen, Context.BoolTy);
 }
 
-ExprResult Sema::ActOnASTMemberVariableSizeExpr(ExprResult DeclRef, SourceLocation Loc)
+ExprResult Sema::ActOnReflectionMemberVariableSizeExpr(ExprResult DeclRef, SourceLocation Loc)
 {
   if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16539,7 +16539,7 @@ ExprResult Sema::ActOnASTMemberVariableSizeExpr(ExprResult DeclRef, SourceLocati
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberVariableSizeExpr(Cast, Loc);
+    return new(Context) ReflectionMemberVariableSizeExpr(Cast, Loc);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
@@ -16568,7 +16568,7 @@ ExprResult Sema::ActOnReflectionMemberVariableNameExpr(ExprResult DeclRef)
   }
 }
 
-ExprResult Sema::ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef)
+ExprResult Sema::ActOnReflectionMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef)
 {
   if (ASTDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass || IndexDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16587,12 +16587,12 @@ ExprResult Sema::ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult In
     auto ASTCast = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, ASTDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
     auto IndexType = IndexDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto IndexCast = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberVariableExpr(ASTCast, IndexCast);
+    return new(Context) ReflectionMemberVariableExpr(ASTCast, IndexCast);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
 
-ExprResult Sema::ActOnASTMemberFunctionSizeExpr(ExprResult DeclRef)
+ExprResult Sema::ActOnReflectionMemberFunctionSizeExpr(ExprResult DeclRef)
 {
   if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16609,12 +16609,12 @@ ExprResult Sema::ActOnASTMemberFunctionSizeExpr(ExprResult DeclRef)
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberFunctionSizeExpr(Cast);
+    return new(Context) ReflectionMemberFunctionSizeExpr(Cast);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
 
-ExprResult Sema::ActOnASTMemberFunctionNameExpr(ExprResult DeclRef)
+ExprResult Sema::ActOnReflectionMemberFunctionNameExpr(ExprResult DeclRef)
 {
   if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16631,12 +16631,12 @@ ExprResult Sema::ActOnASTMemberFunctionNameExpr(ExprResult DeclRef)
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberFunctionNameExpr(Cast);
+    return new(Context) ReflectionMemberFunctionNameExpr(Cast);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
 
-ExprResult Sema::ActOnASTMemberFunctionExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef)
+ExprResult Sema::ActOnReflectionMemberFunctionExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef)
 {
   if (ASTDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass || IndexDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16655,12 +16655,12 @@ ExprResult Sema::ActOnASTMemberFunctionExpr(ExprResult ASTDeclRef, ExprResult In
     auto ASTCast = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, ASTDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
     auto IndexType = IndexDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto IndexCast = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberFunctionExpr(ASTCast, IndexCast);
+    return new(Context) ReflectionMemberFunctionExpr(ASTCast, IndexCast);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
 
-ExprResult Sema::ActOnASTMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS)
+ExprResult Sema::ActOnReflectionMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS)
 {
   if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16677,12 +16677,12 @@ ExprResult Sema::ActOnASTMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpe
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberCheckAccessSpecExpr(Context, Cast, AS);
+    return new(Context) ReflectionMemberCheckAccessSpecExpr(Context, Cast, AS);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
 
-ExprResult Sema::ActOnASTMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS)
+ExprResult Sema::ActOnReflectionMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS)
 {
   if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
   {
@@ -16699,7 +16699,7 @@ ExprResult Sema::ActOnASTMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSp
 //    }
     auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
     auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ASTMemberUpdateAccessSpecExpr(Context, Cast, AS);
+    return new(Context) ReflectionMemberUpdateAccessSpecExpr(Context, Cast, AS);
 //    return new(Context) TestCashExpr((DeclRefExpr*)DeclRef.get());
   }
 }
@@ -16714,67 +16714,115 @@ ExprResult Sema::ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, Sou
   return new(Context) ReflexprExpr(Ty, Context.getIntPtrType(), ArgRange.getBegin(), ArgRange.getEnd());
 }
 
-ExprResult Sema::ActOnReflectionEnumFieldsExpr(ExprResult DeclRef, SourceRange Range)
+ExprResult Sema::ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange Range)
 {
-  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  Expr* AstExpr = SubExpr.get();
+  if (SubExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
-    // TODO: Diag expect lvalue
-    return ExprResult{};
+    auto Type = SubExpr.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, SubExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+  }
+  if (AstExpr->isValueDependent() || AstExpr->isTypeDependent())
+  {
+    return new(Context) ReflectionEnumFieldsExpr(AstExpr, Range);
   }
   else
   {
-    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
-    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ReflectionEnumFieldsExpr(Cast, Range);
+    auto T = AstExpr->getType().getCanonicalType();
+    T.removeLocalConst();
+    if (T == Context.getIntPtrType())
+    {
+      return new(Context) ReflectionEnumFieldsExpr(AstExpr, Range);
+    }
+    else
+    {
+      Diag(AstExpr->getLocStart(), diag::err_reflection_argument_type_mismatch);
+      return ExprError();
+    }
   }
 }
 
-ExprResult Sema::ActOnReflectionEnumFieldExpr(ExprResult DeclRef, ExprResult IndexDeclRef, SourceRange Range)
+ExprResult Sema::ActOnReflectionEnumFieldExpr(ExprResult AstResult, ExprResult IndexResult, SourceRange Range)
 {
-  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass || IndexDeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  Expr* AstExpr = AstResult.get();
+  Expr* IndexExpr = IndexResult.get();
+  if (AstResult.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
-    // TODO: Diag expect lvalue
-    return ExprResult{};
+    auto ASTType = AstResult.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, AstResult.getAs<DeclRefExpr>(), nullptr, VK_RValue);
   }
-  else
+  if (IndexResult.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
-    auto ASTType = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
-    auto ASTCast = ImplicitCastExpr::Create(Context, ASTType, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    auto IndexType = IndexDeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
-    auto IndexCast = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexDeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ReflectionEnumFieldExpr(ASTCast, IndexCast, Range);
+    auto IndexType = IndexResult.getAs<DeclRefExpr>()->getDecl()->getType();
+    IndexExpr = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexResult.getAs<DeclRefExpr>(), nullptr, VK_RValue);
   }
+
+  if (AstExpr->isValueDependent() || AstExpr->isTypeDependent() ||
+      IndexExpr->isValueDependent() || IndexExpr->isTypeDependent())
+  {
+    return new(Context) ReflectionEnumFieldExpr(AstExpr, IndexExpr, Range);
+  }
+
+  auto T = AstExpr->getType().getCanonicalType();
+  T.removeLocalConst();
+  if (T != Context.getIntPtrType())
+  {
+    Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch);
+    return ExprError();
+  }
+
+  if (!IndexExpr->getType().getTypePtr()->isIntegerType())
+  {
+    Diag(Range.getEnd(), diag::err_reflection_argument_type_mismatch);
+    return ExprError();
+  }
+
+  return new(Context) ReflectionEnumFieldExpr(AstExpr, IndexExpr, Range);
 }
 
-ExprResult Sema::ActOnReflectionEnumFieldValueExpr(ExprResult DeclRef, SourceRange Range)
+ExprResult Sema::ActOnReflectionEnumFieldValueExpr(ExprResult SubExpr, SourceRange Range)
 {
-  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  Expr* AstExpr = SubExpr.get();
+  if (SubExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
-    // TODO: Diag expect lvalue
-    return ExprResult{};
+    auto Type = SubExpr.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, SubExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
   }
-  else
+  if (AstExpr->isValueDependent() || AstExpr->isTypeDependent())
   {
-    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
-    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(Context) ReflectionEnumFieldValueExpr(Cast, Range, Context, false);
+    return new(Context) ReflectionEnumFieldValueExpr(AstExpr, Range, Context, false);
   }
+  auto T = AstExpr->getType().getCanonicalType();
+  T.removeLocalConst();
+  if (T != Context.getIntPtrType())
+  {
+    Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch);
+    return ExprError();
+  }
+  return new(Context) ReflectionEnumFieldValueExpr(AstExpr, Range, Context, false);
 }
 
-ExprResult Sema::ActOnReflectionEnumFieldNameExpr(ExprResult DeclRef, SourceRange Range)
+ExprResult Sema::ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRange Range)
 {
-  if (DeclRef.get()->getStmtClass() != Stmt::DeclRefExprClass)
+  Expr* AstExpr = SubExpr.get();
+  if (SubExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
   {
-    // TODO: Diag expect lvalue
-    return ExprResult{};
+    auto Type = SubExpr.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, SubExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
   }
-  else
+  if (AstExpr->isValueDependent() || AstExpr->isTypeDependent())
   {
-    auto Type = DeclRef.getAs<DeclRefExpr>()->getDecl()->getType();
-    auto Cast = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, DeclRef.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    QualType CharTy = Context.CharTy;
-    CharTy.addConst();
-    return new(Context) ReflectionEnumFieldNameExpr(Cast, Context.getPointerType(CharTy), Context, Range);
+    return new(Context) ReflectionEnumFieldValueExpr(AstExpr, Range, Context, false);
   }
+  auto T = AstExpr->getType().getCanonicalType();
+  T.removeLocalConst();
+  if (T != Context.getIntPtrType())
+  {
+    Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch);
+    return ExprError();
+  }
+  QualType CharTy = Context.CharTy;
+  CharTy.addConst();
+  return new(Context) ReflectionEnumFieldNameExpr(AstExpr, Context.getPointerType(CharTy), Context, Range);
 }
 

@@ -4178,8 +4178,8 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
     return ESR_Succeeded;
   }
 
-  case Stmt::ASTMemberUpdateAccessSpecExprClass : {
-    auto E = cast<ASTMemberUpdateAccessSpecExpr>(S);
+  case Stmt::ReflectionMemberUpdateAccessSpecExprClass : {
+    auto E = cast<ReflectionMemberUpdateAccessSpecExpr>(S);
     auto ASTExpr = E->getImplicitCastExpr();
     auto AS = E->getAccessSpecifier();
     FullExpressionRAII Scope(Info);
@@ -5913,27 +5913,16 @@ public:
       return false;
 
     return Success(E);
-//    auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
-//    auto EnumConstDecl = static_cast<CXXRecordDecl*>(Ast);
-//
-//    auto& Context = Info.Ctx;
-//    SmallVector<SourceLocation, 4> StringTokLocs;
-//    StringTokLocs.push_back(E->getImplicitCastExpr()->getExprLoc());
-//    StringRef lit(EnumConstDecl->getIdentifier()->getNameStart());
-//    QualType CharTy = Context.CharTy;
-//    CharTy.addConst();
-//    CharTy = Context.adjustStringLiteralBaseType(CharTy);
-//    QualType StrTy = Context.getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
-//    auto Str = StringLiteral::Create(
-//                 Context,
-//                 lit,
-//                 StringLiteral::Ascii,
-//                 /*Pascal*/false, 
-//                 StrTy,
-//                 &StringTokLocs[0],
-//                 /*NumConcatenated*/1);
-//    return Success(Str);
   }
+
+  bool VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
+    llvm::APSInt Int;
+    if (!EvaluateInteger(E->getSubExpr(), Int, Info))
+      return false;
+
+    return Success(E);
+  }
+
 
   // FIXME: Missing: @protocol, @selector
 };
@@ -7343,7 +7332,7 @@ public:
     return Success(E->getValue(), E);
   }
 
-  bool VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExpr *E) {
+  bool VisitReflectionMemberVariableSizeExpr(const ReflectionMemberVariableSizeExpr *E) {
     auto SubExpr = E->getImplicitCastExpr();
     if (!Visit(SubExpr))
       return false;
@@ -7361,20 +7350,7 @@ public:
     return Success(MemberNum, E);
   }
 
-  bool VisitReflectionMemberVariableNameExpr(const ReflectionMemberVariableNameExpr *E) {
-    auto SubExpr = E->getImplicitCastExpr();
-    APSInt Val;
-    if (!EvaluateInteger(SubExpr, Val, Info))
-      return false;
-    auto Int = Val.getExtValue();
-    if (!Int)
-      return Success(0ULL, E);
-    auto Ast = reinterpret_cast<Decl*>(Int);
-    auto FieldDeclPtr = static_cast<FieldDecl*>(Ast);
-    return Success(reinterpret_cast<uint64_t>(FieldDeclPtr->getIdentifier()->getNameStart()), E);
-  }
-
-  bool VisitASTMemberVariableExpr(const ASTMemberVariableExpr *E) {
+  bool VisitReflectionMemberVariableExpr(const ReflectionMemberVariableExpr *E) {
     auto ASTExpr = E->getASTExpr();
     auto IndexExpr = E->getIndexExpr();
     APSInt ASTVal;
@@ -7393,7 +7369,7 @@ public:
     return Success(reinterpret_cast<uint64_t>(*MemberVarItr), E);
   }
 
-  bool VisitASTMemberFunctionSizeExpr(const ASTMemberFunctionSizeExpr *E) {
+  bool VisitReflectionMemberFunctionSizeExpr(const ReflectionMemberFunctionSizeExpr *E) {
     auto SubExpr = E->getImplicitCastExpr();
     APSInt Val;
     if (!EvaluateInteger(SubExpr, Val, Info))
@@ -7410,7 +7386,7 @@ public:
     return Success(MemberNum, E);
   }
 
-  bool VisitASTMemberFunctionNameExpr(const ASTMemberFunctionNameExpr *E) {
+  bool VisitReflectionMemberFunctionNameExpr(const ReflectionMemberFunctionNameExpr *E) {
     auto SubExpr = E->getImplicitCastExpr();
     APSInt Val;
     if (!EvaluateInteger(SubExpr, Val, Info))
@@ -7423,7 +7399,7 @@ public:
     return Success(reinterpret_cast<uint64_t>(MethodDeclPtr->getIdentifier()->getNameStart()), E);
   }
 
-  bool VisitASTMemberFunctionExpr(const ASTMemberFunctionExpr *E) {
+  bool VisitReflectionMemberFunctionExpr(const ReflectionMemberFunctionExpr *E) {
     auto ASTExpr = E->getASTExpr();
     auto IndexExpr = E->getIndexExpr();
     APSInt ASTVal;
@@ -7442,7 +7418,7 @@ public:
     return Success(reinterpret_cast<uint64_t>(*MemberFuncItr), E);
   }
 
-  bool VisitASTMemberCheckAccessSpecExpr(const ASTMemberCheckAccessSpecExpr *E) {
+  bool VisitReflectionMemberCheckAccessSpecExpr(const ReflectionMemberCheckAccessSpecExpr *E) {
     auto ASTExpr = E->getImplicitCastExpr();
     auto AS = E->getAccessSpecifier();
     APSInt ASTVal;
@@ -7468,21 +7444,80 @@ public:
   }
 
   bool VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {
-    return Success(0, E);
+    auto ASTExpr = E->getSubExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    if (!ASTVal.getExtValue())
+      return Success(0ULL, E);
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    return Success(reinterpret_cast<uint64_t>(Ast), E);
   }
 
   bool VisitReflectionEnumFieldExpr(const ReflectionEnumFieldExpr *E) {
-    return Success(0, E);
+    auto ASTExpr = E->getASTExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    if (!ASTVal.getExtValue())
+      return Success(0ULL, E);
+    auto IndexExpr = E->getIndexExpr();
+    APSInt IndexVal;
+    if (!EvaluateInteger(IndexExpr, IndexVal, Info))
+      return false;
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto Index = IndexVal.getExtValue();
+    auto EnumDeclPtr = cast_or_null<EnumDecl>(Ast);
+    if (!EnumDeclPtr)
+    {
+      Info.FFDiag(ASTExpr->getLocStart(), diag::err_reflection_type_mismatch) << "Enum";
+      return false;
+    }
+    else
+    {
+      auto Itr = EnumDeclPtr->enumerator_begin();
+      auto End = EnumDeclPtr->enumerator_end();
+      while (Itr != End)
+      {
+        if (Index == 0)
+          break;
+        --Index;
+        ++Itr;
+      }
+      if (Index || Itr == End)
+      {
+        Info.FFDiag(E->getLocStart(), diag::err_reflection_out_of_range) << "$enum_field";
+        return false;
+      }
+      else
+      {
+        auto Ptr = reinterpret_cast<uint64_t>(*Itr);
+        return Success(Ptr, E);
+      }
+    }
   }
 
   bool VisitReflectionEnumFieldValueExpr(const ReflectionEnumFieldValueExpr *E) {
-    return Success(0, E);
+    auto ASTExpr = E->getSubExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    if (!ASTVal.getExtValue())
+      return Success(0ULL, E);
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto EnumConstDeclPtr = cast_or_null<EnumConstantDecl>(Ast);
+    if (!EnumConstDeclPtr)
+    {
+      Info.FFDiag(ASTExpr->getLocStart(), diag::err_reflection_type_mismatch) << "EnumField";
+      return false;
+    }
+    else
+    {
+      // TODO: chage to return LValue just like ReflectionMemberVariableNameExpr?
+      auto Ptr = reinterpret_cast<uint64_t>(EnumConstDeclPtr);
+      return Success(Ptr, E);
+    }
   }
-
-  bool VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
-    return Success(0, E);
-  }
-
 
   bool CheckReferencedDecl(const Expr *E, const Decl *D);
   bool VisitDeclRefExpr(const DeclRefExpr *E) {
@@ -11411,18 +11446,18 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
     }
   }
 
-  case Expr::ASTMemberVariableSizeExprClass:
-    return CheckICE(cast<ASTMemberVariableSizeExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflectionMemberVariableSizeExprClass:
+    return CheckICE(cast<ReflectionMemberVariableSizeExpr>(E)->getImplicitCastExpr(), Ctx);
   case Expr::ReflectionMemberVariableNameExprClass:
     return CheckICE(cast<ReflectionMemberVariableNameExpr>(E)->getImplicitCastExpr(), Ctx);
-  case Expr::ASTMemberFunctionSizeExprClass:
-    return CheckICE(cast<ASTMemberFunctionSizeExpr>(E)->getImplicitCastExpr(), Ctx);
-  case Expr::ASTMemberFunctionNameExprClass:
-    return CheckICE(cast<ASTMemberFunctionNameExpr>(E)->getImplicitCastExpr(), Ctx);
-  case Expr::ASTMemberCheckAccessSpecExprClass:
-    return CheckICE(cast<ASTMemberCheckAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
-  case Expr::ASTMemberUpdateAccessSpecExprClass:
-    return CheckICE(cast<ASTMemberUpdateAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflectionMemberFunctionSizeExprClass:
+    return CheckICE(cast<ReflectionMemberFunctionSizeExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflectionMemberFunctionNameExprClass:
+    return CheckICE(cast<ReflectionMemberFunctionNameExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflectionMemberCheckAccessSpecExprClass:
+    return CheckICE(cast<ReflectionMemberCheckAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+  case Expr::ReflectionMemberUpdateAccessSpecExprClass:
+    return CheckICE(cast<ReflectionMemberUpdateAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
   case Expr::ReflexprExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
   case Expr::ReflectionEnumFieldsExprClass:
@@ -11435,14 +11470,14 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::ReflectionEnumFieldNameExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
-  case Expr::ASTMemberVariableExprClass: {
-    auto Exp = cast<ASTMemberVariableExpr>(E);
+  case Expr::ReflectionMemberVariableExprClass: {
+    auto Exp = cast<ReflectionMemberVariableExpr>(E);
     ICEDiag ASTResult = CheckICE(Exp->getASTExpr(), Ctx);
     if (ASTResult.Kind == IK_NotICE) return ASTResult;
     ICEDiag IdxResult = CheckICE(Exp->getIndexExpr(), Ctx);
     return IdxResult;
   }
-  case Expr::ASTMemberFunctionExprClass:
+  case Expr::ReflectionMemberFunctionExprClass:
 
   case Expr::ASTInjectExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());

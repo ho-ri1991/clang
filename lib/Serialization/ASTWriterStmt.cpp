@@ -1728,7 +1728,7 @@ void ASTStmtWriter::VisitTypoExpr(TypoExpr *E) {
   llvm_unreachable("Cannot write TypoExpr nodes");
 }
 
-void ASTStmtWriter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_SIZE;
@@ -1740,39 +1740,39 @@ void ASTStmtWriter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariab
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_NAME;
 }
 
-void ASTStmtWriter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getASTExpr());
   Record.AddStmt(E->getIndexExpr());
   Code = serialization::EXPR_AST_MEMBER_VARIABLE;
 }
 
-void ASTStmtWriter::VisitASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
   Code = serialization::EXPR_AST_MEMBER_FUNCTION_SIZE;
 }
 
-void ASTStmtWriter::VisitASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
   Code = serialization::EXPR_AST_MEMBER_FUNCTION_NAME;
 }
 
-void ASTStmtWriter::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberFunctionExpr(ReflectionMemberFunctionExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getASTExpr());
   Record.AddStmt(E->getIndexExpr());
   Code = serialization::EXPR_AST_MEMBER_FUNCTION;
 }
 
-void ASTStmtWriter::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheckAccessSpecExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
   Code = serialization::EXPR_AST_MEMBER_CHECK_ACCESS_SPEC;
 }
 
-void ASTStmtWriter::VisitASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *E) {
+void ASTStmtWriter::VisitReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getImplicitCastExpr());
   Code = serialization::EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC;
@@ -1793,26 +1793,26 @@ void ASTStmtWriter::VisitReflexprExpr(ReflexprExpr *E) {
 
 void ASTStmtWriter::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
   VisitExpr(E);
-//  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_REFLECTION_ENUM_FIELDS;
 }
 
 void ASTStmtWriter::VisitReflectionEnumFieldExpr(ReflectionEnumFieldExpr *E) {
   VisitExpr(E);
-//  Record.AddStmt(E->getImplicitCastExpr());
-//  Record.AddStmt(E->getIndexExpr());
+  Record.AddStmt(E->getASTExpr());
+  Record.AddStmt(E->getIndexExpr());
   Code = serialization::EXPR_REFLECTION_ENUM_FIELD;
 }
 
 void ASTStmtWriter::VisitReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
   VisitExpr(E);
-//  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_REFLECTION_ENUM_FIELD_VALUE;
 }
 
 void ASTStmtWriter::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *E) {
   VisitExpr(E);
-//  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_REFLECTION_ENUM_FIELD_NAME;
 }
 

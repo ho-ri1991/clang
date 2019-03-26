@@ -273,7 +273,7 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_public).get();
+      return Actions.ActOnReflectionMemberUpdateAccessSpecExpr(ArgExprs[0], AS_public).get();
     }
     else if (std::strcmp(name, "make_private") == 0)
     {
@@ -285,7 +285,7 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_private).get();
+      return Actions.ActOnReflectionMemberUpdateAccessSpecExpr(ArgExprs[0], AS_private).get();
     }
     else if (std::strcmp(name, "make_protected") == 0)
     {
@@ -297,7 +297,7 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberUpdateAccessSpecExpr(ArgExprs[0], AS_protected).get();
+      return Actions.ActOnReflectionMemberUpdateAccessSpecExpr(ArgExprs[0], AS_protected).get();
     }
   }
   else if (Tok.is(tok::kw_for) && NextToken().is(tok::ellipsis))
@@ -393,7 +393,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       if (!isExpandReflection || ArgExprs[0]->isValueDependent() ||
           !ArgExprs[0]->EvaluateAsInt(Int, Actions.getASTContext()))
       {
-        return Actions.ActOnASTMemberVariableSizeExpr(ArgExprs[0], Loc);
+        return Actions.ActOnReflectionMemberVariableSizeExpr(ArgExprs[0], Loc);
       }
       else
       {
@@ -425,7 +425,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
           !ArgExprs[0]->EvaluateAsInt(Int1, Actions.getASTContext()) ||
           !ArgExprs[1]->EvaluateAsInt(Int2, Actions.getASTContext()))
       {
-        return Actions.ActOnASTMemberVariableExpr(ArgExprs[0], ArgExprs[1]);
+        return Actions.ActOnReflectionMemberVariableExpr(ArgExprs[0], ArgExprs[1]);
       }
       else
       {
@@ -488,7 +488,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberFunctionSizeExpr(ArgExprs[0]);
+      return Actions.ActOnReflectionMemberFunctionSizeExpr(ArgExprs[0]);
     }
     else if (std::strcmp(name, "func") == 0)
     {
@@ -500,7 +500,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 2);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberFunctionExpr(ArgExprs[0], ArgExprs[1]);
+      return Actions.ActOnReflectionMemberFunctionExpr(ArgExprs[0], ArgExprs[1]);
     }
     else if (std::strcmp(name, "func_name") == 0)
     {
@@ -512,7 +512,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberFunctionNameExpr(ArgExprs[0]);
+      return Actions.ActOnReflectionMemberFunctionNameExpr(ArgExprs[0]);
     }
     else if (std::strcmp(name, "is_public") == 0)
     {
@@ -524,7 +524,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberCheckAccessSpecExpr(ArgExprs[0], AS_public);
+      return Actions.ActOnReflectionMemberCheckAccessSpecExpr(ArgExprs[0], AS_public);
     }
     else if (std::strcmp(name, "is_private") == 0)
     {
@@ -536,7 +536,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberCheckAccessSpecExpr(ArgExprs[0], AS_private);
+      return Actions.ActOnReflectionMemberCheckAccessSpecExpr(ArgExprs[0], AS_private);
     }
     else if (std::strcmp(name, "is_protected") == 0)
     {
@@ -548,7 +548,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ParseExpressionList(ArgExprs, CommaLocs);
       assert(ArgExprs.size() == 1);
       BDT.consumeClose();
-      return Actions.ActOnASTMemberCheckAccessSpecExpr(ArgExprs[0], AS_protected);
+      return Actions.ActOnReflectionMemberCheckAccessSpecExpr(ArgExprs[0], AS_protected);
     }
     else if (std::strcmp(name, "enum_field") == 0)
     {

@@ -1980,20 +1980,20 @@ public:
   void ActOnUninitializedDecl(Decl *dcl);
   void ActOnInitializerError(Decl *Dcl);
 
-  ExprResult ActOnASTMemberVariableSizeExpr(ExprResult DeclRef, SourceLocation Loc);
+  ExprResult ActOnReflectionMemberVariableSizeExpr(ExprResult DeclRef, SourceLocation Loc);
   ExprResult ActOnReflectionMemberVariableNameExpr(ExprResult DeclRef);
-  ExprResult ActOnASTMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
-  ExprResult ActOnASTMemberFunctionSizeExpr(ExprResult DeclRef);
-  ExprResult ActOnASTMemberFunctionNameExpr(ExprResult DeclRef);
-  ExprResult ActOnASTMemberFunctionExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
-  ExprResult ActOnASTMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
-  ExprResult ActOnASTMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
+  ExprResult ActOnReflectionMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
+  ExprResult ActOnReflectionMemberFunctionSizeExpr(ExprResult DeclRef);
+  ExprResult ActOnReflectionMemberFunctionNameExpr(ExprResult DeclRef);
+  ExprResult ActOnReflectionMemberFunctionExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
+  ExprResult ActOnReflectionMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
+  ExprResult ActOnReflectionMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
   ExprResult ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn);
   ExprResult ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange);
-  ExprResult ActOnReflectionEnumFieldsExpr(ExprResult DeclRef, SourceRange Range);
-  ExprResult ActOnReflectionEnumFieldExpr(ExprResult DeclRef, ExprResult IndexDeclRef, SourceRange Range);
-  ExprResult ActOnReflectionEnumFieldValueExpr(ExprResult DeclRef, SourceRange Range);
-  ExprResult ActOnReflectionEnumFieldNameExpr(ExprResult DeclRef, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldExpr(ExprResult AstExpr, ExprResult IndexExpr, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldValueExpr(ExprResult SubExpr, SourceRange Range);
+  ExprResult ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRange Range);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);

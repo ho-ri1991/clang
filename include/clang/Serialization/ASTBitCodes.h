@@ -1736,28 +1736,28 @@ namespace serialization {
       /// An AtomicExpr record.
       EXPR_ATOMIC,
 
-      /// An ASTMemberVariableSizeExpr record.
+      /// An ReflectionMemberVariableSizeExpr record.
       EXPR_AST_MEMBER_VARIABLE_SIZE,
 
       /// An ReflectionMemberVariableNameExpr record.
       EXPR_AST_MEMBER_VARIABLE_NAME,
 
-      /// An ASTMemberVariableExpr record.
+      /// An ReflectionMemberVariableExpr record.
       EXPR_AST_MEMBER_VARIABLE,
 
-      /// An ASTMemberFunctionSizeExpr record.
+      /// An ReflectionMemberFunctionSizeExpr record.
       EXPR_AST_MEMBER_FUNCTION_SIZE,
 
-      /// An ASTMemberFunctionNameExpr record.
+      /// An ReflectionMemberFunctionNameExpr record.
       EXPR_AST_MEMBER_FUNCTION_NAME,
 
-      /// An ASTMemberFunctionExpr record.
+      /// An ReflectionMemberFunctionExpr record.
       EXPR_AST_MEMBER_FUNCTION,
 
-      /// An ASTMemberCheckAccessSpecExpr record.
+      /// An ReflectionMemberCheckAccessSpecExpr record.
       EXPR_AST_MEMBER_CHECK_ACCESS_SPEC,
 
-      /// An ASTMemberUpdateAccessSpecExpr record.
+      /// An ReflectionMemberUpdateAccessSpecExpr record.
       EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC,
 
       /// An ASTInjectExpr record.

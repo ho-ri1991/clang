@@ -1733,7 +1733,7 @@ void ASTStmtReader::VisitTypoExpr(TypoExpr *E) {
   llvm_unreachable("Cannot read TypoExpr nodes");
 }
 
-void ASTStmtReader::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *E) {
+void ASTStmtReader::VisitReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
@@ -1743,34 +1743,34 @@ void ASTStmtReader::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariab
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberVariableExpr(ASTMemberVariableExpr *E) {
+void ASTStmtReader::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
   VisitExpr(E);
   E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
   E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *E) {
+void ASTStmtReader::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *E) {
+void ASTStmtReader::VisitReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *E) {
+void ASTStmtReader::VisitReflectionMemberFunctionExpr(ReflectionMemberFunctionExpr *E) {
   VisitExpr(E);
   E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
   E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *E) {
+void ASTStmtReader::VisitReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheckAccessSpecExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *E) {
+void ASTStmtReader::VisitReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
   E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
 }
@@ -1788,23 +1788,23 @@ void ASTStmtReader::VisitReflexprExpr(ReflexprExpr *E) {
 
 void ASTStmtReader::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr((Expr*)Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionEnumFieldExpr(ReflectionEnumFieldExpr *E) {
   VisitExpr(E);
-  E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
-  E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setASTExpr((Expr*)Record.readSubExpr());
+  E->setIndexExpr((Expr*)Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr((Expr*)Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr((Expr*)Record.readSubExpr());
 }
 
 //===----------------------------------------------------------------------===//
@@ -3528,7 +3528,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case EXPR_AST_MEMBER_VARIABLE_SIZE:
-      S = new (Context) ASTMemberVariableSizeExpr(Empty);
+      S = new (Context) ReflectionMemberVariableSizeExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_VARIABLE_NAME:
@@ -3536,27 +3536,27 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case EXPR_AST_MEMBER_VARIABLE:
-      S = new (Context) ASTMemberVariableExpr(Empty);
+      S = new (Context) ReflectionMemberVariableExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_FUNCTION_SIZE:
-      S = new (Context) ASTMemberFunctionSizeExpr(Empty);
+      S = new (Context) ReflectionMemberFunctionSizeExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_FUNCTION_NAME:
-      S = new (Context) ASTMemberFunctionNameExpr(Empty);
+      S = new (Context) ReflectionMemberFunctionNameExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_FUNCTION:
-      S = new (Context) ASTMemberFunctionExpr(Empty);
+      S = new (Context) ReflectionMemberFunctionExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_CHECK_ACCESS_SPEC:
-      S = new (Context) ASTMemberCheckAccessSpecExpr(Empty);
+      S = new (Context) ReflectionMemberCheckAccessSpecExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC:
-      S = new (Context) ASTMemberUpdateAccessSpecExpr(Empty);
+      S = new (Context) ReflectionMemberUpdateAccessSpecExpr(Empty);
       break;
 
     case EXPR_AST_INJECT:

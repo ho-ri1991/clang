@@ -501,14 +501,14 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::FunctionParmPackExprClass:
   case Stmt::UnresolvedLookupExprClass:
   case Stmt::TypoExprClass: // A typo could actually be a DeclRef or a MemberRef
-  case Stmt::ASTMemberVariableSizeExprClass:
+  case Stmt::ReflectionMemberVariableSizeExprClass:
   case Stmt::ReflectionMemberVariableNameExprClass:
-  case Stmt::ASTMemberVariableExprClass:
-  case Stmt::ASTMemberFunctionSizeExprClass:
-  case Stmt::ASTMemberFunctionNameExprClass:
-  case Stmt::ASTMemberFunctionExprClass:
-  case Stmt::ASTMemberCheckAccessSpecExprClass:
-  case Stmt::ASTMemberUpdateAccessSpecExprClass:
+  case Stmt::ReflectionMemberVariableExprClass:
+  case Stmt::ReflectionMemberFunctionSizeExprClass:
+  case Stmt::ReflectionMemberFunctionNameExprClass:
+  case Stmt::ReflectionMemberFunctionExprClass:
+  case Stmt::ReflectionMemberCheckAccessSpecExprClass:
+  case Stmt::ReflectionMemberUpdateAccessSpecExprClass:
   case Stmt::ASTInjectExprClass:
   case Stmt::ReflectionEnumFieldsExprClass:
   case Stmt::ReflectionEnumFieldExprClass:

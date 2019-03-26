@@ -2811,7 +2811,7 @@ void StmtPrinter::VisitTypoExpr(TypoExpr *Node) {
   llvm_unreachable("Cannot print TypoExpr nodes");
 }
 
-void StmtPrinter::VisitASTMemberVariableSizeExpr(ASTMemberVariableSizeExpr *Node) {
+void StmtPrinter::VisitReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *Node) {
   OS << "$var_size(";
   PrintExpr(Node->getImplicitCastExpr());
   OS << ")";
@@ -2823,7 +2823,7 @@ void StmtPrinter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariable
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *Node) {
+void StmtPrinter::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *Node) {
   OS << "$var(";
   PrintExpr(Node->getASTExpr());
   OS << ", ";
@@ -2831,19 +2831,19 @@ void StmtPrinter::VisitASTMemberVariableExpr(ASTMemberVariableExpr *Node) {
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberFunctionSizeExpr(ASTMemberFunctionSizeExpr *Node) {
+void StmtPrinter::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *Node) {
   OS << "$func_size(";
   PrintExpr(Node->getImplicitCastExpr());
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberFunctionNameExpr(ASTMemberFunctionNameExpr *Node) {
+void StmtPrinter::VisitReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *Node) {
   OS << "$func_name(";
   PrintExpr(Node->getImplicitCastExpr());
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *Node) {
+void StmtPrinter::VisitReflectionMemberFunctionExpr(ReflectionMemberFunctionExpr *Node) {
   OS << "$func(";
   PrintExpr(Node->getASTExpr());
   OS << ", ";
@@ -2851,7 +2851,7 @@ void StmtPrinter::VisitASTMemberFunctionExpr(ASTMemberFunctionExpr *Node) {
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr *Node) {
+void StmtPrinter::VisitReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheckAccessSpecExpr *Node) {
   switch (Node->getAccessSpecifier())
   {
   case AS_public:
@@ -2871,7 +2871,7 @@ void StmtPrinter::VisitASTMemberCheckAccessSpecExpr(ASTMemberCheckAccessSpecExpr
   OS << ")";
 }
 
-void StmtPrinter::VisitASTMemberUpdateAccessSpecExpr(ASTMemberUpdateAccessSpecExpr *Node) {
+void StmtPrinter::VisitReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpdateAccessSpecExpr *Node) {
   switch (Node->getAccessSpecifier())
   {
   case AS_public:
@@ -2903,7 +2903,7 @@ void StmtPrinter::VisitReflexprExpr(ReflexprExpr *Node){
 
 void StmtPrinter::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *Node){
   OS << "enum_fields(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ')';
 }
 
@@ -2917,13 +2917,13 @@ void StmtPrinter::VisitReflectionEnumFieldExpr(ReflectionEnumFieldExpr *Node){
 
 void StmtPrinter::VisitReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *Node){
   OS << "enum_value(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ')';
 }
 
 void StmtPrinter::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *Node){
   OS << "enum_name(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ')';
 }
 

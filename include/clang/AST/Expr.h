@@ -5473,7 +5473,7 @@ public:
 };
 
 ///
-class ASTMemberVariableExpr final : public Expr
+class ReflectionMemberVariableExpr final : public Expr
 {
   enum Index
   {
@@ -5483,14 +5483,14 @@ class ASTMemberVariableExpr final : public Expr
   };
   Stmt* SubExprs[INDEX_SIZE];
 public:
-  ASTMemberVariableExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
-    : Expr(ASTMemberVariableExprClass, ast->getType(), VK_RValue, OK_Ordinary, ast->isTypeDependent() || index->isTypeDependent(), ast->isValueDependent() || index->isValueDependent(), false, false)
+  ReflectionMemberVariableExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
+    : Expr(ReflectionMemberVariableExprClass, ast->getType(), VK_RValue, OK_Ordinary, ast->isTypeDependent() || index->isTypeDependent(), ast->isValueDependent() || index->isValueDependent(), false, false)
   {
     SubExprs[INDEX_AST] = ast;
     SubExprs[INDEX_INDEX] = index;
   }
-  explicit ASTMemberVariableExpr(EmptyShell Shell)
-    : Expr(ASTMemberVariableExprClass, Shell) { }
+  explicit ReflectionMemberVariableExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberVariableExprClass, Shell) { }
   void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
   Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
   const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
@@ -5498,7 +5498,7 @@ public:
   Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
   const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberVariableExprClass;
+    return T->getStmtClass() == ReflectionMemberVariableExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
@@ -5534,25 +5534,25 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ASTMemberVariableSizeExpr final : public Expr
+class ReflectionMemberVariableSizeExpr final : public Expr
 {
   Stmt* SubExprs[1];
   SourceLocation Loc;
 public:
-  ASTMemberVariableSizeExpr(ImplicitCastExpr* cast, SourceLocation Loc)
-    : Expr(ASTMemberVariableSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
+  ReflectionMemberVariableSizeExpr(ImplicitCastExpr* cast, SourceLocation Loc)
+    : Expr(ReflectionMemberVariableSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
     , Loc(Loc)
   {
     SubExprs[0] = cast;
   }
   /// Create an empty test cash expression.
-  explicit ASTMemberVariableSizeExpr(EmptyShell Shell)
-    : Expr(ASTMemberVariableSizeExprClass, Shell) { }
+  explicit ReflectionMemberVariableSizeExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberVariableSizeExprClass, Shell) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
   Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
   const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberVariableSizeExprClass;
+    return T->getStmtClass() == ReflectionMemberVariableSizeExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + 1);
@@ -5564,7 +5564,7 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
 };
 
-class ASTMemberFunctionExpr final : public Expr
+class ReflectionMemberFunctionExpr final : public Expr
 {
   enum Index
   {
@@ -5574,14 +5574,14 @@ class ASTMemberFunctionExpr final : public Expr
   };
   Stmt* SubExprs[INDEX_SIZE];
 public:
-  ASTMemberFunctionExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
-    : Expr(ASTMemberFunctionExprClass, ast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  ReflectionMemberFunctionExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
+    : Expr(ReflectionMemberFunctionExprClass, ast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
   {
     SubExprs[INDEX_AST] = ast;
     SubExprs[INDEX_INDEX] = index;
   }
-  explicit ASTMemberFunctionExpr(EmptyShell Shell)
-    : Expr(ASTMemberFunctionExprClass, Shell) { }
+  explicit ReflectionMemberFunctionExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberFunctionExprClass, Shell) { }
   void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
   Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
   const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
@@ -5589,7 +5589,7 @@ public:
   Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
   const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberFunctionExprClass;
+    return T->getStmtClass() == ReflectionMemberFunctionExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
@@ -5601,23 +5601,23 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ASTMemberFunctionNameExpr final : public Expr
+class ReflectionMemberFunctionNameExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ASTMemberFunctionNameExpr(ImplicitCastExpr* cast)
-    : Expr(ASTMemberFunctionNameExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  ReflectionMemberFunctionNameExpr(ImplicitCastExpr* cast)
+    : Expr(ReflectionMemberFunctionNameExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
   {
     SubExprs[0] = cast;
   }
   /// Create an empty test cash expression.
-  explicit ASTMemberFunctionNameExpr(EmptyShell Shell)
-    : Expr(ASTMemberFunctionNameExprClass, Shell) { }
+  explicit ReflectionMemberFunctionNameExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberFunctionNameExprClass, Shell) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
   Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
   const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberFunctionNameExprClass;
+    return T->getStmtClass() == ReflectionMemberFunctionNameExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + 1);
@@ -5629,23 +5629,23 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ASTMemberFunctionSizeExpr final : public Expr
+class ReflectionMemberFunctionSizeExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ASTMemberFunctionSizeExpr(ImplicitCastExpr* cast)
-    : Expr(ASTMemberFunctionSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  ReflectionMemberFunctionSizeExpr(ImplicitCastExpr* cast)
+    : Expr(ReflectionMemberFunctionSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
   {
     SubExprs[0] = cast;
   }
   /// Create an empty test cash expression.
-  explicit ASTMemberFunctionSizeExpr(EmptyShell Shell)
-    : Expr(ASTMemberFunctionSizeExprClass, Shell) { }
+  explicit ReflectionMemberFunctionSizeExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberFunctionSizeExprClass, Shell) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
   Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
   const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberFunctionSizeExprClass;
+    return T->getStmtClass() == ReflectionMemberFunctionSizeExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + 1);
@@ -5657,21 +5657,21 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ASTMemberCheckAccessSpecExpr final : public Expr
+class ReflectionMemberCheckAccessSpecExpr final : public Expr
 {
   Stmt* SubExprs[1];
   AccessSpecifier AS;
 public:
-  ASTMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
+  ReflectionMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
   /// Create an empty test cash expression.
-  explicit ASTMemberCheckAccessSpecExpr(EmptyShell Shell)
-    : Expr(ASTMemberCheckAccessSpecExprClass, Shell), AS(AS_none) { }
+  explicit ReflectionMemberCheckAccessSpecExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberCheckAccessSpecExprClass, Shell), AS(AS_none) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
   Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
   const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   AccessSpecifier getAccessSpecifier() const { return AS; }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberCheckAccessSpecExprClass;
+    return T->getStmtClass() == ReflectionMemberCheckAccessSpecExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + 1);
@@ -5683,21 +5683,21 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
-class ASTMemberUpdateAccessSpecExpr final : public Expr
+class ReflectionMemberUpdateAccessSpecExpr final : public Expr
 {
   Stmt* SubExprs[1];
   AccessSpecifier AS;
 public:
-  ASTMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
+  ReflectionMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
   /// Create an empty test cash expression.
-  explicit ASTMemberUpdateAccessSpecExpr(EmptyShell Shell)
-    : Expr(ASTMemberUpdateAccessSpecExprClass, Shell), AS(AS_none) { }
+  explicit ReflectionMemberUpdateAccessSpecExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberUpdateAccessSpecExprClass, Shell), AS(AS_none) { }
   void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
   Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
   const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   AccessSpecifier getAccessSpecifier() const { return AS; }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ASTMemberUpdateAccessSpecExprClass;
+    return T->getStmtClass() == ReflectionMemberUpdateAccessSpecExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + 1);
@@ -5823,18 +5823,18 @@ class ReflectionEnumFieldsExpr : public Expr
   Stmt* SubExprs[1];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldsExpr(ImplicitCastExpr* cast, SourceRange Range)
-    : Expr(ReflectionEnumFieldsExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
+  ReflectionEnumFieldsExpr(Expr* SubExpr, SourceRange Range)
+    : Expr(ReflectionEnumFieldsExprClass, SubExpr->getType(), VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), SubExpr->isValueDependent(), false, false)
     , BeginLoc(Range.getBegin())
     , EndLoc(Range.getEnd())
   {
-    SubExprs[0] = cast;
+    SubExprs[0] = SubExpr;
   }
   explicit ReflectionEnumFieldsExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldsExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* E) { SubExprs[0] = E; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionEnumFieldsExprClass;
   }
@@ -5860,20 +5860,20 @@ class ReflectionEnumFieldExpr : public Expr
   Stmt* SubExprs[INDEX_SIZE];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index, SourceRange Range)
-    : Expr(ReflectionEnumFieldExprClass, ast->getType(), VK_RValue, OK_Ordinary, ast->isTypeDependent() || index->isTypeDependent(), ast->isValueDependent() || index->isValueDependent(), false, false)
+  ReflectionEnumFieldExpr(Expr* Ast, Expr* Index, SourceRange Range)
+    : Expr(ReflectionEnumFieldExprClass, Ast->getType(), VK_RValue, OK_Ordinary, Ast->isTypeDependent() || Index->isTypeDependent(), Ast->isValueDependent() || Index->isValueDependent(), false, false)
     , BeginLoc(Range.getBegin())
     , EndLoc(Range.getEnd())
   {
-    SubExprs[INDEX_AST] = ast;
-    SubExprs[INDEX_INDEX] = index;
+    SubExprs[INDEX_AST] = Ast;
+    SubExprs[INDEX_INDEX] = Index;
   }
   explicit ReflectionEnumFieldExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldExprClass, Shell) { }
-  void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
+  void setASTExpr(Expr* Ast) { SubExprs[INDEX_AST] = Ast; }
   Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
   const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
-  void setIndexExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_INDEX] = cast; }
+  void setIndexExpr(Expr* Index) { SubExprs[INDEX_INDEX] = Index; }
   Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
   const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
   static bool classof(const Stmt *T) {
@@ -5895,12 +5895,12 @@ class ReflectionEnumFieldValueExpr : public Expr
   Stmt* SubExprs[1];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldValueExpr(ImplicitCastExpr* cast, SourceRange Range, ASTContext& C, bool b);
+  ReflectionEnumFieldValueExpr(Expr* SubExpr, SourceRange Range, ASTContext& C, bool b);
   explicit ReflectionEnumFieldValueExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldValueExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* E) { SubExprs[0] = E; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionEnumFieldValueExprClass;
   }
@@ -5920,12 +5920,12 @@ class ReflectionEnumFieldNameExpr : public Expr
   Stmt* SubExprs[1];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context, SourceRange Range);
+  ReflectionEnumFieldNameExpr(Expr* SubExpr, QualType T, ASTContext& Context, SourceRange Range);
   explicit ReflectionEnumFieldNameExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldNameExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* E) { SubExprs[0] = E; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionEnumFieldNameExprClass;
   }

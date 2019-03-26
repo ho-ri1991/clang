@@ -62,7 +62,7 @@ StmtResult ExpandForStmt(Expr* Init, Stmt* Body, Sema& SemaRef)
       case Stmt::ReflectionEnumFieldsExprClass: {
         llvm::APSInt Int(64);
         auto EnumFieldsExpr = cast<ReflectionEnumFieldsExpr>(Init);
-        if (!EnumFieldsExpr->getImplicitCastExpr()->EvaluateAsInt(Int, SemaRef.getASTContext()))
+        if (!EnumFieldsExpr->getSubExpr()->EvaluateAsInt(Int, SemaRef.getASTContext()))
           return StmtError();
         auto DeclPtr = reinterpret_cast<Decl*>(Int.getExtValue());
         auto EnumDeclPtr = cast_or_null<EnumDecl>(DeclPtr);
@@ -113,10 +113,10 @@ TreeCopy::TreeCopy(Sema &SemaRef, SourceLocation Loc)
 
 ExprResult TreeCopy::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr* E)
 {
-  ExprResult Cast = TransformExpr(E->getImplicitCastExpr());
-  if (Cast.isInvalid())
+  ExprResult SubExpr = TransformExpr(E->getSubExpr());
+  if (SubExpr.isInvalid())
     return ExprError();
-  return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(cast<ImplicitCastExpr>(Cast.get()), SourceRange(E->getLocStart(), E->getLocEnd()));
+  return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(SubExpr.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
 }
 
 StmtResult TreeCopy::TransformExpansionForStmt(ExpansionForStmt* S)

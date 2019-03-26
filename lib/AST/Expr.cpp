@@ -3100,13 +3100,13 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
     // These never have a side-effect.
     return false;
 
-  case ASTMemberVariableSizeExprClass:
+  case ReflectionMemberVariableSizeExprClass:
   case ReflectionMemberVariableNameExprClass:
-  case ASTMemberVariableExprClass:
-  case ASTMemberFunctionSizeExprClass:
-  case ASTMemberFunctionNameExprClass:
-  case ASTMemberFunctionExprClass:
-  case ASTMemberCheckAccessSpecExprClass:
+  case ReflectionMemberVariableExprClass:
+  case ReflectionMemberFunctionSizeExprClass:
+  case ReflectionMemberFunctionNameExprClass:
+  case ReflectionMemberFunctionExprClass:
+  case ReflectionMemberCheckAccessSpecExprClass:
     break;
 
   case CallExprClass:
@@ -3141,7 +3141,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CoawaitExprClass:
   case DependentCoawaitExprClass:
   case CoyieldExprClass:
-  case ASTMemberUpdateAccessSpecExprClass:
+  case ReflectionMemberUpdateAccessSpecExprClass:
   case ASTInjectExprClass:
     // These always have a side-effect.
     return true;
@@ -4213,16 +4213,16 @@ ReflectionMemberVariableNameExpr::ReflectionMemberVariableNameExpr(ImplicitCastE
   SubExprs[0] = cast;
 }
 
-ASTMemberUpdateAccessSpecExpr::ASTMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
-  : Expr(ASTMemberUpdateAccessSpecExprClass, C.VoidTy, VK_RValue, OK_Ordinary, false, false, false, false)
+ReflectionMemberUpdateAccessSpecExpr::ReflectionMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
+  : Expr(ReflectionMemberUpdateAccessSpecExprClass, C.VoidTy, VK_RValue, OK_Ordinary, false, false, false, false)
   , AS(AS)
 {
   SubExprs[0] = cast;
 }
 
 
-ASTMemberCheckAccessSpecExpr::ASTMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
-  : Expr(ASTMemberCheckAccessSpecExprClass, C.BoolTy, VK_RValue, OK_Ordinary, false, false, false, false)
+ReflectionMemberCheckAccessSpecExpr::ReflectionMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
+  : Expr(ReflectionMemberCheckAccessSpecExprClass, C.BoolTy, VK_RValue, OK_Ordinary, false, false, false, false)
   , AS(AS)
 {
   SubExprs[0] = cast;
@@ -4244,17 +4244,17 @@ Stmt::const_child_range ReflexprExpr::children() const {
   return const_child_range(const_child_iterator(), const_child_iterator());
 }
 
-ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context, SourceRange Range)
-  : Expr(ReflectionEnumFieldNameExprClass, T, VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
+ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(Expr* SubExpr, QualType T, ASTContext& Context, SourceRange Range)
+  : Expr(ReflectionEnumFieldNameExprClass, T, VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), SubExpr->isTypeDependent(), false, false)
 {
-  SubExprs[0] = cast;
+  SubExprs[0] = SubExpr;
 }
 
 ReflectionEnumFieldValueExpr::ReflectionEnumFieldValueExpr(
-    ImplicitCastExpr* cast, SourceRange Range, ASTContext& C, bool b)
-  : Expr(ReflectionEnumFieldValueExprClass, b ? cast->getType() : C.DependentTy, VK_RValue, OK_Ordinary, b ? cast->isTypeDependent() : true, b ? cast->isValueDependent() : true, false, false)
+    Expr* SubExpr, SourceRange Range, ASTContext& C, bool b)
+  : Expr(ReflectionEnumFieldValueExprClass, b ? SubExpr->getType() : C.DependentTy, VK_RValue, OK_Ordinary, b ? SubExpr->isTypeDependent() : true, b ? SubExpr->isValueDependent() : true, false, false)
   , BeginLoc(Range.getBegin())
   , EndLoc(Range.getEnd())
 {
-  SubExprs[0] = cast;
+  SubExprs[0] = SubExpr;
 }

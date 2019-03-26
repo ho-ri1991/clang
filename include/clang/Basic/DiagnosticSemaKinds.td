@@ -9438,4 +9438,6 @@ def err_std_compare_type_not_supported : Error<
    "member '%2' is missing|"
    "the type is not trivially copyable|"
    "the type does not have the expected form}1">;
+
+def err_reflection_argument_type_mismatch : Error<"expect reflection type">;
 } // end of sema component.

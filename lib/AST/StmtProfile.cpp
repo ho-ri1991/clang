@@ -1857,7 +1857,7 @@ void StmtProfiler::VisitTypoExpr(const TypoExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberVariableSizeExpr(const ASTMemberVariableSizeExpr *E) {
+void StmtProfiler::VisitReflectionMemberVariableSizeExpr(const ReflectionMemberVariableSizeExpr *E) {
   VisitExpr(E);
 }
 
@@ -1865,27 +1865,27 @@ void StmtProfiler::VisitReflectionMemberVariableNameExpr(const ReflectionMemberV
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberVariableExpr(const ASTMemberVariableExpr *E) {
+void StmtProfiler::VisitReflectionMemberVariableExpr(const ReflectionMemberVariableExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberFunctionSizeExpr(const ASTMemberFunctionSizeExpr *E) {
+void StmtProfiler::VisitReflectionMemberFunctionSizeExpr(const ReflectionMemberFunctionSizeExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberFunctionNameExpr(const ASTMemberFunctionNameExpr *E) {
+void StmtProfiler::VisitReflectionMemberFunctionNameExpr(const ReflectionMemberFunctionNameExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberFunctionExpr(const ASTMemberFunctionExpr *E) {
+void StmtProfiler::VisitReflectionMemberFunctionExpr(const ReflectionMemberFunctionExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberCheckAccessSpecExpr(const ASTMemberCheckAccessSpecExpr *E) {
+void StmtProfiler::VisitReflectionMemberCheckAccessSpecExpr(const ReflectionMemberCheckAccessSpecExpr *E) {
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitASTMemberUpdateAccessSpecExpr(const ASTMemberUpdateAccessSpecExpr *E) {
+void StmtProfiler::VisitReflectionMemberUpdateAccessSpecExpr(const ReflectionMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
 }
 
@@ -1900,7 +1900,7 @@ void StmtProfiler::VisitReflexprExpr(const ReflexprExpr *E) {
 
 void StmtProfiler::VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {
   VisitExpr(E);
-  VisitExpr(E->getImplicitCastExpr());
+  VisitExpr(E->getSubExpr());
 }
 
 void StmtProfiler::VisitReflectionEnumFieldExpr(const ReflectionEnumFieldExpr *E) {
@@ -1911,12 +1911,12 @@ void StmtProfiler::VisitReflectionEnumFieldExpr(const ReflectionEnumFieldExpr *E
 
 void StmtProfiler::VisitReflectionEnumFieldValueExpr(const ReflectionEnumFieldValueExpr *E) {
   VisitExpr(E);
-  VisitExpr(E->getImplicitCastExpr());
+  VisitExpr(E->getSubExpr());
 }
 
 void StmtProfiler::VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
   VisitExpr(E);
-  VisitExpr(E->getImplicitCastExpr());
+  VisitExpr(E->getSubExpr());
 }
 
 void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {
