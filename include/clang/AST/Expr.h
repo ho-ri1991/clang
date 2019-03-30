@@ -5765,7 +5765,8 @@ public:
                QualType resultType, SourceLocation op,
                SourceLocation rp) :
       Expr(ReflexprExprClass, resultType, VK_RValue, OK_Ordinary,
-           false, // Never type-dependent (C++ [temp.dep.expr]p3).
+//           false, // Never type-dependent (C++ [temp.dep.expr]p3).
+           TInfo ? TInfo->getType()->isDependentType() : false,
            // Value-dependent if the argument is type-dependent.
            TInfo ? TInfo->getType()->isDependentType() : false,
            TInfo ? TInfo->getType()->isInstantiationDependentType() : false,
