@@ -1730,13 +1730,13 @@ void ASTStmtWriter::VisitTypoExpr(TypoExpr *E) {
 
 void ASTStmtWriter::VisitReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *E) {
   VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_SIZE;
 }
 
 void ASTStmtWriter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *E) {
   VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_NAME;
 }
 
@@ -1749,13 +1749,13 @@ void ASTStmtWriter::VisitReflectionMemberVariableExpr(ReflectionMemberVariableEx
 
 void ASTStmtWriter::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *E) {
   VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_AST_MEMBER_FUNCTION_SIZE;
 }
 
 void ASTStmtWriter::VisitReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *E) {
   VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_AST_MEMBER_FUNCTION_NAME;
 }
 
@@ -1768,13 +1768,13 @@ void ASTStmtWriter::VisitReflectionMemberFunctionExpr(ReflectionMemberFunctionEx
 
 void ASTStmtWriter::VisitReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheckAccessSpecExpr *E) {
   VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_AST_MEMBER_CHECK_ACCESS_SPEC;
 }
 
 void ASTStmtWriter::VisitReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
-  Record.AddStmt(E->getImplicitCastExpr());
+  Record.AddStmt(E->getSubExpr());
   Code = serialization::EXPR_AST_MEMBER_UPDATE_ACCESS_SPEC;
 }
 

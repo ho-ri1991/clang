@@ -9145,13 +9145,13 @@ TreeTransform<Derived>::TransformTypoExpr(TypoExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *E) {
-  ExprResult SubExpr = TransformExpr(E->getImplicitCastExpr());
+  ExprResult SubExpr = TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return ExprError();
   llvm::APSInt Int(64);
   if (SubExpr.get()->isValueDependent() || !SubExpr.get()->EvaluateAsInt(Int, getSema().getASTContext()))
   {
-    E->setImplicitCastExpr(cast<ImplicitCastExpr>(SubExpr.get()));
+    E->setSubExpr(SubExpr.get());
     return E;
   }
   else
@@ -9170,13 +9170,13 @@ TreeTransform<Derived>::TransformReflectionMemberVariableSizeExpr(ReflectionMemb
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *E) {
-  ExprResult SubExpr = TransformExpr(E->getImplicitCastExpr());
+  ExprResult SubExpr = TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return ExprError();
   llvm::APSInt Int(64);
   if (SubExpr.get()->isValueDependent() || !SubExpr.get()->EvaluateAsInt(Int, getSema().getASTContext()))
   {
-    E->setImplicitCastExpr(cast<ImplicitCastExpr>(SubExpr.get()));
+    E->setSubExpr(SubExpr.get());
     return E;
   }
   else
@@ -9215,8 +9215,8 @@ TreeTransform<Derived>::TransformReflectionMemberVariableExpr(ReflectionMemberVa
       !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
       !IndexExpr.get()->EvaluateAsInt(IndexInt, getSema().getASTContext()))
   {
-    E->setASTExpr(cast<ImplicitCastExpr>(AstExpr.get()));
-    E->setIndexExpr(cast<ImplicitCastExpr>(IndexExpr.get()));
+    E->setASTExpr(AstExpr.get());
+    E->setIndexExpr(IndexExpr.get());
     return E;
   }
   else
@@ -9279,13 +9279,7 @@ TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
   if (!getDerived().AlwaysRebuild() && NewT == OldT)
     return E;
 
-  auto TypePtr = NewT->getType().getTypePtr();
-  if (!TypePtr || TypePtr->isDependentType())
-    return getSema().ActOnReflexprExpr(E->getOperatorLoc(), NewT, SourceRange(E->getOperatorLoc(), E->getRParenLoc()));
-
-  auto Record = static_cast<Decl*>(NewT->getType().getTypePtr()->getAsTagDecl());
-  llvm::APInt Int(64, reinterpret_cast<uint64_t>(Record));
-  return IntegerLiteral::Create(SemaRef.getASTContext(), Int, SemaRef.getASTContext().getIntPtrType(), E->getOperatorLoc());
+  return getSema().ActOnReflexprExpr(E->getOperatorLoc(), NewT, SourceRange(E->getOperatorLoc(), E->getRParenLoc()), true);
 }
 
 template<typename Derived>

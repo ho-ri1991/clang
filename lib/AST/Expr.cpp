@@ -4207,25 +4207,24 @@ QualType OMPArraySectionExpr::getBaseOriginalType(const Expr *Base) {
   return OriginalTy;
 }
 
-ReflectionMemberVariableNameExpr::ReflectionMemberVariableNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context)
-  : Expr(ReflectionMemberVariableNameExprClass, T, VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isTypeDependent(), false, false)
+ReflectionMemberVariableNameExpr::ReflectionMemberVariableNameExpr(Expr* SubExpr, QualType T, ASTContext& Context)
+  : Expr(ReflectionMemberVariableNameExprClass, T, VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), SubExpr->isTypeDependent(), false, false)
 {
-  SubExprs[0] = cast;
+  SubExprs[0] = SubExpr;
 }
 
-ReflectionMemberUpdateAccessSpecExpr::ReflectionMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
+ReflectionMemberUpdateAccessSpecExpr::ReflectionMemberUpdateAccessSpecExpr(ASTContext& C, Expr* SubExpr, AccessSpecifier AS)
   : Expr(ReflectionMemberUpdateAccessSpecExprClass, C.VoidTy, VK_RValue, OK_Ordinary, false, false, false, false)
   , AS(AS)
 {
-  SubExprs[0] = cast;
+  SubExprs[0] = SubExpr;
 }
 
-
-ReflectionMemberCheckAccessSpecExpr::ReflectionMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS)
+ReflectionMemberCheckAccessSpecExpr::ReflectionMemberCheckAccessSpecExpr(ASTContext& C, Expr* SubExpr, AccessSpecifier AS)
   : Expr(ReflectionMemberCheckAccessSpecExprClass, C.BoolTy, VK_RValue, OK_Ordinary, false, false, false, false)
   , AS(AS)
 {
-  SubExprs[0] = cast;
+  SubExprs[0] = SubExpr;
 }
 
 // ReflexprExpr 

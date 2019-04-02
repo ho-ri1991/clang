@@ -4102,9 +4102,9 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
           switch (MetaFuncKind)
           {
           case 1: { // type
-            assert(MetaTok.Expr);
+            assert(MetaTok.ExprPtr);
             APSInt FieldDeclInt;
-            if (!EvaluateInteger(MetaTok.Expr, FieldDeclInt, Info))
+            if (!EvaluateInteger(MetaTok.ExprPtr, FieldDeclInt, Info))
               return ESR_Failed;
             auto Ast = reinterpret_cast<Decl*>(FieldDeclInt.getExtValue());
             if (isa<FieldDecl>(Ast))
@@ -4123,15 +4123,15 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
             break;
           }
           case 2: // identifier
-            if (MetaTok.Expr)
+            if (MetaTok.ExprPtr)
             {
               LValue Result;
-              if (!EvaluatePointer(MetaTok.Expr, Result, Info))
+              if (!EvaluatePointer(MetaTok.ExprPtr, Result, Info))
                 return ESR_Failed;
               auto E = Result.Base.get<const Expr*>();
               auto MemberVariableNameExpr = cast<ReflectionMemberVariableNameExpr>(E);
               llvm::APSInt Ast;
-              if (!EvaluateInteger(MemberVariableNameExpr->getImplicitCastExpr(), Ast, Info))
+              if (!EvaluateInteger(MemberVariableNameExpr->getSubExpr(), Ast, Info))
                 return ESR_Failed;
               auto AstPtr = reinterpret_cast<Decl*>(Ast.getExtValue());
               auto FieldDeclPtr = cast<FieldDecl>(AstPtr);
@@ -4180,7 +4180,7 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
 
   case Stmt::ReflectionMemberUpdateAccessSpecExprClass : {
     auto E = cast<ReflectionMemberUpdateAccessSpecExpr>(S);
-    auto ASTExpr = E->getImplicitCastExpr();
+    auto ASTExpr = E->getSubExpr();
     auto AS = E->getAccessSpecifier();
     FullExpressionRAII Scope(Info);
     APSInt ASTVal;
@@ -5909,7 +5909,7 @@ public:
 
   bool VisitReflectionMemberVariableNameExpr(const ReflectionMemberVariableNameExpr *E) {
     llvm::APSInt Int;
-    if (!EvaluateInteger(E->getImplicitCastExpr(), Int, Info))
+    if (!EvaluateInteger(E->getSubExpr(), Int, Info))
       return false;
 
     return Success(E);
@@ -7333,7 +7333,7 @@ public:
   }
 
   bool VisitReflectionMemberVariableSizeExpr(const ReflectionMemberVariableSizeExpr *E) {
-    auto SubExpr = E->getImplicitCastExpr();
+    auto SubExpr = E->getSubExpr();
     if (!Visit(SubExpr))
       return false;
     if (!Result.isInt()) return Error(E);
@@ -7370,7 +7370,7 @@ public:
   }
 
   bool VisitReflectionMemberFunctionSizeExpr(const ReflectionMemberFunctionSizeExpr *E) {
-    auto SubExpr = E->getImplicitCastExpr();
+    auto SubExpr = E->getSubExpr();
     APSInt Val;
     if (!EvaluateInteger(SubExpr, Val, Info))
       return false;
@@ -7387,7 +7387,7 @@ public:
   }
 
   bool VisitReflectionMemberFunctionNameExpr(const ReflectionMemberFunctionNameExpr *E) {
-    auto SubExpr = E->getImplicitCastExpr();
+    auto SubExpr = E->getSubExpr();
     APSInt Val;
     if (!EvaluateInteger(SubExpr, Val, Info))
       return false;
@@ -7419,7 +7419,7 @@ public:
   }
 
   bool VisitReflectionMemberCheckAccessSpecExpr(const ReflectionMemberCheckAccessSpecExpr *E) {
-    auto ASTExpr = E->getImplicitCastExpr();
+    auto ASTExpr = E->getSubExpr();
     auto AS = E->getAccessSpecifier();
     APSInt ASTVal;
     if (!EvaluateInteger(ASTExpr, ASTVal, Info))
@@ -11447,17 +11447,17 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   }
 
   case Expr::ReflectionMemberVariableSizeExprClass:
-    return CheckICE(cast<ReflectionMemberVariableSizeExpr>(E)->getImplicitCastExpr(), Ctx);
+    return CheckICE(cast<ReflectionMemberVariableSizeExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflectionMemberVariableNameExprClass:
-    return CheckICE(cast<ReflectionMemberVariableNameExpr>(E)->getImplicitCastExpr(), Ctx);
+    return CheckICE(cast<ReflectionMemberVariableNameExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflectionMemberFunctionSizeExprClass:
-    return CheckICE(cast<ReflectionMemberFunctionSizeExpr>(E)->getImplicitCastExpr(), Ctx);
+    return CheckICE(cast<ReflectionMemberFunctionSizeExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflectionMemberFunctionNameExprClass:
-    return CheckICE(cast<ReflectionMemberFunctionNameExpr>(E)->getImplicitCastExpr(), Ctx);
+    return CheckICE(cast<ReflectionMemberFunctionNameExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflectionMemberCheckAccessSpecExprClass:
-    return CheckICE(cast<ReflectionMemberCheckAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+    return CheckICE(cast<ReflectionMemberCheckAccessSpecExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflectionMemberUpdateAccessSpecExprClass:
-    return CheckICE(cast<ReflectionMemberUpdateAccessSpecExpr>(E)->getImplicitCastExpr(), Ctx);
+    return CheckICE(cast<ReflectionMemberUpdateAccessSpecExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflexprExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
   case Expr::ReflectionEnumFieldsExprClass:

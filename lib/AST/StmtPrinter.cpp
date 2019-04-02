@@ -2813,13 +2813,13 @@ void StmtPrinter::VisitTypoExpr(TypoExpr *Node) {
 
 void StmtPrinter::VisitReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *Node) {
   OS << "$var_size(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ")";
 }
 
 void StmtPrinter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *Node) {
   OS << "$var_name(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ")";
 }
 
@@ -2833,13 +2833,13 @@ void StmtPrinter::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr
 
 void StmtPrinter::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *Node) {
   OS << "$func_size(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ")";
 }
 
 void StmtPrinter::VisitReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *Node) {
   OS << "$func_name(";
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ")";
 }
 
@@ -2867,7 +2867,7 @@ void StmtPrinter::VisitReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheck
     OS << "$is_none(";
     break;
   }
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ")";
 }
 
@@ -2887,7 +2887,7 @@ void StmtPrinter::VisitReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpda
     OS << "$make_none(";
     break;
   }
-  PrintExpr(Node->getImplicitCastExpr());
+  PrintExpr(Node->getSubExpr());
   OS << ")";
 }
 

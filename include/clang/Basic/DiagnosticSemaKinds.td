@@ -9439,5 +9439,7 @@ def err_std_compare_type_not_supported : Error<
    "the type is not trivially copyable|"
    "the type does not have the expected form}1">;
 
-def err_reflection_argument_type_mismatch : Error<"expect reflection type">;
+def err_reflection_argument_type_mismatch : Error<"reflection error, expect %0">;
+def err_sema_reflection_out_of_range : Error<"%0 index out of range">;
+
 } // end of sema component.

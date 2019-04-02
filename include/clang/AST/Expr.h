@@ -5483,18 +5483,21 @@ class ReflectionMemberVariableExpr final : public Expr
   };
   Stmt* SubExprs[INDEX_SIZE];
 public:
-  ReflectionMemberVariableExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
-    : Expr(ReflectionMemberVariableExprClass, ast->getType(), VK_RValue, OK_Ordinary, ast->isTypeDependent() || index->isTypeDependent(), ast->isValueDependent() || index->isValueDependent(), false, false)
+  ReflectionMemberVariableExpr(Expr* Ast, Expr* Index)
+    : Expr(ReflectionMemberVariableExprClass,
+           Ast->getType(), VK_RValue, OK_Ordinary,
+           Ast->isTypeDependent() || Index->isTypeDependent(),
+           Ast->isValueDependent() || Index->isValueDependent(), false, false)
   {
-    SubExprs[INDEX_AST] = ast;
-    SubExprs[INDEX_INDEX] = index;
+    SubExprs[INDEX_AST] = Ast;
+    SubExprs[INDEX_INDEX] = Index;
   }
   explicit ReflectionMemberVariableExpr(EmptyShell Shell)
     : Expr(ReflectionMemberVariableExprClass, Shell) { }
-  void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
+  void setASTExpr(Expr* Ast) { SubExprs[INDEX_AST] = Ast; }
   Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
   const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
-  void setIndexExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_INDEX] = cast; }
+  void setIndexExpr(Expr* Index) { SubExprs[INDEX_INDEX] = Index; }
   Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
   const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
   static bool classof(const Stmt *T) {
@@ -5514,13 +5517,13 @@ class ReflectionMemberVariableNameExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ReflectionMemberVariableNameExpr(ImplicitCastExpr* cast, QualType T, ASTContext& Context);
+  ReflectionMemberVariableNameExpr(Expr* SubExpr, QualType T, ASTContext& Context);
   /// Create an empty test cash expression.
   explicit ReflectionMemberVariableNameExpr(EmptyShell Shell)
     : Expr(ReflectionMemberVariableNameExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* SubExpr) { SubExprs[0] = SubExpr; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionMemberVariableNameExprClass;
   }
@@ -5539,18 +5542,21 @@ class ReflectionMemberVariableSizeExpr final : public Expr
   Stmt* SubExprs[1];
   SourceLocation Loc;
 public:
-  ReflectionMemberVariableSizeExpr(ImplicitCastExpr* cast, SourceLocation Loc)
-    : Expr(ReflectionMemberVariableSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, cast->isTypeDependent(), cast->isValueDependent(), false, false)
+  ReflectionMemberVariableSizeExpr(Expr* SubExpr, SourceLocation Loc)
+    : Expr(ReflectionMemberVariableSizeExprClass,
+           SubExpr->getType(), VK_RValue, OK_Ordinary,
+           SubExpr->isTypeDependent(),
+           SubExpr->isValueDependent(), false, false)
     , Loc(Loc)
   {
-    SubExprs[0] = cast;
+    SubExprs[0] = SubExpr;
   }
   /// Create an empty test cash expression.
   explicit ReflectionMemberVariableSizeExpr(EmptyShell Shell)
     : Expr(ReflectionMemberVariableSizeExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* SubExpr) { SubExprs[0] = SubExpr; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionMemberVariableSizeExprClass;
   }
@@ -5574,18 +5580,19 @@ class ReflectionMemberFunctionExpr final : public Expr
   };
   Stmt* SubExprs[INDEX_SIZE];
 public:
-  ReflectionMemberFunctionExpr(ImplicitCastExpr* ast, ImplicitCastExpr* index)
-    : Expr(ReflectionMemberFunctionExprClass, ast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  ReflectionMemberFunctionExpr(Expr* Ast, Expr* Index)
+    : Expr(ReflectionMemberFunctionExprClass,
+           Ast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
   {
-    SubExprs[INDEX_AST] = ast;
-    SubExprs[INDEX_INDEX] = index;
+    SubExprs[INDEX_AST] = Ast;
+    SubExprs[INDEX_INDEX] = Index;
   }
   explicit ReflectionMemberFunctionExpr(EmptyShell Shell)
     : Expr(ReflectionMemberFunctionExprClass, Shell) { }
-  void setASTExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_AST] = cast; }
+  void setASTExpr(Expr* Ast) { SubExprs[INDEX_AST] = Ast; }
   Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
   const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
-  void setIndexExpr(ImplicitCastExpr* cast) { SubExprs[INDEX_INDEX] = cast; }
+  void setIndexExpr(Expr* Index) { SubExprs[INDEX_INDEX] = Index; }
   Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
   const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
   static bool classof(const Stmt *T) {
@@ -5605,17 +5612,18 @@ class ReflectionMemberFunctionNameExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ReflectionMemberFunctionNameExpr(ImplicitCastExpr* cast)
-    : Expr(ReflectionMemberFunctionNameExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
+  ReflectionMemberFunctionNameExpr(Expr* SubExpr)
+    : Expr(ReflectionMemberFunctionNameExprClass,
+           SubExpr->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
   {
-    SubExprs[0] = cast;
+    SubExprs[0] = SubExpr;
   }
   /// Create an empty test cash expression.
   explicit ReflectionMemberFunctionNameExpr(EmptyShell Shell)
     : Expr(ReflectionMemberFunctionNameExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* SubExpr) { SubExprs[0] = SubExpr; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionMemberFunctionNameExprClass;
   }
@@ -5633,7 +5641,7 @@ class ReflectionMemberFunctionSizeExpr final : public Expr
 {
   Stmt* SubExprs[1];
 public:
-  ReflectionMemberFunctionSizeExpr(ImplicitCastExpr* cast)
+  ReflectionMemberFunctionSizeExpr(Expr* cast)
     : Expr(ReflectionMemberFunctionSizeExprClass, cast->getType(), VK_RValue, OK_Ordinary, false, false, false, false)
   {
     SubExprs[0] = cast;
@@ -5641,9 +5649,9 @@ public:
   /// Create an empty test cash expression.
   explicit ReflectionMemberFunctionSizeExpr(EmptyShell Shell)
     : Expr(ReflectionMemberFunctionSizeExprClass, Shell) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* SubExpr) { SubExprs[0] = SubExpr; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionMemberFunctionSizeExprClass;
   }
@@ -5662,13 +5670,13 @@ class ReflectionMemberCheckAccessSpecExpr final : public Expr
   Stmt* SubExprs[1];
   AccessSpecifier AS;
 public:
-  ReflectionMemberCheckAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
+  ReflectionMemberCheckAccessSpecExpr(ASTContext& C, Expr* SubExpr, AccessSpecifier AS);
   /// Create an empty test cash expression.
   explicit ReflectionMemberCheckAccessSpecExpr(EmptyShell Shell)
     : Expr(ReflectionMemberCheckAccessSpecExprClass, Shell), AS(AS_none) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* SubExpr) { SubExprs[0] = SubExpr; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   AccessSpecifier getAccessSpecifier() const { return AS; }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionMemberCheckAccessSpecExprClass;
@@ -5688,13 +5696,13 @@ class ReflectionMemberUpdateAccessSpecExpr final : public Expr
   Stmt* SubExprs[1];
   AccessSpecifier AS;
 public:
-  ReflectionMemberUpdateAccessSpecExpr(ASTContext& C, ImplicitCastExpr* cast, AccessSpecifier AS);
+  ReflectionMemberUpdateAccessSpecExpr(ASTContext& C, Expr* SubExpr, AccessSpecifier AS);
   /// Create an empty test cash expression.
   explicit ReflectionMemberUpdateAccessSpecExpr(EmptyShell Shell)
     : Expr(ReflectionMemberUpdateAccessSpecExprClass, Shell), AS(AS_none) { }
-  void setImplicitCastExpr(ImplicitCastExpr* cast) { SubExprs[0] = cast; }
-  Expr* getImplicitCastExpr() { return static_cast<Expr*>(SubExprs[0]); }
-  const Expr* getImplicitCastExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  void setSubExpr(Expr* SubExpr) { SubExprs[0] = SubExpr; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
   AccessSpecifier getAccessSpecifier() const { return AS; }
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ReflectionMemberUpdateAccessSpecExprClass;
@@ -5714,7 +5722,7 @@ class Parser;
 struct ASTMetaToken
 {
   Token Tok;
-  ImplicitCastExpr* Expr;
+  Expr* ExprPtr;
   Stmt* EvalCompoundStmt;
 };
 

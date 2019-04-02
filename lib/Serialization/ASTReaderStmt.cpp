@@ -1735,12 +1735,12 @@ void ASTStmtReader::VisitTypoExpr(TypoExpr *E) {
 
 void ASTStmtReader::VisitReflectionMemberVariableSizeExpr(ReflectionMemberVariableSizeExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariableNameExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
@@ -1751,12 +1751,12 @@ void ASTStmtReader::VisitReflectionMemberVariableExpr(ReflectionMemberVariableEx
 
 void ASTStmtReader::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionMemberFunctionNameExpr(ReflectionMemberFunctionNameExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionMemberFunctionExpr(ReflectionMemberFunctionExpr *E) {
@@ -1767,12 +1767,12 @@ void ASTStmtReader::VisitReflectionMemberFunctionExpr(ReflectionMemberFunctionEx
 
 void ASTStmtReader::VisitReflectionMemberCheckAccessSpecExpr(ReflectionMemberCheckAccessSpecExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionMemberUpdateAccessSpecExpr(ReflectionMemberUpdateAccessSpecExpr *E) {
   VisitExpr(E);
-  E->setImplicitCastExpr((ImplicitCastExpr*)Record.readSubExpr());
+  E->setSubExpr(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitASTInjectExpr(ASTInjectExpr *E) {

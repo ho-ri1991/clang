@@ -1980,20 +1980,20 @@ public:
   void ActOnUninitializedDecl(Decl *dcl);
   void ActOnInitializerError(Decl *Dcl);
 
-  ExprResult ActOnReflectionMemberVariableSizeExpr(ExprResult DeclRef, SourceLocation Loc);
-  ExprResult ActOnReflectionMemberVariableNameExpr(ExprResult DeclRef);
-  ExprResult ActOnReflectionMemberVariableExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
-  ExprResult ActOnReflectionMemberFunctionSizeExpr(ExprResult DeclRef);
-  ExprResult ActOnReflectionMemberFunctionNameExpr(ExprResult DeclRef);
-  ExprResult ActOnReflectionMemberFunctionExpr(ExprResult ASTDeclRef, ExprResult IndexDeclRef);
-  ExprResult ActOnReflectionMemberCheckAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
-  ExprResult ActOnReflectionMemberUpdateAccessSpecExpr(ExprResult DeclRef, AccessSpecifier AS);
-  ExprResult ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn);
-  ExprResult ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange);
-  ExprResult ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange Range);
-  ExprResult ActOnReflectionEnumFieldExpr(ExprResult AstExpr, ExprResult IndexExpr, SourceRange Range);
-  ExprResult ActOnReflectionEnumFieldValueExpr(ExprResult SubExpr, SourceRange Range);
-  ExprResult ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRange Range);
+  ExprResult ActOnReflectionMemberVariableSizeExpr(ExprResult SubExpr, SourceLocation Loc, bool allowExpansion);
+  ExprResult ActOnReflectionMemberVariableNameExpr(ExprResult SubExpr, bool allowExpansion);
+  ExprResult ActOnReflectionMemberVariableExpr(ExprResult AstExpr, ExprResult IndexExpr, bool allowExpansion);
+  ExprResult ActOnReflectionMemberFunctionSizeExpr(ExprResult SubExpr, bool allowExpansion);
+  ExprResult ActOnReflectionMemberFunctionNameExpr(ExprResult SubExpr, bool allowExpansion);
+  ExprResult ActOnReflectionMemberFunctionExpr(ExprResult AstExpr, ExprResult IndexExpr, bool allowExpansion);
+  ExprResult ActOnReflectionMemberCheckAccessSpecExpr(ExprResult SubExpr, AccessSpecifier AS, bool allowExpansion);
+  ExprResult ActOnReflectionMemberUpdateAccessSpecExpr(ExprResult SubExpr, AccessSpecifier AS, bool allowExpansion);
+  ExprResult ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector<ASTMetaToken>&& Tokens, Parser* LateParser, ASTInjectExpr::LateTokenizeFunction LateTokenzeFn, bool allowExpansion);
+  ExprResult ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange, bool allowExpansion);
+  ExprResult ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion);
+  ExprResult ActOnReflectionEnumFieldExpr(ExprResult AstExpr, ExprResult IndexExpr, SourceRange Range, bool allowExpansion);
+  ExprResult ActOnReflectionEnumFieldValueExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion);
+  ExprResult ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);
