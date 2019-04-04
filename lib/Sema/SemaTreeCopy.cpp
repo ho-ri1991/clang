@@ -64,7 +64,22 @@ StmtResult ExpandForStmt(Expr* Init, Stmt* Body, Sema& SemaRef)
         auto EnumFieldsExpr = cast<ReflectionEnumFieldsExpr>(Init);
         if (!EnumFieldsExpr->getSubExpr()->EvaluateAsInt(Int, SemaRef.getASTContext()))
           return StmtError();
-        auto DeclPtr = reinterpret_cast<Decl*>(Int.getExtValue());
+        Decl* DeclPtr = nullptr;
+        auto T = EnumFieldsExpr->getSubExpr()->getType().getCanonicalType();
+        T.removeLocalConst();
+        if (T == SemaRef.getASTContext().getUIntPtrType())
+        {
+          auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+          DeclPtr = TypePtr->getAsTagDecl();
+        }
+        else if (T == SemaRef.getASTContext().getIntPtrType())
+        {
+          DeclPtr = reinterpret_cast<Decl*>(Int.getExtValue());
+        }
+        else
+        {
+          return StmtError();
+        }
         auto EnumDeclPtr = cast_or_null<EnumDecl>(DeclPtr);
         if (!EnumDeclPtr)
           return StmtError();
@@ -116,7 +131,7 @@ ExprResult TreeCopy::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr*
   ExprResult SubExpr = TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return ExprError();
-  return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(SubExpr.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
+  return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(getSema().getASTContext(), SubExpr.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
 }
 
 StmtResult TreeCopy::TransformExpansionForStmt(ExpansionForStmt* S)

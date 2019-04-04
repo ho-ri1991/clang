@@ -9293,10 +9293,10 @@ TreeTransform<Derived>::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsEx
 //    getSema().MaybeODRUseExprs.erase(Result.get());
     auto ASTType = Result.getAs<DeclRefExpr>()->getDecl()->getType();
     auto ASTCast = ImplicitCastExpr::Create(getSema().getASTContext(), ASTType, CK_LValueToRValue, Result.getAs<DeclRefExpr>(), nullptr, VK_RValue);
-    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(ASTCast, SourceRange(E->getLocStart(), E->getLocEnd()));
+    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(getSema().getASTContext(), ASTCast, SourceRange(E->getLocStart(), E->getLocEnd()));
   }
   else
-    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(Result.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
+    return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(getSema().getASTContext(), Result.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
 }
 
 template<typename Derived>
@@ -9318,8 +9318,24 @@ TreeTransform<Derived>::TransformReflectionEnumFieldExpr(ReflectionEnumFieldExpr
   }
   else
   {
-    auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
-    auto ClassDecl = static_cast<EnumDecl*>(Ast);
+    auto T = AstExpr.get()->getType().getCanonicalType();
+    T.removeLocalConst();
+    Decl* Ast = nullptr;
+    if (T == getSema().getASTContext().getUIntPtrType())
+    {
+      auto TypePtr = reinterpret_cast<Type*>(AstInt.getExtValue());
+      Ast = TypePtr->getAsTagDecl();
+    }
+    else if (T == getSema().getASTContext().getIntPtrType())
+    {
+      Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+    }
+    auto ClassDecl = cast_or_null<EnumDecl>(Ast);
+    if (!ClassDecl)
+    {
+      // TODO: diag
+      return ExprError();
+    }
     auto Index = IndexInt.getExtValue();
     auto enumFieldItr = ClassDecl->enumerator_begin();
     while (Index--) { ++enumFieldItr; }

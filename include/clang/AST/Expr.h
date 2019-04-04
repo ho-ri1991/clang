@@ -5832,13 +5832,7 @@ class ReflectionEnumFieldsExpr : public Expr
   Stmt* SubExprs[1];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldsExpr(Expr* SubExpr, SourceRange Range)
-    : Expr(ReflectionEnumFieldsExprClass, SubExpr->getType(), VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), SubExpr->isValueDependent(), false, false)
-    , BeginLoc(Range.getBegin())
-    , EndLoc(Range.getEnd())
-  {
-    SubExprs[0] = SubExpr;
-  }
+  ReflectionEnumFieldsExpr(ASTContext& Context, Expr* SubExpr, SourceRange Range);
   explicit ReflectionEnumFieldsExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldsExprClass, Shell) { }
   void setSubExpr(Expr* E) { SubExprs[0] = E; }
@@ -5869,14 +5863,7 @@ class ReflectionEnumFieldExpr : public Expr
   Stmt* SubExprs[INDEX_SIZE];
   SourceLocation BeginLoc, EndLoc;
 public:
-  ReflectionEnumFieldExpr(Expr* Ast, Expr* Index, SourceRange Range)
-    : Expr(ReflectionEnumFieldExprClass, Ast->getType(), VK_RValue, OK_Ordinary, Ast->isTypeDependent() || Index->isTypeDependent(), Ast->isValueDependent() || Index->isValueDependent(), false, false)
-    , BeginLoc(Range.getBegin())
-    , EndLoc(Range.getEnd())
-  {
-    SubExprs[INDEX_AST] = Ast;
-    SubExprs[INDEX_INDEX] = Index;
-  }
+  ReflectionEnumFieldExpr(ASTContext& Context, Expr* Ast, Expr* Index, SourceRange Range);
   explicit ReflectionEnumFieldExpr(EmptyShell Shell)
     : Expr(ReflectionEnumFieldExprClass, Shell) { }
   void setASTExpr(Expr* Ast) { SubExprs[INDEX_AST] = Ast; }

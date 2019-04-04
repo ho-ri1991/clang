@@ -5,8 +5,15 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include <iostream>
 #include <cassert>
+#include <unordered_map>
 
 using namespace clang;
+
+namespace
+{
+  const char* NullDeclTokenString = "__null_decl";
+  const char* NullTypeTokenString = "__null_type";
+}
 
 static Token GenerateToken(tok::TokenKind kind, SourceLocation Loc = SourceLocation{})
 {
@@ -312,19 +319,19 @@ ExtendParser::ParseStatementOrDeclaration(StmtVector &Stmts, AllowedConstructsKi
     ExprVector ArgExprs;
     CommaLocsTy CommaLocs;
     this->isExpandReflection = false;
-    ParseExpressionList(ArgExprs, CommaLocs); // parse $enum_fields(E)/member_var_fields(X)/..
-    assert(ArgExprs.size() == 1);
+    ParseExpressionList(ArgExprs, CommaLocs); // parse $enum_fields(E)/data_member_fields(X)/..
     BDT.consumeClose();
+    if (ArgExprs.size() != 1)
+    {
+      return StmtError();
+    }
 
     StmtVector Stmts;
     {
       ParseScope CompoundScope(this, Scope::DeclScope | Scope::CompoundStmtScope);
       RangeDeclToks.push_back(GenerateToken(tok::equal, BDT.getCloseLocation()));
       RangeDeclToks.push_back(GenerateToken(tok::cash, RangeDeclToks.back().getLocation()));
-      RangeDeclToks.push_back(GenerateIdentifierToken(PP, "reflexpr", RangeDeclToks.back().getLocation()));
-      RangeDeclToks.push_back(GenerateToken(tok::l_paren, RangeDeclToks.back().getLocation()));
-      RangeDeclToks.push_back(GenerateToken(tok::kw_int, RangeDeclToks.back().getLocation()));
-      RangeDeclToks.push_back(GenerateToken(tok::r_paren, RangeDeclToks.back().getLocation()));
+      RangeDeclToks.push_back(GenerateIdentifierToken(PP, NullDeclTokenString, RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(GenerateToken(tok::semi, RangeDeclToks.back().getLocation()));
       RangeDeclToks.push_back(Tok);
       PP.EnterTokenStream(RangeDeclToks, true);
@@ -368,6 +375,18 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       TypeSourceInfo *TInfo;
       (void) Sema::GetTypeFromParser(ParsedType::getFromOpaquePtr(CastTy.getAsOpaquePtr()), &TInfo);
       return Actions.ActOnReflexprExpr(Loc, TInfo, CastRange, isExpandReflection);
+    }
+    else if (std::strcmp(name, NullDeclTokenString) == 0)
+    {
+      ConsumeToken();
+      llvm::APInt Int(64, 0);
+      return IntegerLiteral::Create(Actions.getASTContext(), Int, Actions.getASTContext().getIntPtrType(), Tok.getLocation());
+    }
+    else if (std::strcmp(name, NullTypeTokenString) == 0)
+    {
+      ConsumeToken();
+      llvm::APInt Int(64, 0);
+      return IntegerLiteral::Create(Actions.getASTContext(), Int, Actions.getASTContext().getUIntPtrType(), Tok.getLocation());
     }
     else if (std::strcmp(name, "var_size") == 0)
     {

@@ -4243,6 +4243,23 @@ Stmt::const_child_range ReflexprExpr::children() const {
   return const_child_range(const_child_iterator(), const_child_iterator());
 }
 
+ReflectionEnumFieldsExpr::ReflectionEnumFieldsExpr(ASTContext& Context, Expr* SubExpr, SourceRange Range)
+  : Expr(ReflectionEnumFieldsExprClass, Context.getIntPtrType(), VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), SubExpr->isValueDependent(), false, false)
+  , BeginLoc(Range.getBegin())
+  , EndLoc(Range.getEnd())
+{
+  SubExprs[0] = SubExpr;
+}
+
+ReflectionEnumFieldExpr::ReflectionEnumFieldExpr(ASTContext& Context, Expr* Ast, Expr* Index, SourceRange Range)
+  : Expr(ReflectionEnumFieldExprClass, Context.getIntPtrType(), VK_RValue, OK_Ordinary, Ast->isTypeDependent() || Index->isTypeDependent(), Ast->isValueDependent() || Index->isValueDependent(), false, false)
+  , BeginLoc(Range.getBegin())
+  , EndLoc(Range.getEnd())
+{
+  SubExprs[INDEX_AST] = Ast;
+  SubExprs[INDEX_INDEX] = Index;
+}
+
 ReflectionEnumFieldNameExpr::ReflectionEnumFieldNameExpr(Expr* SubExpr, QualType T, ASTContext& Context, SourceRange Range)
   : Expr(ReflectionEnumFieldNameExprClass, T, VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), SubExpr->isTypeDependent(), false, false)
 {

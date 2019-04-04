@@ -16533,9 +16533,9 @@ ExprResult Sema::ActOnReflectionMemberVariableSizeExpr(ExprResult SubExpr, Sourc
 
   auto T = AstExpr->getType().getCanonicalType();
   T.removeLocalConst();
-  if (T != Context.getIntPtrType())
+  if (T != Context.getIntPtrType() && T != Context.getUIntPtrType())
   {
-    Diag(Loc, diag::err_reflection_argument_type_mismatch) << "reflection type";
+    Diag(Loc, diag::err_reflection_argument_type_mismatch) << "class/struct reflection";
     return ExprError();
   }
 
@@ -16548,11 +16548,21 @@ ExprResult Sema::ActOnReflectionMemberVariableSizeExpr(ExprResult SubExpr, Sourc
     return new(Context) ReflectionMemberVariableSizeExpr(AstExpr, Loc);
   }
 
-  auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+  Decl* Ast = nullptr;
+  if (T == Context.getUIntPtrType())
+  {
+    auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+    Ast = TypePtr->getAsTagDecl();
+  }
+  else
+  {
+    Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+  }
+
   auto ClassDecl = cast_or_null<CXXRecordDecl>(Ast);
   if (!ClassDecl)
   {
-    Diag(Loc, diag::err_reflection_argument_type_mismatch) << "reflection of class/struct";
+    Diag(Loc, diag::err_reflection_argument_type_mismatch) << "class/struct reflection";
     return ExprError();
   }
   auto MemberRange = ClassDecl->fields();
@@ -16637,15 +16647,11 @@ ExprResult Sema::ActOnReflectionMemberVariableExpr(ExprResult AstResult, ExprRes
   }
 
   if (!AstExpr->isValueDependent() &&
-      !AstExpr->isTypeDependent())
+      !AstExpr->isTypeDependent() &&
+      !AstExpr->getType().getTypePtr()->isIntegerType())
   {
-    auto T = AstExpr->getType().getCanonicalType();
-    T.removeLocalConst();
-    if (T != Context.getIntPtrType())
-    {
-      Diag(AstExpr->getExprLoc(), diag::err_reflection_argument_type_mismatch) << "reflection type";
-      return ExprError();
-    }
+    Diag(AstExpr->getExprLoc(), diag::err_reflection_argument_type_mismatch) << "class/struct reflection";
+    return ExprError();
   }
 
   if (!IndexExpr->isValueDependent() &&
@@ -16667,7 +16673,24 @@ ExprResult Sema::ActOnReflectionMemberVariableExpr(ExprResult AstResult, ExprRes
     return new(Context) ReflectionMemberVariableExpr(AstExpr, IndexExpr);
   }
 
-  auto Ast = reinterpret_cast<Decl*>(Int1.getExtValue());
+  auto T = AstExpr->getType().getCanonicalType();
+  T.removeLocalConst();
+  Decl* Ast = nullptr;
+  if (T == Context.getUIntPtrType())
+  {
+    auto TypePtr = reinterpret_cast<Type*>(Int1.getExtValue());
+    Ast = TypePtr->getAsTagDecl();
+  }
+  else if (T == Context.getIntPtrType())
+  {
+    Ast = reinterpret_cast<Decl*>(Int1.getExtValue());
+  }
+  else
+  {
+    Diag(AstExpr->getExprLoc(), diag::err_reflection_argument_type_mismatch) << "class/struct reflection";
+    return ExprError();
+  }
+
   auto ClassDecl = cast_or_null<RecordDecl>(Ast);
   if (!ClassDecl)
   {
@@ -16810,16 +16833,14 @@ ExprResult Sema::ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector
 
 ExprResult Sema::ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange, bool allowExpansion)
 {
-  // TODO: null check of Ty and Ty->getType().getTypePtr()
   if (!allowExpansion ||
       Ty->getType().getTypePtr()->isDependentType())
   {
-    return new(Context) ReflexprExpr(Ty, Context.getIntPtrType(), ArgRange.getBegin(), ArgRange.getEnd());
+    return new(Context) ReflexprExpr(Ty, Context.getUIntPtrType(), ArgRange.getBegin(), ArgRange.getEnd());
   }
 
-  auto Record = static_cast<Decl*>(Ty->getType().getTypePtr()->getAsTagDecl());
-  llvm::APInt Int(64, reinterpret_cast<uint64_t>(Record));
-  return IntegerLiteral::Create(Context, Int, Context.getIntPtrType(), ArgRange.getBegin());
+  llvm::APInt Int(64, reinterpret_cast<uint64_t>(Ty->getType().getTypePtr()));
+  return IntegerLiteral::Create(Context, Int, Context.getUIntPtrType(), ArgRange.getBegin());
 }
 
 ExprResult Sema::ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion)
@@ -16832,15 +16853,15 @@ ExprResult Sema::ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange R
   }
   if (AstExpr->isValueDependent() || AstExpr->isTypeDependent())
   {
-    return new(Context) ReflectionEnumFieldsExpr(AstExpr, Range);
+    return new(Context) ReflectionEnumFieldsExpr(Context, AstExpr, Range);
   }
   else
   {
     auto T = AstExpr->getType().getCanonicalType();
     T.removeLocalConst();
-    if (T == Context.getIntPtrType())
+    if (T == Context.getIntPtrType() || T == Context.getUIntPtrType())
     {
-      return new(Context) ReflectionEnumFieldsExpr(AstExpr, Range);
+      return new(Context) ReflectionEnumFieldsExpr(Context, AstExpr, Range);
     }
     else
     {
@@ -16865,15 +16886,12 @@ ExprResult Sema::ActOnReflectionEnumFieldExpr(ExprResult AstResult, ExprResult I
     IndexExpr = ImplicitCastExpr::Create(Context, IndexType, CK_LValueToRValue, IndexResult.getAs<DeclRefExpr>(), nullptr, VK_RValue);
   }
 
-  if (!AstExpr->isValueDependent() && !AstExpr->isTypeDependent())
+  if (!AstExpr->isValueDependent() &&
+      !AstExpr->isTypeDependent() &&
+      !AstExpr->getType().getTypePtr()->isIntegerType())
   {
-    auto T = AstExpr->getType().getCanonicalType();
-    T.removeLocalConst();
-    if (T != Context.getIntPtrType())
-    {
-      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "reflection type";
-      return ExprError();
-    }
+    Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "enum reflection";
+    return ExprError();
   }
   if (!IndexExpr->isValueDependent() &&
       !IndexExpr->isTypeDependent() &&
@@ -16891,10 +16909,27 @@ ExprResult Sema::ActOnReflectionEnumFieldExpr(ExprResult AstResult, ExprResult I
       !AstExpr->EvaluateAsInt(Int1, Context) ||
       !IndexExpr->EvaluateAsInt(Int2, Context))
   {
-    return new(Context) ReflectionEnumFieldExpr(AstExpr, IndexExpr, Range);
+    return new(Context) ReflectionEnumFieldExpr(Context, AstExpr, IndexExpr, Range);
   }
 
-  auto Ast = reinterpret_cast<Decl*>(Int1.getExtValue());
+  Decl* Ast = nullptr;
+  auto T = AstExpr->getType().getCanonicalType();
+  T.removeLocalConst();
+  if (T == Context.getUIntPtrType())
+  {
+    auto TypePtr = reinterpret_cast<Type*>(Int1.getExtValue());
+    Ast = TypePtr->getAsTagDecl();
+  }
+  else if (T == Context.getIntPtrType())
+  {
+    Ast = reinterpret_cast<Decl*>(Int1.getExtValue());
+  }
+  else
+  {
+    Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "enum reflection";
+    return ExprError();
+  }
+
   auto EnumDeclPtr = cast_or_null<EnumDecl>(Ast);
   if (!EnumDeclPtr)
   {
@@ -16936,7 +16971,7 @@ ExprResult Sema::ActOnReflectionEnumFieldValueExpr(ExprResult SubExpr, SourceRan
     T.removeLocalConst();
     if (T != Context.getIntPtrType())
     {
-      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "reflection type";
+      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "enum field reflection";
       return ExprError();
     }
   }
@@ -16977,7 +17012,7 @@ ExprResult Sema::ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRang
     T.removeLocalConst();
     if (T != Context.getIntPtrType())
     {
-      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "reflection type";
+      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "enum field reflection";
       return ExprError();
     }
   }
