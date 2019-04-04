@@ -1807,6 +1807,11 @@ void ASTStmtReader::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr
   E->setSubExpr((Expr*)Record.readSubExpr());
 }
 
+void ASTStmtReader::VisitReflectionNameOfExpr(ReflectionNameOfExpr *E) {
+  VisitExpr(E);
+  E->setSubExpr((Expr*)Record.readSubExpr());
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft Expressions and Statements
 //===----------------------------------------------------------------------===//
@@ -3581,6 +3586,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_REFLECTION_ENUM_FIELD_NAME:
       S = new (Context) ReflectionEnumFieldNameExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_NAME_OF:
+      S = new (Context) ReflectionNameOfExpr(Empty);
       break;
 
     case EXPR_GENERIC_SELECTION:

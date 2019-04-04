@@ -9429,6 +9429,75 @@ TreeTransform<Derived>::TransformReflectionEnumFieldNameExpr(ReflectionEnumField
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformReflectionNameOfExpr(ReflectionNameOfExpr *E) {
+  ExprResult AstExpr = TransformExpr(E->getSubExpr());
+  if (AstExpr.isInvalid())
+    return ExprError();
+//  getSema().MaybeODRUseExprs.erase(AstExpr.get());
+  llvm::APSInt AstInt(64);
+  if (AstExpr.get()->isValueDependent() ||
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
+      !AstInt.getExtValue())
+  {
+    if (AstExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+    {
+      auto Cast = ImplicitCastExpr::Create(getSema().getASTContext(), AstExpr.get()->getType(), CK_LValueToRValue, AstExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+      E->setSubExpr(Cast);
+      return E;
+    }
+    else
+    {
+      E->setSubExpr(AstExpr.get());
+      return E;
+    }
+  }
+  else
+  {
+    auto T = AstExpr.get()->getType().getCanonicalType();
+    T.removeLocalConst();
+    auto& Context = getSema().getASTContext();
+    StringRef lit;
+    if (T == Context.getIntPtrType())
+    {
+      auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+      auto Named = cast_or_null<NamedDecl>(Ast);
+      if (!Named)
+      {
+        return ExprError();
+      }
+      lit = StringRef(Named->getIdentifier()->getNameStart());
+    }
+    else
+    {
+      auto TypePtr = reinterpret_cast<Type*>(AstInt.getExtValue());
+      auto Tag = TypePtr->getAsTagDecl();
+      if (!Tag)
+      {
+        return ExprError();
+      }
+      lit = StringRef(Tag->getIdentifier()->getNameStart());
+    }
+
+    SmallVector<SourceLocation, 4> StringTokLocs;
+    StringTokLocs.push_back(AstExpr.get()->getExprLoc());
+    QualType CharTy = Context.CharTy;
+    CharTy.addConst();
+    CharTy = Context.adjustStringLiteralBaseType(CharTy);
+    QualType StrTy = Context.getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+    auto Str = StringLiteral::Create(
+                 Context,
+                 lit,
+                 StringLiteral::Ascii,
+                 /*Pascal*/false, 
+                 StrTy,
+                 &StringTokLocs[0],
+                 /*NumConcatenated*/1);
+    return ImplicitCastExpr::Create(Context, Context.getPointerType(CharTy), CK_ArrayToPointerDecay, Str, nullptr, VK_RValue);
+  }
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformPseudoObjectExpr(PseudoObjectExpr *E) {
   // Rebuild the syntactic form.  The original syntactic form has
   // opaque-value expressions in it, so strip those away and rebuild

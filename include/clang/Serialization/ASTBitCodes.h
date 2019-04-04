@@ -1778,6 +1778,9 @@ namespace serialization {
       /// An ReflectionEnumFieldNameExpr record.
       EXPR_REFLECTION_ENUM_FIELD_NAME,
 
+      /// An ReflectionNameOfExpr record.
+      EXPR_REFLECTION_NAME_OF,
+
       // Objective-C
 
       /// An ObjCStringLiteral record.

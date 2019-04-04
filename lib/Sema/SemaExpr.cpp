@@ -17053,3 +17053,77 @@ ExprResult Sema::ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRang
       /*NumConcatenated*/1);
 }
 
+ExprResult Sema::ActOnReflectionNameOfExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion)
+{
+  Expr* AstExpr = SubExpr.get();
+  if (SubExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+  {
+    auto Type = SubExpr.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, SubExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+  }
+
+  if (!AstExpr->isValueDependent() &&
+      !AstExpr->isTypeDependent())
+  {
+    auto T = AstExpr->getType().getCanonicalType();
+    T.removeLocalConst();
+    if (T != Context.getIntPtrType() && T != Context.getUIntPtrType())
+    {
+      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "enum field reflection";
+      return ExprError();
+    }
+  }
+
+  llvm::APSInt Int(64);
+  if (!allowExpansion ||
+      AstExpr->isValueDependent() ||
+      AstExpr->isTypeDependent() ||
+      !AstExpr->EvaluateAsInt(Int, Context))
+  {
+    QualType CharTy = Context.CharTy;
+    CharTy.addConst();
+    return new(Context) ReflectionNameOfExpr(AstExpr, Context.getPointerType(CharTy), Context, Range);
+  }
+
+  auto T = AstExpr->getType().getCanonicalType();
+  T.removeLocalConst();
+  StringRef lit;
+  if (T == Context.getIntPtrType())
+  {
+    auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+    auto Named = cast_or_null<NamedDecl>(Ast);
+    if (!Named)
+    {
+      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "named declaration reflection";
+      return ExprError();
+    }
+    lit = StringRef(Named->getIdentifier()->getNameStart());
+  }
+  else
+  {
+    auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+    auto Tag = TypePtr->getAsTagDecl();
+    if (!Tag)
+    {
+      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "unimplemented reflection";
+      return ExprError();
+    }
+    lit = StringRef(Tag->getIdentifier()->getNameStart());
+  }
+
+  SmallVector<SourceLocation, 4> StringTokLocs;
+  StringTokLocs.push_back(AstExpr->getExprLoc());
+  QualType CharTy = Context.CharTy;
+  CharTy.addConst();
+  CharTy = Context.adjustStringLiteralBaseType(CharTy);
+  QualType StrTy = Context.getConstantArrayType(CharTy, llvm::APInt(32, lit.size() + 1), ArrayType::Normal, 0);
+  return StringLiteral::Create(
+      Context,
+      lit,
+      StringLiteral::Ascii,
+      /*Pascal*/false, 
+      StrTy,
+      &StringTokLocs[0],
+      /*NumConcatenated*/1);
+}
+

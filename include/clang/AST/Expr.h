@@ -5935,6 +5935,30 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 };
 
+// $name_of(reflection);
+class ReflectionNameOfExpr : public Expr
+{
+  Stmt* SubExprs[1];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionNameOfExpr(Expr* SubExpr, QualType T, ASTContext& Context, SourceRange Range);
+  explicit ReflectionNameOfExpr(EmptyShell Shell)
+    : Expr(ReflectionNameOfExprClass, Shell) { }
+  void setSubExpr(Expr* E) { SubExprs[0] = E; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionNameOfExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return BeginLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
+};
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXPR_H

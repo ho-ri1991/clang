@@ -1919,6 +1919,11 @@ void StmtProfiler::VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNam
   VisitExpr(E->getSubExpr());
 }
 
+void StmtProfiler::VisitReflectionNameOfExpr(const ReflectionNameOfExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getSubExpr());
+}
+
 void StmtProfiler::VisitObjCStringLiteral(const ObjCStringLiteral *S) {
   VisitExpr(S);
 }

@@ -3538,6 +3538,7 @@ recurse:
   case Expr::ReflectionEnumFieldExprClass:
   case Expr::ReflectionEnumFieldValueExprClass:
   case Expr::ReflectionEnumFieldNameExprClass:
+  case Expr::ReflectionNameOfExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

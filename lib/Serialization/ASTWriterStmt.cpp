@@ -1816,6 +1816,12 @@ void ASTStmtWriter::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr
   Code = serialization::EXPR_REFLECTION_ENUM_FIELD_NAME;
 }
 
+void ASTStmtWriter::VisitReflectionNameOfExpr(ReflectionNameOfExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getSubExpr());
+  Code = serialization::EXPR_REFLECTION_NAME_OF;
+}
+
 //===----------------------------------------------------------------------===//
 // CUDA Expressions and Statements.
 //===----------------------------------------------------------------------===//

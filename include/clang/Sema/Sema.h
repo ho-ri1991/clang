@@ -1994,6 +1994,7 @@ public:
   ExprResult ActOnReflectionEnumFieldExpr(ExprResult AstExpr, ExprResult IndexExpr, SourceRange Range, bool allowExpansion);
   ExprResult ActOnReflectionEnumFieldValueExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion);
   ExprResult ActOnReflectionEnumFieldNameExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion);
+  ExprResult ActOnReflectionNameOfExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion);
 
   void ActOnPureSpecifier(Decl *D, SourceLocation PureSpecLoc);
   void ActOnCXXForRangeDecl(Decl *D);

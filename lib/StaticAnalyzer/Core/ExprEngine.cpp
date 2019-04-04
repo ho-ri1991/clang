@@ -1178,6 +1178,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ReflectionEnumFieldExprClass:
     case Stmt::ReflectionEnumFieldValueExprClass:
     case Stmt::ReflectionEnumFieldNameExprClass:
+    case Stmt::ReflectionNameOfExprClass:
     case Stmt::CXXNoexceptExprClass:
     case Stmt::PackExpansionExprClass:
     case Stmt::SubstNonTypeTemplateParmPackExprClass:

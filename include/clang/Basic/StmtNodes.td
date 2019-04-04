@@ -198,6 +198,7 @@ def ReflectionEnumFieldsExpr : DStmt<Expr>;
 def ReflectionEnumFieldExpr : DStmt<Expr>;
 def ReflectionEnumFieldValueExpr : DStmt<Expr>;
 def ReflectionEnumFieldNameExpr : DStmt<Expr>;
+def ReflectionNameOfExpr : DStmt<Expr>;
 
 // Microsoft Extensions.
 def MSPropertyRefExpr : DStmt<Expr>;

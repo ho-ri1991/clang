@@ -4129,9 +4129,9 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
               if (!EvaluatePointer(MetaTok.ExprPtr, Result, Info))
                 return ESR_Failed;
               auto E = Result.Base.get<const Expr*>();
-              auto MemberVariableNameExpr = cast<ReflectionMemberVariableNameExpr>(E);
+              auto NameOfExpr = cast<ReflectionNameOfExpr>(E);
               llvm::APSInt Ast;
-              if (!EvaluateInteger(MemberVariableNameExpr->getSubExpr(), Ast, Info))
+              if (!EvaluateInteger(NameOfExpr->getSubExpr(), Ast, Info))
                 return ESR_Failed;
               auto AstPtr = reinterpret_cast<Decl*>(Ast.getExtValue());
               auto FieldDeclPtr = cast<FieldDecl>(AstPtr);
@@ -5916,6 +5916,14 @@ public:
   }
 
   bool VisitReflectionEnumFieldNameExpr(const ReflectionEnumFieldNameExpr *E) {
+    llvm::APSInt Int;
+    if (!EvaluateInteger(E->getSubExpr(), Int, Info))
+      return false;
+
+    return Success(E);
+  }
+
+  bool VisitReflectionNameOfExpr(const ReflectionNameOfExpr *E) {
     llvm::APSInt Int;
     if (!EvaluateInteger(E->getSubExpr(), Int, Info))
       return false;
@@ -11468,6 +11476,7 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
     return NoDiag();
 //    return ICEDiag(IK_NotICE, E->getLocStart());
   case Expr::ReflectionEnumFieldNameExprClass:
+  case Expr::ReflectionNameOfExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::ReflectionMemberVariableExprClass: {

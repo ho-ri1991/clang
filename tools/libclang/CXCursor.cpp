@@ -514,6 +514,7 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::ReflectionEnumFieldExprClass:
   case Stmt::ReflectionEnumFieldValueExprClass:
   case Stmt::ReflectionEnumFieldNameExprClass:
+  case Stmt::ReflectionNameOfExprClass:
     K = CXCursor_DeclRefExpr;
     break;
       

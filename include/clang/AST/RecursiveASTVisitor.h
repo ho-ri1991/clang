@@ -2556,6 +2556,7 @@ DEF_TRAVERSE_STMT(ReflectionEnumFieldsExpr, {})
 DEF_TRAVERSE_STMT(ReflectionEnumFieldExpr, {})
 DEF_TRAVERSE_STMT(ReflectionEnumFieldValueExpr, {})
 DEF_TRAVERSE_STMT(ReflectionEnumFieldNameExpr, {})
+DEF_TRAVERSE_STMT(ReflectionNameOfExpr, {})
 DEF_TRAVERSE_STMT(ASTInjectExpr, {})
 DEF_TRAVERSE_STMT(CUDAKernelCallExpr, {})
 

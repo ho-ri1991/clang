@@ -419,21 +419,6 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       }
       return Actions.ActOnReflectionMemberVariableExpr(ArgExprs[0], ArgExprs[1], isExpandReflection);
     }
-    else if (std::strcmp(name, "var_name") == 0)
-    {
-      ConsumeToken(); // var_name
-      BalancedDelimiterTracker BDT(*this, tok::l_paren);
-      BDT.consumeOpen();
-      ExprVector ArgExprs;
-      CommaLocsTy CommaLocs;
-      ParseExpressionList(ArgExprs, CommaLocs);
-      BDT.consumeClose();
-      if (ArgExprs.size() != 1)
-      {
-        return ExprError();
-      }
-      return Actions.ActOnReflectionMemberVariableNameExpr(ArgExprs[0], isExpandReflection);
-    }
     else if (std::strcmp(name, "func_size") == 0)
     {
       ConsumeToken(); // func_size
@@ -536,7 +521,19 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       llvm::APSInt Int(64);
       return Actions.ActOnReflectionEnumFieldValueExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
-    else if (std::strcmp(name, "enum_name") == 0)
+    else if (std::strcmp(name, "enum_fields") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnReflectionEnumFieldsExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
+    }
+    else if (std::strcmp(name, "name_of") == 0)
     {
       ConsumeToken();
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
@@ -549,19 +546,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       {
         return ExprError();
       }
-      return Actions.ActOnReflectionEnumFieldNameExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
-    }
-    else if (std::strcmp(name, "enum_fields") == 0)
-    {
-      ConsumeToken();
-      BalancedDelimiterTracker BDT(*this, tok::l_paren);
-      BDT.consumeOpen();
-      ExprVector ArgExprs;
-      CommaLocsTy CommaLocs;
-      ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
-      BDT.consumeClose();
-      return Actions.ActOnReflectionEnumFieldsExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
+      return Actions.ActOnReflectionNameOfExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
   }
   return Parser::ParseAssignmentExpression(isTypeCast);

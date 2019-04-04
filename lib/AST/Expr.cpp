@@ -4274,3 +4274,15 @@ ReflectionEnumFieldValueExpr::ReflectionEnumFieldValueExpr(
 {
   SubExprs[0] = SubExpr;
 }
+
+ReflectionNameOfExpr::ReflectionNameOfExpr(
+    Expr* SubExpr, QualType T, ASTContext& Context, SourceRange Range)
+  : Expr(ReflectionNameOfExprClass,
+         T, VK_RValue, OK_Ordinary,
+         SubExpr->isTypeDependent(),
+         SubExpr->isTypeDependent(),
+         false, false)
+{
+  SubExprs[0] = SubExpr;
+}
+

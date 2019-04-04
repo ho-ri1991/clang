@@ -2927,6 +2927,12 @@ void StmtPrinter::VisitReflectionEnumFieldNameExpr(ReflectionEnumFieldNameExpr *
   OS << ')';
 }
 
+void StmtPrinter::VisitReflectionNameOfExpr(ReflectionNameOfExpr *Node){
+  OS << "name_of(";
+  PrintExpr(Node->getSubExpr());
+  OS << ')';
+}
+
 void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
   OS << "__builtin_astype(";
   PrintExpr(Node->getSrcExpr());

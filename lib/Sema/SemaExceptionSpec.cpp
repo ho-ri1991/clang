@@ -1192,6 +1192,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::ReflectionEnumFieldExprClass:
   case Expr::ReflectionEnumFieldValueExprClass:
   case Expr::ReflectionEnumFieldNameExprClass:
+  case Expr::ReflectionNameOfExprClass:
     return canSubExprsThrow(*this, E);
 
     // Some might be dependent for other reasons.
