@@ -1166,7 +1166,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::TypoExprClass:
     case Stmt::ReflectionMemberVariableSizeExprClass:
     case Stmt::ReflectionMemberVariableNameExprClass:
-    case Stmt::ReflectionMemberVariableExprClass:
+    case Stmt::ReflectionDataMemberExprClass:
     case Stmt::ReflectionMemberFunctionSizeExprClass:
     case Stmt::ReflectionMemberFunctionNameExprClass:
     case Stmt::ReflectionMemberFunctionExprClass:
@@ -1174,6 +1174,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ReflectionMemberUpdateAccessSpecExprClass:
     case Stmt::ASTInjectExprClass:
     case Stmt::ReflexprExprClass:
+    case Stmt::ReflectionDataMembersExprClass:
+    case Stmt::ReflectionMemberPtrExprClass:
     case Stmt::ReflectionEnumFieldsExprClass:
     case Stmt::ReflectionEnumFieldExprClass:
     case Stmt::ReflectionEnumFieldValueExprClass:

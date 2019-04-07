@@ -3526,7 +3526,7 @@ recurse:
   case Expr::CXXInheritedCtorInitExprClass:
   case Expr::ReflectionMemberVariableSizeExprClass:
   case Expr::ReflectionMemberVariableNameExprClass:
-  case Expr::ReflectionMemberVariableExprClass:
+  case Expr::ReflectionDataMemberExprClass:
   case Expr::ReflectionMemberFunctionSizeExprClass:
   case Expr::ReflectionMemberFunctionNameExprClass:
   case Expr::ReflectionMemberFunctionExprClass:
@@ -3534,6 +3534,8 @@ recurse:
   case Expr::ReflectionMemberUpdateAccessSpecExprClass:
   case Expr::ASTInjectExprClass:
   case Expr::ReflexprExprClass:
+  case Expr::ReflectionDataMembersExprClass:
+  case Expr::ReflectionMemberPtrExprClass:
   case Expr::ReflectionEnumFieldsExprClass:
   case Expr::ReflectionEnumFieldExprClass:
   case Expr::ReflectionEnumFieldValueExprClass:

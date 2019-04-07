@@ -3093,16 +3093,19 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CXXUuidofExprClass:
   case OpaqueValueExprClass:
   case ReflexprExprClass:
+  case ReflectionDataMembersExprClass:
+  case ReflectionMemberPtrExprClass:
   case ReflectionEnumFieldsExprClass:
   case ReflectionEnumFieldExprClass:
   case ReflectionEnumFieldValueExprClass:
   case ReflectionEnumFieldNameExprClass:
+  case ReflectionNameOfExprClass:
     // These never have a side-effect.
     return false;
 
   case ReflectionMemberVariableSizeExprClass:
   case ReflectionMemberVariableNameExprClass:
-  case ReflectionMemberVariableExprClass:
+  case ReflectionDataMemberExprClass:
   case ReflectionMemberFunctionSizeExprClass:
   case ReflectionMemberFunctionNameExprClass:
   case ReflectionMemberFunctionExprClass:
@@ -4241,6 +4244,31 @@ Stmt::const_child_range ReflexprExpr::children() const {
           dyn_cast<VariableArrayType>(getArgumentType().getTypePtr()))
     return const_child_range(const_child_iterator(T), const_child_iterator());
   return const_child_range(const_child_iterator(), const_child_iterator());
+}
+
+ReflectionMemberPtrExpr::ReflectionMemberPtrExpr(
+    Expr* SubExpr, SourceRange Range, ASTContext& C, bool b)
+  : Expr(ReflectionMemberPtrExprClass,
+         b ? SubExpr->getType() : C.DependentTy,
+         VK_RValue, OK_Ordinary,
+         b ? SubExpr->isTypeDependent() : true,
+         b ? SubExpr->isValueDependent() : true, false, false)
+  , BeginLoc(Range.getBegin())
+  , EndLoc(Range.getEnd())
+{
+  SubExprs[0] = SubExpr;
+}
+
+ReflectionDataMembersExpr::ReflectionDataMembersExpr(ASTContext& Context, Expr* SubExpr, SourceRange Range)
+  : Expr(ReflectionDataMembersExprClass,
+         Context.getIntPtrType(),
+         VK_RValue, OK_Ordinary,
+         SubExpr->isTypeDependent(),
+         SubExpr->isValueDependent(), false, false)
+  , BeginLoc(Range.getBegin())
+  , EndLoc(Range.getEnd())
+{
+  SubExprs[0] = SubExpr;
 }
 
 ReflectionEnumFieldsExpr::ReflectionEnumFieldsExpr(ASTContext& Context, Expr* SubExpr, SourceRange Range)

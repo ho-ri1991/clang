@@ -5473,7 +5473,7 @@ public:
 };
 
 ///
-class ReflectionMemberVariableExpr final : public Expr
+class ReflectionDataMemberExpr final : public Expr
 {
   enum Index
   {
@@ -5483,8 +5483,8 @@ class ReflectionMemberVariableExpr final : public Expr
   };
   Stmt* SubExprs[INDEX_SIZE];
 public:
-  ReflectionMemberVariableExpr(Expr* Ast, Expr* Index)
-    : Expr(ReflectionMemberVariableExprClass,
+  ReflectionDataMemberExpr(Expr* Ast, Expr* Index)
+    : Expr(ReflectionDataMemberExprClass,
            Ast->getType(), VK_RValue, OK_Ordinary,
            Ast->isTypeDependent() || Index->isTypeDependent(),
            Ast->isValueDependent() || Index->isValueDependent(), false, false)
@@ -5492,8 +5492,8 @@ public:
     SubExprs[INDEX_AST] = Ast;
     SubExprs[INDEX_INDEX] = Index;
   }
-  explicit ReflectionMemberVariableExpr(EmptyShell Shell)
-    : Expr(ReflectionMemberVariableExprClass, Shell) { }
+  explicit ReflectionDataMemberExpr(EmptyShell Shell)
+    : Expr(ReflectionDataMemberExprClass, Shell) { }
   void setASTExpr(Expr* Ast) { SubExprs[INDEX_AST] = Ast; }
   Expr* getASTExpr() { return static_cast<Expr*>(SubExprs[INDEX_AST]); }
   const Expr* getASTExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_AST]); }
@@ -5501,7 +5501,7 @@ public:
   Expr* getIndexExpr() { return static_cast<Expr*>(SubExprs[INDEX_INDEX]); }
   const Expr* getIndexExpr() const { return static_cast<const Expr*>(SubExprs[INDEX_INDEX]); }
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ReflectionMemberVariableExprClass;
+    return T->getStmtClass() == ReflectionDataMemberExprClass;
   }
   child_range children() {
     return child_range(&SubExprs[0], &SubExprs[0] + INDEX_SIZE);
@@ -5823,6 +5823,57 @@ public:
   // Iterators
   child_range children();
   const_child_range children() const;
+};
+
+// $enum_fields($reflexpr(E));
+// only for expansion statements
+class ReflectionDataMembersExpr : public Expr
+{
+  Stmt* SubExprs[1];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionDataMembersExpr(ASTContext& Context, Expr* SubExpr, SourceRange Range);
+  explicit ReflectionDataMembersExpr(EmptyShell Shell)
+    : Expr(ReflectionDataMembersExprClass, Shell) { }
+  void setSubExpr(Expr* E) { SubExprs[0] = E; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionDataMembersExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return BeginLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
+};
+
+// $member_ptr(m);
+class ReflectionMemberPtrExpr : public Expr
+{
+  Stmt* SubExprs[1];
+  SourceLocation BeginLoc, EndLoc;
+public:
+  ReflectionMemberPtrExpr(Expr* SubExpr, SourceRange Range, ASTContext& C, bool b);
+  explicit ReflectionMemberPtrExpr(EmptyShell Shell)
+    : Expr(ReflectionMemberPtrExprClass, Shell) { }
+  void setSubExpr(Expr* E) { SubExprs[0] = E; }
+  Expr* getSubExpr() { return static_cast<Expr*>(SubExprs[0]); }
+  const Expr* getSubExpr() const { return static_cast<const Expr*>(SubExprs[0]); }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ReflectionMemberPtrExprClass;
+  }
+  child_range children() {
+    return child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  const_child_range children() const {
+    return const_child_range(&SubExprs[0], &SubExprs[0] + 1);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return BeginLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
 };
 
 // $enum_fields($reflexpr(E));

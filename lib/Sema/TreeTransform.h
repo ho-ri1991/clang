@@ -9204,7 +9204,7 @@ TreeTransform<Derived>::TransformReflectionMemberVariableNameExpr(ReflectionMemb
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
+TreeTransform<Derived>::TransformReflectionDataMemberExpr(ReflectionDataMemberExpr *E) {
   ExprResult AstExpr = TransformExpr(E->getASTExpr());
   ExprResult IndexExpr = TransformExpr(E->getIndexExpr());
   if (AstExpr.isInvalid() || IndexExpr.isInvalid())
@@ -9280,6 +9280,82 @@ TreeTransform<Derived>::TransformReflexprExpr(ReflexprExpr *E) {
     return E;
 
   return getSema().ActOnReflexprExpr(E->getOperatorLoc(), NewT, SourceRange(E->getOperatorLoc(), E->getRParenLoc()), true);
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflectionDataMembersExpr(ReflectionDataMembersExpr *E) {
+  ExprResult Result = TransformExpr(E->getSubExpr());
+  if (Result.isInvalid())
+    return ExprError();
+  if (Result.get()->getStmtClass() == Stmt::DeclRefExprClass)
+  {
+//    getSema().MaybeODRUseExprs.erase(Result.get());
+    auto ASTType = Result.getAs<DeclRefExpr>()->getDecl()->getType();
+    auto ASTCast = ImplicitCastExpr::Create(getSema().getASTContext(), ASTType, CK_LValueToRValue, Result.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+    return new(getSema().getASTContext()) ReflectionDataMembersExpr(getSema().getASTContext(), ASTCast, SourceRange(E->getLocStart(), E->getLocEnd()));
+  }
+  else
+    return new(getSema().getASTContext()) ReflectionDataMembersExpr(getSema().getASTContext(), Result.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
+}
+
+namespace
+{
+
+void BuildScopeFromFieldDeclContext(CXXScopeSpec& Scope, DeclContext* DC, ASTContext& Ctx, SourceLocation Loc)
+{
+  if (!DC)
+    return;
+  BuildScopeFromFieldDeclContext(Scope, DC->getParent(), Ctx, Loc);
+  if (DC->isNamespace())
+  {
+    Scope.Extend(Ctx, cast<NamespaceDecl>(DC), Loc, Loc);
+  }
+  else if (DC->isRecord())
+  {
+    Scope.Extend(Ctx, cast<RecordDecl>(DC)->getIdentifier(), Loc, Loc);
+  }
+}
+
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformReflectionMemberPtrExpr(ReflectionMemberPtrExpr *E) {
+  ExprResult AstExpr = getDerived().TransformExpr(E->getSubExpr());
+  if (AstExpr.isInvalid())
+    return ExprError();
+//  getSema().MaybeODRUseExprs.erase(AstExpr.get());
+  llvm::APSInt AstInt(64);
+  if (AstExpr.get()->isValueDependent() ||
+      !AstExpr.get()->EvaluateAsInt(AstInt, getSema().getASTContext()) ||
+      !AstInt.getExtValue())
+  {
+    if (AstExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+    {
+      auto Cast = ImplicitCastExpr::Create(getSema().getASTContext(), AstExpr.get()->getType(), CK_LValueToRValue, AstExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+      E->setSubExpr(Cast);
+      return E;
+    }
+    else
+    {
+      E->setSubExpr(AstExpr.get());
+      return E;
+    }
+  }
+  else
+  {
+    auto Ast = reinterpret_cast<Decl*>(AstInt.getExtValue());
+    auto FieldDeclPtr = cast_or_null<FieldDecl>(Ast);
+    if (!FieldDeclPtr)
+      return ExprError();
+    CXXScopeSpec ScopeSpec;
+    BuildScopeFromFieldDeclContext(ScopeSpec, FieldDeclPtr->getParent(), getSema().getASTContext(), E->getExprLoc());
+    auto DeclRefResult = getSema().BuildDeclRefExpr(FieldDeclPtr, FieldDeclPtr->getType(), VK_LValue, E->getLocStart(), &ScopeSpec);
+    if (DeclRefResult.isInvalid())
+      return ExprError();
+    return getSema().BuildUnaryOp(/*Scope=*/nullptr, E->getLocStart(), UnaryOperatorKind::UO_AddrOf, DeclRefResult.get());
+  }
 }
 
 template<typename Derived>

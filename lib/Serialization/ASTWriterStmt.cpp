@@ -1740,11 +1740,11 @@ void ASTStmtWriter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariab
   Code = serialization::EXPR_AST_MEMBER_VARIABLE_NAME;
 }
 
-void ASTStmtWriter::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
+void ASTStmtWriter::VisitReflectionDataMemberExpr(ReflectionDataMemberExpr *E) {
   VisitExpr(E);
   Record.AddStmt(E->getASTExpr());
   Record.AddStmt(E->getIndexExpr());
-  Code = serialization::EXPR_AST_MEMBER_VARIABLE;
+  Code = serialization::EXPR_REFLECTION_DATA_MEMBER;
 }
 
 void ASTStmtWriter::VisitReflectionMemberFunctionSizeExpr(ReflectionMemberFunctionSizeExpr *E) {
@@ -1789,6 +1789,18 @@ void ASTStmtWriter::VisitReflexprExpr(ReflexprExpr *E) {
   Record.AddSourceLocation(E->getOperatorLoc());
   Record.AddSourceLocation(E->getRParenLoc());
   Code = serialization::EXPR_REFLEXPR;
+}
+
+void ASTStmtWriter::VisitReflectionDataMembersExpr(ReflectionDataMembersExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getSubExpr());
+  Code = serialization::EXPR_REFLECTION_DATA_MEMBERS;
+}
+
+void ASTStmtWriter::VisitReflectionMemberPtrExpr(ReflectionMemberPtrExpr *E) {
+  VisitExpr(E);
+  Record.AddStmt(E->getSubExpr());
+  Code = serialization::EXPR_REFLECTION_MEMBER_PTR;
 }
 
 void ASTStmtWriter::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {

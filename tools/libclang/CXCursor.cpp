@@ -503,13 +503,15 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::TypoExprClass: // A typo could actually be a DeclRef or a MemberRef
   case Stmt::ReflectionMemberVariableSizeExprClass:
   case Stmt::ReflectionMemberVariableNameExprClass:
-  case Stmt::ReflectionMemberVariableExprClass:
+  case Stmt::ReflectionDataMemberExprClass:
   case Stmt::ReflectionMemberFunctionSizeExprClass:
   case Stmt::ReflectionMemberFunctionNameExprClass:
   case Stmt::ReflectionMemberFunctionExprClass:
   case Stmt::ReflectionMemberCheckAccessSpecExprClass:
   case Stmt::ReflectionMemberUpdateAccessSpecExprClass:
   case Stmt::ASTInjectExprClass:
+  case Stmt::ReflectionDataMembersExprClass:
+  case Stmt::ReflectionMemberPtrExprClass:
   case Stmt::ReflectionEnumFieldsExprClass:
   case Stmt::ReflectionEnumFieldExprClass:
   case Stmt::ReflectionEnumFieldValueExprClass:

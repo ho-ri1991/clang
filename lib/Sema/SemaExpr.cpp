@@ -16630,7 +16630,7 @@ ExprResult Sema::ActOnReflectionMemberVariableNameExpr(ExprResult SubExpr, bool 
       /*NumConcatenated*/1);
 }
 
-ExprResult Sema::ActOnReflectionMemberVariableExpr(ExprResult AstResult, ExprResult IndexResult, bool allowExpansion)
+ExprResult Sema::ActOnReflectionDataMemberExpr(ExprResult AstResult, ExprResult IndexResult, bool allowExpansion)
 {
   Expr* AstExpr = AstResult.get();
   if (AstExpr->getStmtClass() == Stmt::DeclRefExprClass)
@@ -16670,7 +16670,7 @@ ExprResult Sema::ActOnReflectionMemberVariableExpr(ExprResult AstResult, ExprRes
       !AstExpr->EvaluateAsInt(Int1, Context) ||
       !IndexExpr->EvaluateAsInt(Int2, Context))
   {
-    return new(Context) ReflectionMemberVariableExpr(AstExpr, IndexExpr);
+    return new(Context) ReflectionDataMemberExpr(AstExpr, IndexExpr);
   }
 
   auto T = AstExpr->getType().getCanonicalType();
@@ -16841,6 +16841,98 @@ ExprResult Sema::ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, Sou
 
   llvm::APInt Int(64, reinterpret_cast<uint64_t>(Ty->getType().getTypePtr()));
   return IntegerLiteral::Create(Context, Int, Context.getUIntPtrType(), ArgRange.getBegin());
+}
+
+ExprResult Sema::ActOnReflectionDataMembersExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion)
+{
+  Expr* AstExpr = SubExpr.get();
+  if (SubExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+  {
+    auto Type = SubExpr.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, SubExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+  }
+  if (AstExpr->isValueDependent() || AstExpr->isTypeDependent())
+  {
+    return new(Context) ReflectionDataMembersExpr(Context, AstExpr, Range);
+  }
+  else
+  {
+    auto T = AstExpr->getType().getCanonicalType();
+    T.removeLocalConst();
+    if (T == Context.getIntPtrType() || T == Context.getUIntPtrType())
+    {
+      return new(Context) ReflectionDataMembersExpr(Context, AstExpr, Range);
+    }
+    else
+    {
+      Diag(AstExpr->getLocStart(), diag::err_reflection_argument_type_mismatch) << "reflection type";
+      return ExprError();
+    }
+  }
+}
+
+namespace
+{
+
+void BuildScopeFromFieldDeclContext(CXXScopeSpec& Scope, DeclContext* DC, ASTContext& Ctx, SourceLocation Loc)
+{
+  if (!DC)
+    return;
+  BuildScopeFromFieldDeclContext(Scope, DC->getParent(), Ctx, Loc);
+  if (DC->isNamespace())
+  {
+    Scope.Extend(Ctx, cast<NamespaceDecl>(DC), Loc, Loc);
+  }
+  else if (DC->isRecord())
+  {
+    Scope.Extend(Ctx, cast<RecordDecl>(DC)->getIdentifier(), Loc, Loc);
+  }
+}
+
+}
+
+ExprResult Sema::ActOnReflectionMemberPtrExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion)
+{
+  Expr* AstExpr = SubExpr.get();
+  if (SubExpr.get()->getStmtClass() == Stmt::DeclRefExprClass)
+  {
+    auto Type = SubExpr.getAs<DeclRefExpr>()->getDecl()->getType();
+    AstExpr = ImplicitCastExpr::Create(Context, Type, CK_LValueToRValue, SubExpr.getAs<DeclRefExpr>(), nullptr, VK_RValue);
+  }
+  
+  if (!AstExpr->isValueDependent() && !AstExpr->isTypeDependent())
+  {
+    auto T = AstExpr->getType().getCanonicalType();
+    T.removeLocalConst();
+    if (T != Context.getIntPtrType())
+    {
+      Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "enum field reflection";
+      return ExprError();
+    }
+  }
+
+  llvm::APSInt Int(64);
+  if (!allowExpansion ||
+      AstExpr->isValueDependent() ||
+      AstExpr->isTypeDependent() ||
+      !AstExpr->EvaluateAsInt(Int, Context))
+  {
+    return new(Context) ReflectionMemberPtrExpr(AstExpr, Range, Context, false);
+  }
+
+  auto Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+  auto FieldDeclPtr = cast_or_null<FieldDecl>(Ast);
+  if (!FieldDeclPtr)
+  {
+    Diag(Range.getBegin(), diag::err_reflection_argument_type_mismatch) << "class/struct member reflection";
+    return ExprError();
+  }
+  CXXScopeSpec ScopeSpec;
+  BuildScopeFromFieldDeclContext(ScopeSpec, FieldDeclPtr->getParent(), Context, Range.getBegin());
+  auto DeclRefResult = BuildDeclRefExpr(FieldDeclPtr, FieldDeclPtr->getType(), VK_LValue, Range.getBegin(), &ScopeSpec);
+  if (DeclRefResult.isInvalid())
+    return ExprError();
+  return BuildUnaryOp(/*Scope=*/nullptr, Range.getBegin(), UnaryOperatorKind::UO_AddrOf, DeclRefResult.get());
 }
 
 ExprResult Sema::ActOnReflectionEnumFieldsExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion)

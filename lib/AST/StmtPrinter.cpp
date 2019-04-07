@@ -2823,8 +2823,8 @@ void StmtPrinter::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariable
   OS << ")";
 }
 
-void StmtPrinter::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *Node) {
-  OS << "$var(";
+void StmtPrinter::VisitReflectionDataMemberExpr(ReflectionDataMemberExpr *Node) {
+  OS << "$data_member(";
   PrintExpr(Node->getASTExpr());
   OS << ", ";
   PrintExpr(Node->getIndexExpr());
@@ -2898,6 +2898,18 @@ void StmtPrinter::VisitASTInjectExpr(ASTInjectExpr *Node) {
 void StmtPrinter::VisitReflexprExpr(ReflexprExpr *Node){
   OS << "reflexpr(";
   Node->getArgumentType().print(OS, Policy);
+  OS << ')';
+}
+
+void StmtPrinter::VisitReflectionDataMembersExpr(ReflectionDataMembersExpr *Node){
+  OS << "data_members(";
+  PrintExpr(Node->getSubExpr());
+  OS << ')';
+}
+
+void StmtPrinter::VisitReflectionMemberPtrExpr(ReflectionMemberPtrExpr *Node){
+  OS << "member_ptr(";
+  PrintExpr(Node->getSubExpr());
   OS << ')';
 }
 

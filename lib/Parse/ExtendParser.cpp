@@ -403,7 +403,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       }
       return Actions.ActOnReflectionMemberVariableSizeExpr(ArgExprs[0], Loc, isExpandReflection);
     }
-    else if (std::strcmp(name, "var") == 0)
+    else if (std::strcmp(name, "data_member") == 0)
     {
       ConsumeToken();
       BalancedDelimiterTracker BDT(*this, tok::l_paren);
@@ -417,7 +417,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       {
         return ExprError();
       }
-      return Actions.ActOnReflectionMemberVariableExpr(ArgExprs[0], ArgExprs[1], isExpandReflection);
+      return Actions.ActOnReflectionDataMemberExpr(ArgExprs[0], ArgExprs[1], isExpandReflection);
     }
     else if (std::strcmp(name, "func_size") == 0)
     {
@@ -533,6 +533,18 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       BDT.consumeClose();
       return Actions.ActOnReflectionEnumFieldsExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
+    else if (std::strcmp(name, "data_members") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      return Actions.ActOnReflectionDataMembersExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
+    }
     else if (std::strcmp(name, "name_of") == 0)
     {
       ConsumeToken();
@@ -547,6 +559,19 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
         return ExprError();
       }
       return Actions.ActOnReflectionNameOfExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
+    }
+    else if (std::strcmp(name, "member_ptr") == 0)
+    {
+      ConsumeToken();
+      BalancedDelimiterTracker BDT(*this, tok::l_paren);
+      BDT.consumeOpen();
+      ExprVector ArgExprs;
+      CommaLocsTy CommaLocs;
+      ParseExpressionList(ArgExprs, CommaLocs);
+      assert(ArgExprs.size() == 1);
+      BDT.consumeClose();
+      llvm::APSInt Int(64);
+      return Actions.ActOnReflectionMemberPtrExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
   }
   return Parser::ParseAssignmentExpression(isTypeCast);

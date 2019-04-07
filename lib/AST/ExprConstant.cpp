@@ -7358,7 +7358,7 @@ public:
     return Success(MemberNum, E);
   }
 
-  bool VisitReflectionMemberVariableExpr(const ReflectionMemberVariableExpr *E) {
+  bool VisitReflectionDataMemberExpr(const ReflectionDataMemberExpr *E) {
     auto ASTExpr = E->getASTExpr();
     auto IndexExpr = E->getIndexExpr();
     APSInt ASTVal;
@@ -7449,6 +7449,39 @@ public:
 
     uint64_t Ptr = reinterpret_cast<uint64_t>(SrcTy.getTypePtr()->getAsTagDecl());
     return Success(Ptr, E);
+  }
+
+  bool VisitReflectionDataMembersExpr(const ReflectionDataMembersExpr *E) {
+    auto ASTExpr = E->getSubExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    if (!ASTVal.getExtValue())
+      return Success(0ULL, E);
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    return Success(reinterpret_cast<uint64_t>(Ast), E);
+  }
+
+  bool VisitReflectionMemberPtrExpr(const ReflectionMemberPtrExpr *E) {
+    auto ASTExpr = E->getSubExpr();
+    APSInt ASTVal;
+    if (!EvaluateInteger(ASTExpr, ASTVal, Info))
+      return false;
+    if (!ASTVal.getExtValue())
+      return Success(0ULL, E);
+    auto Ast = reinterpret_cast<Decl*>(ASTVal.getExtValue());
+    auto FieldDeclPtr = cast_or_null<FieldDecl>(Ast);
+    if (!FieldDeclPtr)
+    {
+      Info.FFDiag(ASTExpr->getLocStart(), diag::err_reflection_type_mismatch) << "class/struct member";
+      return false;
+    }
+    else
+    {
+      // TODO: chage to return LValue just like ReflectionMemberVariableNameExpr?
+      auto Ptr = reinterpret_cast<uint64_t>(FieldDeclPtr);
+      return Success(Ptr, E);
+    }
   }
 
   bool VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {
@@ -11468,6 +11501,10 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
     return CheckICE(cast<ReflectionMemberUpdateAccessSpecExpr>(E)->getSubExpr(), Ctx);
   case Expr::ReflexprExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
+  case Expr::ReflectionDataMembersExprClass:
+    return ICEDiag(IK_NotICE, E->getLocStart());
+  case Expr::ReflectionMemberPtrExprClass:
+    return NoDiag();
   case Expr::ReflectionEnumFieldsExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
   case Expr::ReflectionEnumFieldExprClass:
@@ -11479,8 +11516,8 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::ReflectionNameOfExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
-  case Expr::ReflectionMemberVariableExprClass: {
-    auto Exp = cast<ReflectionMemberVariableExpr>(E);
+  case Expr::ReflectionDataMemberExprClass: {
+    auto Exp = cast<ReflectionDataMemberExpr>(E);
     ICEDiag ASTResult = CheckICE(Exp->getASTExpr(), Ctx);
     if (ASTResult.Kind == IK_NotICE) return ASTResult;
     ICEDiag IdxResult = CheckICE(Exp->getIndexExpr(), Ctx);

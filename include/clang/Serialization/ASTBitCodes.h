@@ -1742,8 +1742,8 @@ namespace serialization {
       /// An ReflectionMemberVariableNameExpr record.
       EXPR_AST_MEMBER_VARIABLE_NAME,
 
-      /// An ReflectionMemberVariableExpr record.
-      EXPR_AST_MEMBER_VARIABLE,
+      /// An ReflectionDataMemberExpr record.
+      EXPR_REFLECTION_DATA_MEMBER,
 
       /// An ReflectionMemberFunctionSizeExpr record.
       EXPR_AST_MEMBER_FUNCTION_SIZE,
@@ -1765,6 +1765,12 @@ namespace serialization {
 
       /// An ReflexprExpr record.
       EXPR_REFLEXPR,
+
+      /// An ReflectionDataMembersExpr record.
+      EXPR_REFLECTION_DATA_MEMBERS,
+
+      /// An ReflectionMemberPtrExpr record.
+      EXPR_REFLECTION_MEMBER_PTR,
 
       /// An ReflectionEnumFieldsExpr record.
       EXPR_REFLECTION_ENUM_FIELDS,

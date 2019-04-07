@@ -25,6 +25,8 @@ public:
 
   ExprResult TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr* E);
 
+  ExprResult TransformReflectionDataMembersExpr(ReflectionDataMembersExpr* E);
+
 //  ExprResult TransformReflectionEnumFieldValueExpr(ReflectionEnumFieldValueExpr *E);
 
 //  StmtResult RebuildDeclStmt(MutableArrayRef<Decl *> Decls, SourceLocation StartLoc, SourceLocation EndLoc);

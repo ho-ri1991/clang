@@ -1865,8 +1865,10 @@ void StmtProfiler::VisitReflectionMemberVariableNameExpr(const ReflectionMemberV
   VisitExpr(E);
 }
 
-void StmtProfiler::VisitReflectionMemberVariableExpr(const ReflectionMemberVariableExpr *E) {
+void StmtProfiler::VisitReflectionDataMemberExpr(const ReflectionDataMemberExpr *E) {
   VisitExpr(E);
+  VisitExpr(E->getASTExpr());
+  VisitExpr(E->getIndexExpr());
 }
 
 void StmtProfiler::VisitReflectionMemberFunctionSizeExpr(const ReflectionMemberFunctionSizeExpr *E) {
@@ -1896,6 +1898,16 @@ void StmtProfiler::VisitASTInjectExpr(const ASTInjectExpr *E) {
 void StmtProfiler::VisitReflexprExpr(const ReflexprExpr *E) {
   VisitExpr(E);
   VisitType(E->getArgumentType());
+}
+
+void StmtProfiler::VisitReflectionDataMembersExpr(const ReflectionDataMembersExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getSubExpr());
+}
+
+void StmtProfiler::VisitReflectionMemberPtrExpr(const ReflectionMemberPtrExpr *E) {
+  VisitExpr(E);
+  VisitExpr(E->getSubExpr());
 }
 
 void StmtProfiler::VisitReflectionEnumFieldsExpr(const ReflectionEnumFieldsExpr *E) {

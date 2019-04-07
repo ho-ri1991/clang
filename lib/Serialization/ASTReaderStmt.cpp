@@ -1743,7 +1743,7 @@ void ASTStmtReader::VisitReflectionMemberVariableNameExpr(ReflectionMemberVariab
   E->setSubExpr(Record.readSubExpr());
 }
 
-void ASTStmtReader::VisitReflectionMemberVariableExpr(ReflectionMemberVariableExpr *E) {
+void ASTStmtReader::VisitReflectionDataMemberExpr(ReflectionDataMemberExpr *E) {
   VisitExpr(E);
   E->setASTExpr((ImplicitCastExpr*)Record.readSubExpr());
   E->setIndexExpr((ImplicitCastExpr*)Record.readSubExpr());
@@ -1784,6 +1784,16 @@ void ASTStmtReader::VisitReflexprExpr(ReflexprExpr *E) {
   E->setArgument(GetTypeSourceInfo());
   E->setOperatorLoc(ReadSourceLocation());
   E->setRParenLoc(ReadSourceLocation());
+}
+
+void ASTStmtReader::VisitReflectionDataMembersExpr(ReflectionDataMembersExpr *E) {
+  VisitExpr(E);
+  E->setSubExpr((Expr*)Record.readSubExpr());
+}
+
+void ASTStmtReader::VisitReflectionMemberPtrExpr(ReflectionMemberPtrExpr *E) {
+  VisitExpr(E);
+  E->setSubExpr((Expr*)Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr *E) {
@@ -3540,8 +3550,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) ReflectionMemberVariableNameExpr(Empty);
       break;
 
-    case EXPR_AST_MEMBER_VARIABLE:
-      S = new (Context) ReflectionMemberVariableExpr(Empty);
+    case EXPR_REFLECTION_DATA_MEMBER:
+      S = new (Context) ReflectionDataMemberExpr(Empty);
       break;
 
     case EXPR_AST_MEMBER_FUNCTION_SIZE:
@@ -3570,6 +3580,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_REFLEXPR:
       S = new (Context) ReflexprExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_DATA_MEMBERS:
+      S = new (Context) ReflectionDataMembersExpr(Empty);
+      break;
+
+    case EXPR_REFLECTION_MEMBER_PTR:
+      S = new (Context) ReflectionMemberPtrExpr(Empty);
       break;
 
     case EXPR_REFLECTION_ENUM_FIELDS:

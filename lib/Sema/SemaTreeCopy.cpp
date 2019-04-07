@@ -5,18 +5,19 @@ namespace clang {
 using namespace sema;
 
 namespace {
-VarDecl* CopyVarDecl(VarDecl* OldDecl, Sema& SemaRef)
+VarDecl* CopyVarDecl(VarDecl* OldDecl, Expr* NewInit, Sema& SemaRef)
 {
   auto NewDecl = VarDecl::Create(SemaRef.getASTContext(),
                                  OldDecl->getDeclContext(),
                                  OldDecl->getBeginLoc(),
                                  OldDecl->getLocation(),
                                  OldDecl->getIdentifier(),
-                                 OldDecl->getType(),
+                                 NewInit ? NewInit->getType() : OldDecl->getType(),
+//                                 OldDecl->getType(),
                                  OldDecl->getTypeSourceInfo(),
                                  OldDecl->getStorageClass()); 
-  if (OldDecl->getInit())
-    NewDecl->setInit(OldDecl->getInit());
+  if (NewInit)
+    NewDecl->setInit(NewInit);
   NewDecl->setConstexpr(OldDecl->isConstexpr());
   if (OldDecl->isInlineSpecified())
     NewDecl->setInlineSpecified();
@@ -96,7 +97,7 @@ StmtResult ExpandForStmt(Expr* Init, Stmt* Body, Sema& SemaRef)
           if (!OldDecl)
             return StmtError();
 
-          auto NewDecl = CopyVarDecl(OldDecl, SemaRef);
+          auto NewDecl = CopyVarDecl(OldDecl, nullptr, SemaRef);
           auto OldInitExpr = OldDecl->getInit();
           llvm::APInt Int(64, reinterpret_cast<uint64_t>(*Itr));
           NewDecl->setInit(IntegerLiteral::Create(SemaRef.getASTContext(),
@@ -106,6 +107,63 @@ StmtResult ExpandForStmt(Expr* Init, Stmt* Body, Sema& SemaRef)
 
 //          if (SemaRef.CurrentInstantiationScope)
 //            SemaRef.CurrentInstantiationScope->InstantiatedLocal(OldDecl, NewDecl);
+
+          TreeCopy TreeCopyer(SemaRef, TypedBody->getLocStart());
+          TreeCopyer.transformedLocalDecl(OldDecl, NewDecl);
+          auto CopiedBody = TreeCopyer.TransformStmt(TypedBody);
+          if (CopiedBody.isInvalid())
+            return StmtError();
+          ExpandedBodies.push_back(CopiedBody.get());
+        }
+        return CompoundStmt::Create(SemaRef.getASTContext(), ExpandedBodies, TypedBody->getLBracLoc(), TypedBody->getRBracLoc());
+      }
+      case Stmt::ReflectionDataMembersExprClass: {
+        llvm::APSInt Int(64);
+        auto DataMembersExpr = cast<ReflectionDataMembersExpr>(Init);
+        if (!DataMembersExpr->getSubExpr()->EvaluateAsInt(Int, SemaRef.getASTContext()))
+          return StmtError();
+        Decl* DeclPtr = nullptr;
+        auto T = DataMembersExpr->getSubExpr()->getType().getCanonicalType();
+        T.removeLocalConst();
+        if (T == SemaRef.getASTContext().getUIntPtrType())
+        {
+          auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+          DeclPtr = TypePtr->getAsTagDecl();
+        }
+        else if (T == SemaRef.getASTContext().getIntPtrType())
+        {
+          DeclPtr = reinterpret_cast<Decl*>(Int.getExtValue());
+        }
+        else
+        {
+          return StmtError();
+        }
+        auto RecordDeclPtr = cast_or_null<RecordDecl>(DeclPtr);
+        if (!RecordDeclPtr)
+          return StmtError();
+        SmallVector<Stmt*, 8> ExpandedBodies;
+        for (auto Itr = RecordDeclPtr->field_begin();
+             Itr != RecordDeclPtr->field_end(); 
+             ++Itr)
+        {
+          auto DeclStmtPtr = cast_or_null<DeclStmt>(*TypedBody->body_begin());
+          if (!DeclStmtPtr || !DeclStmtPtr->isSingleDecl())
+            return StmtError();
+
+          auto OldDecl = cast_or_null<VarDecl>(DeclStmtPtr->getSingleDecl());
+          if (!OldDecl)
+            return StmtError();
+
+          auto NewDecl = CopyVarDecl(OldDecl, nullptr, SemaRef);
+          auto OldInitExpr = OldDecl->getInit();
+          llvm::APInt Int(64, reinterpret_cast<uint64_t>(*Itr));
+          NewDecl->setInit(IntegerLiteral::Create(SemaRef.getASTContext(),
+                                                  Int,
+                                                  OldInitExpr->getType(),
+                                                  OldInitExpr->getLocStart()));
+
+          if (SemaRef.CurrentInstantiationScope)
+            SemaRef.CurrentInstantiationScope->InstantiatedLocal(OldDecl, NewDecl);
 
           TreeCopy TreeCopyer(SemaRef, TypedBody->getLocStart());
           TreeCopyer.transformedLocalDecl(OldDecl, NewDecl);
@@ -132,6 +190,14 @@ ExprResult TreeCopy::TransformReflectionEnumFieldsExpr(ReflectionEnumFieldsExpr*
   if (SubExpr.isInvalid())
     return ExprError();
   return new(getSema().getASTContext()) ReflectionEnumFieldsExpr(getSema().getASTContext(), SubExpr.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
+}
+
+ExprResult TreeCopy::TransformReflectionDataMembersExpr(ReflectionDataMembersExpr* E)
+{
+  ExprResult SubExpr = TransformExpr(E->getSubExpr());
+  if (SubExpr.isInvalid())
+    return ExprError();
+  return new(getSema().getASTContext()) ReflectionDataMembersExpr(getSema().getASTContext(), SubExpr.get(), SourceRange(E->getLocStart(), E->getLocEnd()));
 }
 
 StmtResult TreeCopy::TransformExpansionForStmt(ExpansionForStmt* S)
@@ -164,15 +230,11 @@ Decl* TreeCopy::TransformDefinition(SourceLocation Loc, Decl* D)
   auto VarDeclPtr = cast_or_null<VarDecl>(TransformedDecl);
   if (VarDeclPtr && VarDeclPtr->getInit())
   {
-    auto NewDecl = CopyVarDecl(VarDeclPtr, getSema());
-    if (VarDeclPtr->getInit())
-    {
-      auto NewInit = TransformExpr(VarDeclPtr->getInit());
-      if (NewInit.isInvalid())
-        return D; // TODO: DeclError? like ExprError();
-      NewDecl->setInit(NewInit.get());
-      transformedLocalDecl(D, NewDecl);
-    }
+    auto NewInit = TransformExpr(VarDeclPtr->getInit());
+    if (NewInit.isInvalid())
+      return D; // TODO: DeclError? like ExprError();
+    auto NewDecl = CopyVarDecl(VarDeclPtr, NewInit.get(), getSema());
+    transformedLocalDecl(D, NewDecl);
     return NewDecl;
   }
   return TransformedDecl;
