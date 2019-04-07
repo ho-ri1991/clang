@@ -1777,7 +1777,10 @@ StmtResult Sema::ActOnExpansionForStmt(SourceLocation ForLoc,
                                        SourceLocation RParenLoc,
                                        Stmt *Body)
 {
-  if (Init->isValueDependent() || Init->isTypeDependent())
+  llvm::APSInt Int(64);
+  if (Init->isValueDependent() ||
+      Init->isTypeDependent() ||
+      !Init->EvaluateAsInt(Int, Context))
   {
     return new (Context) ExpansionForStmt(Var, Init, Body, ForLoc, LParenLoc, RParenLoc);
   }

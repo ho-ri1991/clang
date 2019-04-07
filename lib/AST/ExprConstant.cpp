@@ -4017,7 +4017,91 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
 
     case Stmt::ExpansionForStmtClass: {
       const ExpansionForStmt *FS = cast<ExpansionForStmt>(S);
-      assert(false && "unimplemented now");
+      auto Init = FS->getInit();
+
+      auto DeclStmtPtr = cast_or_null<DeclStmt>(FS->getVarDecl());
+      if (!DeclStmtPtr || !DeclStmtPtr->isSingleDecl())
+        return ESR_Failed;
+
+      auto VarDeclPtr = cast_or_null<VarDecl>(DeclStmtPtr->getSingleDecl());
+      if (!VarDeclPtr)
+        return ESR_Failed;
+
+      auto Integer = const_cast<IntegerLiteral*>(cast_or_null<IntegerLiteral>(VarDeclPtr->getInit()));
+      if (!Integer)
+        return ESR_Failed;
+
+      auto& Context = Info.Ctx;
+      llvm::APSInt Int(64);
+      if (!Init->EvaluateAsInt(Int, Context))
+        return ESR_Failed;
+
+      if (auto DataMembersExpr = cast_or_null<ReflectionDataMembersExpr>(Init))
+      {
+        Decl* Ast = nullptr;
+        auto T = DataMembersExpr->getSubExpr()->getType().getCanonicalType();
+        T.removeLocalConst();
+        if (T == Context.getIntPtrType())
+        {
+          auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+          Ast = TypePtr->getAsTagDecl();
+        }
+        else if (T == Context.getUIntPtrType())
+        {
+          Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+        }
+        else
+        {
+          return ESR_Failed;
+        }
+        auto RecordDeclPtr = cast_or_null<RecordDecl>(Ast);
+        if (!RecordDeclPtr)
+          return ESR_Failed;
+        auto MemberVarItr = RecordDeclPtr->field_begin();
+        auto MemberVarEnd = RecordDeclPtr->field_end();
+        for (;MemberVarItr != MemberVarEnd; ++MemberVarItr)
+        {
+          llvm::APInt Ptr(64, reinterpret_cast<uint64_t>(*MemberVarItr));
+          Integer->setValue(Context, Ptr);
+          EvalStmtResult ESR =
+              EvaluateLoopBody(Result, Info, FS->getBody(), Case);
+        }
+      }
+      else if (auto EnumFieldsExpr = cast_or_null<ReflectionEnumFieldsExpr>(Init))
+      {
+        Decl* Ast = nullptr;
+        auto T = EnumFieldsExpr->getSubExpr()->getType().getCanonicalType();
+        T.removeLocalConst();
+        if (T == Context.getIntPtrType())
+        {
+          auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+          Ast = TypePtr->getAsTagDecl();
+        }
+        else if (T == Context.getUIntPtrType())
+        {
+          Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+        }
+        else
+        {
+          return ESR_Failed;
+        }
+        auto EnumDeclPtr = cast_or_null<EnumDecl>(Ast);
+        if (!EnumDeclPtr)
+          return ESR_Failed;
+        auto EnumConstItr = EnumDeclPtr->enumerator_begin();
+        auto EnumConstEnd = EnumDeclPtr->enumerator_end();
+        for (;EnumConstItr != EnumConstEnd; ++EnumConstItr)
+        {
+          llvm::APInt Ptr(64, reinterpret_cast<uint64_t>(*EnumConstItr));
+          Integer->setValue(Context, Ptr);
+          EvalStmtResult ESR =
+              EvaluateLoopBody(Result, Info, FS->getBody(), Case);
+        }
+      }
+      else
+      {
+        return ESR_Failed;
+      }
       break;
     }
 
@@ -4319,7 +4403,91 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
 
   case Stmt::ExpansionForStmtClass: {
     const ExpansionForStmt *FS = cast<ExpansionForStmt>(S);
-    assert(false && "unimplemented now");
+    auto Init = FS->getInit();
+
+    auto DeclStmtPtr = cast_or_null<DeclStmt>(FS->getVarDecl());
+    if (!DeclStmtPtr || !DeclStmtPtr->isSingleDecl())
+      return ESR_Failed;
+
+    auto VarDeclPtr = cast_or_null<VarDecl>(DeclStmtPtr->getSingleDecl());
+    if (!VarDeclPtr)
+      return ESR_Failed;
+
+    auto Integer = const_cast<IntegerLiteral*>(cast_or_null<IntegerLiteral>(VarDeclPtr->getInit()));
+    if (!Integer)
+      return ESR_Failed;
+
+    auto& Context = Info.Ctx;
+    APSInt Int;
+    if (!EvaluateInteger(Init, Int, Info))
+      return ESR_Failed;
+
+    if (auto DataMembersExpr = cast_or_null<ReflectionDataMembersExpr>(Init))
+    {
+      Decl* Ast = nullptr;
+      auto T = DataMembersExpr->getSubExpr()->getType().getCanonicalType();
+      T.removeLocalConst();
+      if (T == Context.getIntPtrType())
+      {
+        Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+      }
+      else if (T == Context.getUIntPtrType())
+      {
+        auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+        Ast = TypePtr->getAsTagDecl();
+      }
+      else
+      {
+        return ESR_Failed;
+      }
+      auto RecordDeclPtr = cast_or_null<RecordDecl>(Ast);
+      if (!RecordDeclPtr)
+        return ESR_Failed;
+      auto MemberVarItr = RecordDeclPtr->field_begin();
+      auto MemberVarEnd = RecordDeclPtr->field_end();
+      for (;MemberVarItr != MemberVarEnd; ++MemberVarItr)
+      {
+        llvm::APInt Ptr(64, reinterpret_cast<uint64_t>(*MemberVarItr));
+        Integer->setValue(Context, Ptr);
+        EvalStmtResult ESR =
+            EvaluateLoopBody(Result, Info, FS->getBody(), Case);
+      }
+    }
+    else if (auto EnumFieldsExpr = cast_or_null<ReflectionEnumFieldsExpr>(Init))
+    {
+      Decl* Ast = nullptr;
+      auto T = EnumFieldsExpr->getSubExpr()->getType().getCanonicalType();
+      T.removeLocalConst();
+      if (T == Context.getIntPtrType())
+      {
+        Ast = reinterpret_cast<Decl*>(Int.getExtValue());
+      }
+      else if (T == Context.getUIntPtrType())
+      {
+        auto TypePtr = reinterpret_cast<Type*>(Int.getExtValue());
+        Ast = TypePtr->getAsTagDecl();
+      }
+      else
+      {
+        return ESR_Failed;
+      }
+      auto EnumDeclPtr = cast_or_null<EnumDecl>(Ast);
+      if (!EnumDeclPtr)
+        return ESR_Failed;
+      auto EnumConstItr = EnumDeclPtr->enumerator_begin();
+      auto EnumConstEnd = EnumDeclPtr->enumerator_end();
+      for (;EnumConstItr != EnumConstEnd; ++EnumConstItr)
+      {
+        llvm::APInt Ptr(64, reinterpret_cast<uint64_t>(*EnumConstItr));
+        Integer->setValue(Context, Ptr);
+        EvalStmtResult ESR =
+            EvaluateLoopBody(Result, Info, FS->getBody(), Case);
+      }
+    }
+    else
+    {
+      return ESR_Failed;
+    }
     return ESR_Succeeded;
   }
 
