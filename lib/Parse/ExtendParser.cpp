@@ -399,6 +399,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       BDT.consumeClose();
       if (ArgExprs.size() != 1)
       {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
         return ExprError();
       }
       return Actions.ActOnReflectionMemberVariableSizeExpr(ArgExprs[0], Loc, isExpandReflection);
@@ -411,10 +412,10 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 2);
       BDT.consumeClose();
       if (ArgExprs.size() != 2)
       {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "2";
         return ExprError();
       }
       return Actions.ActOnReflectionDataMemberExpr(ArgExprs[0], ArgExprs[1], isExpandReflection);
@@ -427,8 +428,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionMemberFunctionSizeExpr(ArgExprs[0], isExpandReflection);
     }
     else if (std::strcmp(name, "func") == 0)
@@ -439,8 +444,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 2);
       BDT.consumeClose();
+      if (ArgExprs.size() != 2)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "2";
+        return ExprError();
+      }
       return Actions.ActOnReflectionMemberFunctionExpr(ArgExprs[0], ArgExprs[1], isExpandReflection);
     }
     else if (std::strcmp(name, "func_name") == 0)
@@ -451,8 +460,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionMemberFunctionNameExpr(ArgExprs[0], isExpandReflection);
     }
     else if (std::strcmp(name, "is_public") == 0)
@@ -463,8 +476,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionMemberCheckAccessSpecExpr(ArgExprs[0], AS_public, isExpandReflection);
     }
     else if (std::strcmp(name, "is_private") == 0)
@@ -475,8 +492,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionMemberCheckAccessSpecExpr(ArgExprs[0], AS_private, isExpandReflection);
     }
     else if (std::strcmp(name, "is_protected") == 0)
@@ -487,8 +508,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionMemberCheckAccessSpecExpr(ArgExprs[0], AS_protected, isExpandReflection);
     }
     else if (std::strcmp(name, "enum_field") == 0)
@@ -499,10 +524,10 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 2);
       BDT.consumeClose();
       if (ArgExprs.size() != 2)
       {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "2";
         return ExprError();
       }
       SourceRange Range(BDT.getOpenLocation(), BDT.getCloseLocation());
@@ -516,8 +541,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       llvm::APSInt Int(64);
       return Actions.ActOnReflectionEnumFieldValueExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
@@ -529,8 +558,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionEnumFieldsExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
     else if (std::strcmp(name, "data_members") == 0)
@@ -541,8 +574,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       return Actions.ActOnReflectionDataMembersExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
     else if (std::strcmp(name, "name_of") == 0)
@@ -556,6 +593,7 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       BDT.consumeClose();
       if (ArgExprs.size() != 1)
       {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
         return ExprError();
       }
       return Actions.ActOnReflectionNameOfExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
@@ -568,8 +606,12 @@ ExtendParser::ParseAssignmentExpression(TypeCastState isTypeCast)
       ExprVector ArgExprs;
       CommaLocsTy CommaLocs;
       ParseExpressionList(ArgExprs, CommaLocs);
-      assert(ArgExprs.size() == 1);
       BDT.consumeClose();
+      if (ArgExprs.size() != 1)
+      {
+        Diag(BDT.getOpenLocation(), diag::err_reflection_argument_number_mismatch) << "1";
+        return ExprError();
+      }
       llvm::APSInt Int(64);
       return Actions.ActOnReflectionMemberPtrExpr(ArgExprs[0], SourceRange(BDT.getOpenLocation(), BDT.getCloseLocation()), isExpandReflection);
     }
