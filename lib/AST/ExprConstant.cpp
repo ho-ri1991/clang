@@ -7610,12 +7610,7 @@ public:
     QualType SrcTy = E->getTypeOfArgument();
     if (SrcTy.isNull())
       return Success(0ULL, E);
-    // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
-    //   the result is the size of the referenced type."
-    if (const ReferenceType *Ref = SrcTy->getAs<ReferenceType>())
-      SrcTy = Ref->getPointeeType();
-
-    uint64_t Ptr = reinterpret_cast<uint64_t>(SrcTy.getTypePtr()->getAsTagDecl());
+    uint64_t Ptr = reinterpret_cast<uint64_t>(SrcTy.getTypePtr());
     return Success(Ptr, E);
   }
 

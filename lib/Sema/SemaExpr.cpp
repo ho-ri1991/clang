@@ -16833,14 +16833,14 @@ ExprResult Sema::ActOnASTInjectExpr(CachedTokens& InjectTokenBuffer, std::vector
 
 ExprResult Sema::ActOnReflexprExpr(SourceLocation OpLoc, TypeSourceInfo* Ty, SourceRange ArgRange, bool allowExpansion)
 {
-  if (!allowExpansion ||
-      Ty->getType().getTypePtr()->isDependentType())
-  {
+//  if (!allowExpansion ||
+//      Ty->getType().getTypePtr()->isDependentType())
+//  {
     return new(Context) ReflexprExpr(Ty, Context.getUIntPtrType(), ArgRange.getBegin(), ArgRange.getEnd());
-  }
-
-  llvm::APInt Int(64, reinterpret_cast<uint64_t>(Ty->getType().getTypePtr()));
-  return IntegerLiteral::Create(Context, Int, Context.getUIntPtrType(), ArgRange.getBegin());
+//  }
+//
+//  llvm::APInt Int(64, reinterpret_cast<uint64_t>(Ty->getType().getTypePtr()));
+//  return IntegerLiteral::Create(Context, Int, Context.getUIntPtrType(), ArgRange.getBegin());
 }
 
 ExprResult Sema::ActOnReflectionDataMembersExpr(ExprResult SubExpr, SourceRange Range, bool allowExpansion)
