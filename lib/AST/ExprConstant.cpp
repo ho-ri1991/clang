@@ -4242,8 +4242,9 @@ static EvalStmtResult EvaluateStmt(StmtResult &Result, EvalInfo &Info,
         { state = 3; }
         else if (MetaTok.Tok.is(tok::r_paren))
         {
-          auto tmp = new std::string(identifierData); // TODO memory management
-          auto LateTokens = E->LateTokenizeFn(E->LateParser, tmp->c_str());
+          auto mem = (char*)Info.Ctx.Allocate(identifierData.size() + 1, 1);
+          std::memcpy(mem, identifierData.data(), identifierData.size() + 1);
+          auto LateTokens = E->LateTokenizeFn(E->LateParser, mem);
           for (auto tok: LateTokens)
           {
             tok.setLocation(identifierLoc);
